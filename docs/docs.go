@@ -9,16 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -60,7 +51,59 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.RecommendResponse"
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SongResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/recommend/tags": {
+            "post": {
+                "description": "태그에 해당하는 노래를 추천합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "노래 추천 by 태그",
+                "parameters": [
+                    {
+                        "description": "태그 목록",
+                        "name": "songs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.HomeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.HomeResponse"
+                                            }
                                         }
                                     }
                                 }
@@ -81,6 +124,31 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.HomeRequest": {
+            "type": "object",
+            "properties": {
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "handler.HomeResponse": {
+            "type": "object",
+            "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongResponse"
+                    }
+                },
+                "tag": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.RecommendRequest": {
             "type": "object",
             "properties": {
@@ -88,17 +156,6 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "integer"
-                    }
-                }
-            }
-        },
-        "handler.RecommendResponse": {
-            "type": "object",
-            "properties": {
-                "songs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.SongResponse"
                     }
                 }
             }
@@ -123,26 +180,17 @@ const docTemplate = `{
                 }
             }
         }
-    },
-    "securityDefinitions": {
-        "BasicAuth": {
-            "type": "basic"
-        }
-    },
-    "externalDocs": {
-        "description": "OpenAPI",
-        "url": "https://swagger.io/resources/open-api/"
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Swagger Example API",
-	Description:      "This is a sample server celler server.",
+	Title:            "싱송생송 API",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

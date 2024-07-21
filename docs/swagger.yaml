@@ -6,18 +6,27 @@ definitions:
       message:
         type: string
     type: object
+  handler.HomeRequest:
+    properties:
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  handler.HomeResponse:
+    properties:
+      songs:
+        items:
+          $ref: '#/definitions/handler.SongResponse'
+        type: array
+      tag:
+        type: string
+    type: object
   handler.RecommendRequest:
     properties:
       songs:
         items:
           type: integer
-        type: array
-    type: object
-  handler.RecommendResponse:
-    properties:
-      songs:
-        items:
-          $ref: '#/definitions/handler.SongResponse'
         type: array
     type: object
   handler.SongResponse:
@@ -33,21 +42,9 @@ definitions:
           type: string
         type: array
     type: object
-externalDocs:
-  description: OpenAPI
-  url: https://swagger.io/resources/open-api/
-host: localhost:8080
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: This is a sample server celler server.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Swagger Example API
+  contact: {}
+  title: 싱송생송 API
   version: "1.0"
 paths:
   /recommend:
@@ -72,12 +69,40 @@ paths:
             - $ref: '#/definitions/handler.BaseResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.RecommendResponse'
+                  items:
+                    $ref: '#/definitions/handler.SongResponse'
+                  type: array
               type: object
       summary: 노래 추천 by 노래 번호 목록
       tags:
       - Recommendation
-securityDefinitions:
-  BasicAuth:
-    type: basic
+  /recommend/tags:
+    post:
+      consumes:
+      - application/json
+      description: 태그에 해당하는 노래를 추천합니다.
+      parameters:
+      - description: 태그 목록
+        in: body
+        name: songs
+        required: true
+        schema:
+          $ref: '#/definitions/handler.HomeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.HomeResponse'
+                  type: array
+              type: object
+      summary: 노래 추천 by 태그
+      tags:
+      - Recommendation
 swagger: "2.0"

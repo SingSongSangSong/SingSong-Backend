@@ -16,25 +16,10 @@ import (
 	"strconv"
 )
 
-// @title           Swagger Example API
+// @title           싱송생송 API
 // @version         1.0
-// @description     This is a sample server celler server.
-// @termsOfService  http://swagger.io/terms/
-
-// @contact.name   API Support
-// @contact.url    http://www.swagger.io/support
-// @contact.email  support@swagger.io
-
-// @license.name  Apache 2.0
-// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host      localhost:8080
 // @BasePath  /api/v1
 
-// @securityDefinitions.basic  BasicAuth
-
-// @externalDocs.description  OpenAPI
-// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	err := godotenv.Load(".env")
 	ctx := context.Background()
@@ -92,7 +77,7 @@ func main() {
 	// 추천 엔드포인트 설정
 	recommend := r.Group("/api/v1/recommend")
 	{
-		recommend.POST("", ph.GetSongRecommendation)
+		recommend.POST("", ph.RecommendBySongs)
 		recommend.POST("/tags", ph.HomeRecommendation)
 	}
 
