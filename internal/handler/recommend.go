@@ -24,12 +24,13 @@ type RecommendResponse struct {
 // @Accept       json
 // @Produce      json
 // @Param        songs   body      RecommendRequest  true  "노래 번호 목록"
-// @Success      200 {object} RecommendResponse "성공"
+// @Success      200 {object} BaseResponse{data=RecommendResponse} "성공"
 // @Router       /recommend [post]
-func (pineconeHandler *PineconeHandler) RegisterRecommendation(c *gin.Context) {
+func (pineconeHandler *PineconeHandler) GetSongRecommendation(c *gin.Context) {
 	request := &RecommendRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, NewBaseResponse("error", err.Error()))
+		//c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -67,7 +68,8 @@ func (pineconeHandler *PineconeHandler) RegisterRecommendation(c *gin.Context) {
 		})
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, NewBaseResponse("error", nil))
+			//c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		// Iterate through the matches in the QueryVectorsResponse
@@ -77,20 +79,18 @@ func (pineconeHandler *PineconeHandler) RegisterRecommendation(c *gin.Context) {
 	}
 
 	// Returning the result as a JSON response
-	c.JSON(http.StatusOK, RecommendResponse{returnSongs})
+	c.JSON(http.StatusOK, NewBaseResponse("ok", RecommendResponse{returnSongs}))
 }
 
 func (pineconeHandler *PineconeHandler) GetPineconeIndex(c *gin.Context) {
 	idxs, err := pineconeHandler.pinecone.DescribeIndexStats(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, NewBaseResponse("error", err.Error()))
+		//c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "ok",
-		"data":    idxs,
-	})
+	c.JSON(http.StatusOK, NewBaseResponse("ok", idxs))
 }
 
 // HomeRequest는 추천 요청 구조체입니다.
@@ -102,7 +102,8 @@ type HomeRequest struct {
 func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 	request := &HomeRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, NewBaseResponse("error", nil))
+		//c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -145,7 +146,8 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 		IncludeMetadata: true,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, NewBaseResponse("error", nil))
+		//c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -155,9 +157,5 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 		returnSongs = append(returnSongs, match.Vector.Id)
 	}
 
-	// 결과를 JSON 응답으로 반환합니다.
-	c.JSON(http.StatusOK, gin.H{
-		"message": "ok",
-		"data":    returnSongs,
-	})
+	c.JSON(http.StatusOK, NewBaseResponse("ok", returnSongs))
 }

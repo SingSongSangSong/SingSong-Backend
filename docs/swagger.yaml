@@ -1,5 +1,11 @@
 basePath: /api/v1
 definitions:
+  handler.BaseResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
   handler.RecommendRequest:
     properties:
       songs:
@@ -49,7 +55,12 @@ paths:
         "200":
           description: 성공
           schema:
-            $ref: '#/definitions/handler.RecommendResponse'
+            allOf:
+            - $ref: '#/definitions/handler.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.RecommendResponse'
+              type: object
       summary: 노래 추천 by 노래 번호 목록
       tags:
       - Recommendation

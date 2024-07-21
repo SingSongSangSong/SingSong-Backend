@@ -52,7 +52,19 @@ const docTemplate = `{
                     "200": {
                         "description": "성공",
                         "schema": {
-                            "$ref": "#/definitions/handler.RecommendResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.RecommendResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -60,6 +72,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.BaseResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.RecommendRequest": {
             "type": "object",
             "properties": {

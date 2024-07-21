@@ -11,6 +11,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/net/context"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 )
@@ -91,12 +92,17 @@ func main() {
 	// 추천 엔드포인트 설정
 	recommend := r.Group("/api/v1/recommend")
 	{
-		recommend.POST("", ph.RegisterRecommendation)
+		recommend.POST("", ph.GetSongRecommendation)
 		recommend.POST("/tags", ph.HomeRecommendation)
 	}
 
 	//스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// 404 에러
+	r.NoRoute(func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, handler.NewBaseResponse("error", nil))
+	})
 
 	// 서버 실행
 	if err := r.Run(); err != nil {
