@@ -88,6 +88,7 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 			koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
 			if err != nil {
 				log.Printf("Failed to convert tags to korean, error: %+v", err)
+				koreanTags = []string{}
 			}
 
 			returnSongs = append(returnSongs, SongResponse{
@@ -214,6 +215,7 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 		koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
 		if err != nil {
 			log.Printf("Failed to convert tags to korean, error: %+v", err)
+			koreanTags = []string{}
 		}
 		returnSongs = append(returnSongs, SongResponse{
 			songNumber,
