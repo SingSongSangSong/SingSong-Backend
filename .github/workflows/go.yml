@@ -51,10 +51,29 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Install SSH client
         run: sudo apt-get install -y sshpass
 
-      - name: Connect to Raspberry Pi and run commands
+      - name: Create .env file
+        run: |
+          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" >> .env
+          echo "PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+
+      - name: Copy .env file to Raspberry Pi
+        env:
+          PI_HOST: ${{ secrets.PI_HOST }}
+          PI_USER: ${{ secrets.PI_USER }}
+          PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
+        run: |
+          sshpass -p $PI_PASSWORD scp -o StrictHostKeyChecking=no .env $PI_USER@$PI_HOST:/home/$PI_USER/.env
+
+      - name: Connect to Raspberry Pi and run Docker commands
         env:
           PI_HOST: ${{ secrets.PI_HOST }}
           PI_USER: ${{ secrets.PI_USER }}
@@ -62,20 +81,6 @@ jobs:
         run: |
           sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST << EOF
           echo "Connected to Raspberry Pi"
-          # Add any commands you want to run on the Raspberry Pi here
-          hostname
+          docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
+          docker run -d -p 8080:8080 --env-file /home/$PI_USER/.env ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
           EOF
-
-      - name: Pull Docker image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
-
-      - name: Run Docker container
-        run: docker run -d -p 8080:8080 \
-            --env PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }} \
-            --env PINECONE_INDEX=${{ secrets.PINECONE_INDEX }} \
-            --env DB_HOST=${{ secrets.DB_HOST }} \
-            --env DB_PORT=${{ secrets.DB_PORT }} \
-            --env DB_NAME=${{ secrets.DB_NAME }} \
-            --env DB_USER=${{ secrets.DB_USER }} \
-            --env DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
