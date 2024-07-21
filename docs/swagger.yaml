@@ -1,5 +1,12 @@
 basePath: /api/v1
 definitions:
+  handler.HomeRequest:
+    properties:
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
   handler.RecommendRequest:
     properties:
       songs:
@@ -51,6 +58,28 @@ paths:
           schema:
             $ref: '#/definitions/handler.RecommendResponse'
       summary: 노래 추천 by 노래 번호 목록
+      tags:
+      - Recommendation
+  /recommend/tags:
+    post:
+      consumes:
+      - application/json
+      description: 태그 목록을 보내면 유사한 노래들을 추천합니다.
+      parameters:
+      - description: 태그 목록
+        in: body
+        name: tags
+        required: true
+        schema:
+          $ref: '#/definitions/handler.HomeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/handler.RecommendResponse'
+      summary: 노래 추천 by 태그 목록
       tags:
       - Recommendation
 securityDefinitions:

@@ -51,9 +51,54 @@
                     }
                 }
             }
+        },
+        "/recommend/tags": {
+            "post": {
+                "description": "태그 목록을 보내면 유사한 노래들을 추천합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "노래 추천 by 태그 목록",
+                "parameters": [
+                    {
+                        "description": "태그 목록",
+                        "name": "tags",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.HomeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/handler.RecommendResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "handler.HomeRequest": {
+            "type": "object",
+            "properties": {
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "handler.RecommendRequest": {
             "type": "object",
             "properties": {

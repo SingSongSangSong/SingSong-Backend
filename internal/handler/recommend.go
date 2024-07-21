@@ -99,6 +99,15 @@ type HomeRequest struct {
 }
 
 // HomeRecommendation은 추천 요청을 처리하는 핸들러 함수입니다.
+// HomeRecommendation godoc
+// @Summary      노래 추천 by 태그 목록
+// @Description  태그 목록을 보내면 유사한 노래들을 추천합니다.
+// @Tags         Recommendation
+// @Accept       json
+// @Produce      json
+// @Param        tags   body      HomeRequest  true  "태그 목록"
+// @Success      200 {object} RecommendResponse "성공"
+// @Router       /recommend/tags [post]
 func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 	request := &HomeRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
