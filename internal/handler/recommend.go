@@ -85,12 +85,16 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 			if err != nil {
 				log.Fatalf("Failed to convert ID to int, error: %+v", err)
 			}
+			koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
+			if err != nil {
+				log.Fatalf("Failed to convert tags to korean, error: %+v", err)
+			}
 
 			returnSongs = append(returnSongs, SongResponse{
 				songNumber,
 				v.Metadata.Fields["song_name"].GetStringValue(),
 				v.Metadata.Fields["singer_name"].GetStringValue(),
-				parseTags(v.Metadata.Fields["ssss"].GetStringValue()),
+				koreanTags,
 			})
 		}
 	}
@@ -145,9 +149,16 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 		return
 	}
 
+	englishTags, err := mapTagsKoreanToEnglish(request.Tags)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, NewBaseResponse("error - "+err.Error(), nil))
+		//c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	// 필터링 조건을 설정합니다.
-	filterConditions := make([]*structpb.Value, len(request.Tags))
-	for i, tag := range request.Tags {
+	filterConditions := make([]*structpb.Value, len(englishTags))
+	for i, tag := range englishTags {
 		filterConditions[i] = structpb.NewStructValue(&structpb.Struct{
 			Fields: map[string]*structpb.Value{
 				"ssss": {
@@ -200,15 +211,19 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 		if err != nil {
 			log.Fatalf("Failed to convert ID to int, error: %+v", err)
 		}
+		koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
+		if err != nil {
+			log.Fatalf("Failed to convert tags to korean, error: %+v", err)
+		}
 		returnSongs = append(returnSongs, SongResponse{
 			songNumber,
 			v.Metadata.Fields["song_name"].GetStringValue(),
 			v.Metadata.Fields["singer_name"].GetStringValue(),
-			parseTags(v.Metadata.Fields["ssss"].GetStringValue()),
+			koreanTags,
 		})
 	}
 
-	// []songResponse를 request.Tags에 들어있는 태그들로 분류해서 []HomeResponse로 변환하는 코드
+	// []songResponse를 request.Tags(한국어태그)에 들어있는 태그들로 분류해서 []HomeResponse로 변환하는 코드
 	tagSongMap := make(map[string][]SongResponse)
 	for _, song := range returnSongs {
 		for _, tag := range song.Tags {

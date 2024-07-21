@@ -56,3 +56,27 @@ func mapTagEnglishToKorean(englishTag string) (string, error) {
 	}
 	return "", errors.New("tag not found, tag cannot convert to english")
 }
+
+func mapTagsKoreanToEnglish(koreanTags []string) ([]string, error) {
+	englishTags := make([]string, len(koreanTags))
+	for i, tag := range koreanTags {
+		englishTag, err := mapTagKoreanToEnglish(tag)
+		if err != nil {
+			return nil, err
+		}
+		englishTags[i] = englishTag
+	}
+	return englishTags, nil
+}
+
+func mapTagsEnglishToKorean(englishTags []string) ([]string, error) {
+	koreanTags := make([]string, len(englishTags))
+	for i, tag := range englishTags {
+		koreanTag, err := mapTagEnglishToKorean(tag)
+		if err != nil {
+			return nil, err
+		}
+		koreanTags[i] = koreanTag
+	}
+	return koreanTags, nil
+}
