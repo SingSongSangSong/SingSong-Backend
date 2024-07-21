@@ -112,6 +112,32 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/tags/ssss": {
+            "get": {
+                "description": "ssss 태그 목록을 조회합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "ssss 태그 목록 가져오기",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

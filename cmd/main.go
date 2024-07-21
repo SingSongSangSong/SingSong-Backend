@@ -81,6 +81,12 @@ func main() {
 		recommend.POST("/tags", ph.HomeRecommendation)
 	}
 
+	// 태그 엔드포인트 설정
+	tags := r.Group("/api/v1/tags")
+	{
+		tags.GET("/ssss", h.ListSsssTags)
+	}
+
 	//스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

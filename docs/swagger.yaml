@@ -105,4 +105,21 @@ paths:
       summary: 노래 추천 by 태그
       tags:
       - Recommendation
+  /tags/ssss:
+    get:
+      consumes:
+      - application/json
+      description: ssss 태그 목록을 조회합니다.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            items:
+              type: string
+            type: array
+      summary: ssss 태그 목록 가져오기
+      tags:
+      - Tags
 swagger: "2.0"
