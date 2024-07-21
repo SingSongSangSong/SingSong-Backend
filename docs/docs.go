@@ -87,7 +87,7 @@ const docTemplate = `{
                 "songs": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     }
                 }
             }
@@ -96,6 +96,26 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongResponse"
+                    }
+                }
+            }
+        },
+        "handler.SongResponse": {
+            "type": "object",
+            "properties": {
+                "singerName": {
+                    "type": "string"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                },
+                "tags": {
                     "type": "array",
                     "items": {
                         "type": "string"

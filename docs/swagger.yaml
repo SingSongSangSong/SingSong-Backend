@@ -10,12 +10,25 @@ definitions:
     properties:
       songs:
         items:
-          type: string
+          type: integer
         type: array
     type: object
   handler.RecommendResponse:
     properties:
       songs:
+        items:
+          $ref: '#/definitions/handler.SongResponse'
+        type: array
+    type: object
+  handler.SongResponse:
+    properties:
+      singerName:
+        type: string
+      songName:
+        type: string
+      songNumber:
+        type: integer
+      tags:
         items:
           type: string
         type: array
