@@ -92,6 +92,7 @@ func main() {
 	recommend := r.Group("/api/v1/recommend")
 	{
 		recommend.POST("", ph.RegisterRecommendation)
+		recommend.POST("/tags", ph.HomeRecommendation)
 	}
 
 	//스웨거 설정

@@ -3,6 +3,8 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/pinecone-io/go-pinecone/pinecone"
+	"golang.org/x/net/context"
+	"google.golang.org/protobuf/types/known/structpb"
 	"log"
 	"net/http"
 )
@@ -88,5 +90,74 @@ func (pineconeHandler *PineconeHandler) GetPineconeIndex(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "ok",
 		"data":    idxs,
+	})
+}
+
+// HomeRequest는 추천 요청 구조체입니다.
+type HomeRequest struct {
+	Tags []string `json:"tags"`
+}
+
+// HomeRecommendation은 추천 요청을 처리하는 핸들러 함수입니다.
+func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
+	request := &HomeRequest{}
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 필터링 조건을 설정합니다.
+	filterConditions := make([]*structpb.Value, len(request.Tags))
+	for i, tag := range request.Tags {
+		filterConditions[i] = structpb.NewStructValue(&structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"ssss": {
+					Kind: &structpb.Value_StringValue{
+						StringValue: tag,
+					},
+				},
+			},
+		})
+	}
+
+	filterStruct := &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"$or": {
+				Kind: &structpb.Value_ListValue{
+					ListValue: &structpb.ListValue{
+						Values: filterConditions,
+					},
+				},
+			},
+		},
+	}
+
+	// Define a dummy vector (e.g., zero vector) for the query
+	dummyVector := make([]float32, 30) // Assuming the vector length is 1536, adjust as necessary
+
+	// 쿼리 요청을 보냅니다.
+	values, err := pineconeHandler.pinecone.QueryByVectorValues(context.Background(), &pinecone.QueryByVectorValuesRequest{
+		Vector:          dummyVector,
+		TopK:            100,
+		Filter:          filterStruct,
+		SparseValues:    nil,
+		IncludeValues:   true,
+		IncludeMetadata: true,
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 반환된 벡터의 ID를 수집합니다.
+	returnSongs := make([]string, 0, len(values.Matches))
+	for _, match := range values.Matches {
+		returnSongs = append(returnSongs, match.Vector.Id)
+	}
+
+	// 결과를 JSON 응답으로 반환합니다.
+	c.JSON(http.StatusOK, gin.H{
+		"message": "ok",
+		"data":    returnSongs,
 	})
 }
