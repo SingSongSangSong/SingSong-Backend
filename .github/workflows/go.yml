@@ -75,6 +75,16 @@ jobs:
       - name: Install SSH client
         run: sudo apt-get install -y sshpass
 
+      - name: Create .env file
+        run: |
+          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" > .env
+          echo "PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+
       - name: Copy .env file to Raspberry Pi
         env:
           PI_HOST: ${{ secrets.PI_HOST }}
@@ -82,7 +92,6 @@ jobs:
           PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
         run: |
           sshpass -p $PI_PASSWORD scp -o StrictHostKeyChecking=no .env $PI_USER@$PI_HOST:/home/$PI_USER/.env
-          sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST "chmod 600 /home/$PI_USER/.env"
 
       - name: Connect to Raspberry Pi and manage Docker container
         env:
