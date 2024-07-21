@@ -49,7 +49,7 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 	// vectorid로 vector 조회하기
 	res, err := pineconeHandler.pinecone.FetchVectors(c, songs)
 	if err != nil {
-		log.Fatalf("Failed to fetch vectors, error: %+v", err)
+		log.Printf("Failed to fetch vectors, error: %+v", err)
 	}
 
 	returnSongs := make([]SongResponse, 0, len(res.Vectors))
@@ -83,11 +83,11 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 			v := values.Matches[j].Vector
 			songNumber, err := strconv.Atoi(v.Id)
 			if err != nil {
-				log.Fatalf("Failed to convert ID to int, error: %+v", err)
+				log.Printf("Failed to convert ID to int, error: %+v", err)
 			}
 			koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
 			if err != nil {
-				log.Fatalf("Failed to convert tags to korean, error: %+v", err)
+				log.Printf("Failed to convert tags to korean, error: %+v", err)
 			}
 
 			returnSongs = append(returnSongs, SongResponse{
@@ -209,11 +209,11 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 		v := match.Vector
 		songNumber, err := strconv.Atoi(v.Id)
 		if err != nil {
-			log.Fatalf("Failed to convert ID to int, error: %+v", err)
+			log.Printf("Failed to convert ID to int, error: %+v", err)
 		}
 		koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
 		if err != nil {
-			log.Fatalf("Failed to convert tags to korean, error: %+v", err)
+			log.Printf("Failed to convert tags to korean, error: %+v", err)
 		}
 		returnSongs = append(returnSongs, SongResponse{
 			songNumber,
