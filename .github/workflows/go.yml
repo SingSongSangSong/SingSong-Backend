@@ -52,14 +52,6 @@ jobs:
       - name: Install SSH client
         run: sudo apt-get install -y sshpass
 
-      - name: Copy .env file to Raspberry Pi
-        env:
-          PI_HOST: ${{ secrets.PI_HOST }}
-          PI_USER: ${{ secrets.PI_USER }}
-          PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
-        run: |
-          sshpass -p $PI_PASSWORD scp -o StrictHostKeyChecking=no .env $PI_USER@$PI_HOST:/home/$PI_USER/.env
-
       - name: Connect to Raspberry Pi and manage Docker container
         env:
           PI_HOST: ${{ secrets.PI_HOST }}
