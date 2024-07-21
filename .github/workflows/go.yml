@@ -20,41 +20,18 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" > .env
+          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" >> .env
           echo "PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}" >> .env
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-
-      - name: Build
-        run: go build -v ./...
-
-  docker:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Create .env file
-        run: |
-          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" > .env
-          echo "PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-
-      - name: Log in to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -62,28 +39,15 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
           platforms: linux/amd64,linux/arm64
 
-      - name: Docker logout
-        run: docker logout
-
   deploy:
     runs-on: ubuntu-latest
-    needs: docker
+    needs: build
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Install SSH client
         run: sudo apt-get install -y sshpass
-
-      - name: Create .env file
-        run: |
-          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" > .env
-          echo "PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
 
       - name: Copy .env file to Raspberry Pi
         env:
