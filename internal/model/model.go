@@ -1,9 +1,9 @@
 package model
 
 import (
+	"SingSong-Backend/config"
 	"database/sql"
 	"fmt"
-	"http-practice/config"
 
 	_ "github.com/go-sql-driver/mysql"
 )

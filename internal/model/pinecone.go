@@ -1,10 +1,10 @@
 package model
 
 import (
+	"SingSong-Backend/config"
 	"context"
 	"fmt"
 	"github.com/pinecone-io/go-pinecone/pinecone"
-	"http-practice/config"
 	"log"
 	"os"
 )

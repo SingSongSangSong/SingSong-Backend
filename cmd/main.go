@@ -1,15 +1,15 @@
 package main
 
 import (
+	"SingSong-Backend/config"
+	_ "SingSong-Backend/docs"
+	"SingSong-Backend/internal/handler"
+	"SingSong-Backend/internal/model"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/net/context"
-	"http-practice/config"
-	_ "http-practice/docs"
-	"http-practice/internal/handler"
-	"http-practice/internal/model"
 	"log"
 	"os"
 	"strconv"

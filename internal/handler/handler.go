@@ -1,6 +1,6 @@
 package handler
 
-import "http-practice/internal/model"
+import "SingSong-Backend/internal/model"
 
 type Handler struct {
 	model *model.Model
