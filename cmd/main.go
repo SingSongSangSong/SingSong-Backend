@@ -5,6 +5,7 @@ import (
 	_ "SingSong-Backend/docs"
 	"SingSong-Backend/internal/handler"
 	"SingSong-Backend/internal/model"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
@@ -13,6 +14,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 // @title           Swagger Example API
@@ -36,6 +38,10 @@ import (
 // @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
 	ctx := context.Background()
 
 	// MySQL 설정
@@ -56,6 +62,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Model 생성 실패: %v", err)
 	}
+
 	// 핸들러 초기화
 	h, err := handler.NewHandler(m)
 	if err != nil {
@@ -80,6 +87,16 @@ func main() {
 	// Gin 라우터 설정
 	r := gin.Default()
 
+	// CORS 설정 추가
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"}, // Allow all origins
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	// 사용자 엔드포인트 설정
 	user := r.Group("/user")
 	{
@@ -95,7 +112,7 @@ func main() {
 		recommend.POST("/tags", ph.HomeRecommendation)
 	}
 
-	//스웨거 설정
+	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// 서버 실행
