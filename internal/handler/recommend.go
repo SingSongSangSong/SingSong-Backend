@@ -233,9 +233,13 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 
 	var homeResponses []HomeResponse
 	for _, tag := range request.Tags {
+		songs := tagSongMap[tag]
+		if songs == nil {
+			songs = []SongResponse{}
+		}
 		homeResponses = append(homeResponses, HomeResponse{
 			Tag:   tag,
-			Songs: tagSongMap[tag],
+			Songs: songs,
 		})
 	}
 
