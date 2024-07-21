@@ -2,9 +2,9 @@ name: Go
 
 on:
   push:
-    branches: [ "feature/#3" ]
+    branches: ["feature/#3"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["master"]
 
 jobs:
   build:
@@ -57,7 +57,7 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" >> .env
+          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" > .env
           echo "PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}" >> .env
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
@@ -72,28 +72,24 @@ jobs:
           PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
         run: |
           sshpass -p $PI_PASSWORD scp -o StrictHostKeyChecking=no .env $PI_USER@$PI_HOST:/home/$PI_USER/.env
+          sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST "chmod 600 /home/$PI_USER/.env"
 
       - name: Connect to Raspberry Pi and run Docker commands
         env:
-            PI_HOST: ${{ secrets.PI_HOST }}
-            PI_USER: ${{ secrets.PI_USER }}
-            PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
+          PI_HOST: ${{ secrets.PI_HOST }}
+          PI_USER: ${{ secrets.PI_USER }}
+          PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
         run: |
-            sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST << EOF
-            echo "Connected to Raspberry Pi"
-            # Stop and remove existing container if it exists
-            if [ \$(docker ps -q -f name=${{ secrets.DOCKER_REPOSITORY }}) ]; then
-              docker stop ${{ secrets.DOCKER_REPOSITORY }}
-              docker rm ${{ secrets.DOCKER_REPOSITORY }}
-            fi
-            # Remove any existing container with the same name (in case it's stopped)
-            if [ \$(docker ps -aq -f status=exited -f name=${{ secrets.DOCKER_REPOSITORY }}) ]; then
-              docker rm ${{ secrets.DOCKER_REPOSITORY }}
-            fi
-            # Clear Docker system
-            docker system prune -f
-            # Pull the latest image
-            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
-            # Run the new container
-            docker run -d -p 8080:8080 --name ${{ secrets.DOCKER_REPOSITORY }} --env-file /home/$PI_USER/.env ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
-            EOF
+          sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST << EOF
+          echo "Connected to Raspberry Pi"
+          if [ \$(docker ps -q -f name=${{ secrets.DOCKER_REPOSITORY }}) ]; then
+            docker stop ${{ secrets.DOCKER_REPOSITORY }}
+            docker rm ${{ secrets.DOCKER_REPOSITORY }}
+          fi
+          if [ \$(docker ps -aq -f status=exited -f name=${{ secrets.DOCKER_REPOSITORY }}) ]; then
+            docker rm ${{ secrets.DOCKER_REPOSITORY }}
+          fi
+          docker system prune -f
+          docker pull ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
+          docker run -d -p 8080:8080 --name ${{ secrets.DOCKER_REPOSITORY }} --env-file /home/$PI_USER/.env ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
+          EOF
