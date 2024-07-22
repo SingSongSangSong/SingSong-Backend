@@ -12,30 +12,16 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"golang.org/x/net/context"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"time"
 )
 
-// @title           Swagger Example API
+// @title           싱송생송 API
 // @version         1.0
-// @description     This is a sample server celler server.
-// @termsOfService  http://swagger.io/terms/
-
-// @contact.name   API Support
-// @contact.url    http://www.swagger.io/support
-// @contact.email  support@swagger.io
-
-// @license.name  Apache 2.0
-// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @host      localhost:8080
 // @BasePath  /api/v1
 
-// @securityDefinitions.basic  BasicAuth
-
-// @externalDocs.description  OpenAPI
-// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -108,12 +94,23 @@ func main() {
 	// 추천 엔드포인트 설정
 	recommend := r.Group("/api/v1/recommend")
 	{
-		recommend.POST("", ph.RegisterRecommendation)
+		recommend.POST("", ph.RecommendBySongs)
 		recommend.POST("/tags", ph.HomeRecommendation)
+	}
+
+	// 태그 엔드포인트 설정
+	tags := r.Group("/api/v1/tags")
+	{
+		tags.GET("/ssss", h.ListSsssTags)
 	}
 
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// 404 에러
+	r.NoRoute(func(c *gin.Context) {
+		c.JSON(http.StatusNotFound, handler.NewBaseResponse("error - invalid api", nil))
+	})
 
 	// 서버 실행
 	if err := r.Run(); err != nil {

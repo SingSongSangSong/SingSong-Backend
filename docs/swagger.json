@@ -1,21 +1,10 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server celler server.",
-        "title": "Swagger Example API",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
+        "title": "싱송생송 API",
+        "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
         "/recommend": {
@@ -46,7 +35,22 @@
                     "200": {
                         "description": "성공",
                         "schema": {
-                            "$ref": "#/definitions/handler.RecommendResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SongResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -54,7 +58,7 @@
         },
         "/recommend/tags": {
             "post": {
-                "description": "태그 목록을 보내면 유사한 노래들을 추천합니다.",
+                "description": "태그에 해당하는 노래를 추천합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -64,11 +68,11 @@
                 "tags": [
                     "Recommendation"
                 ],
-                "summary": "노래 추천 by 태그 목록",
+                "summary": "노래 추천 by 태그",
                 "parameters": [
                     {
                         "description": "태그 목록",
-                        "name": "tags",
+                        "name": "songs",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -80,7 +84,48 @@
                     "200": {
                         "description": "성공",
                         "schema": {
-                            "$ref": "#/definitions/handler.RecommendResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/handler.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.HomeResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/tags/ssss": {
+            "get": {
+                "description": "ssss 태그 목록을 조회합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "ssss 태그 목록 가져오기",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -88,6 +133,15 @@
         }
     },
     "definitions": {
+        "handler.BaseResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.HomeRequest": {
             "type": "object",
             "properties": {
@@ -99,21 +153,44 @@
                 }
             }
         },
+        "handler.HomeResponse": {
+            "type": "object",
+            "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongResponse"
+                    }
+                },
+                "tag": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.RecommendRequest": {
             "type": "object",
             "properties": {
                 "songs": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     }
                 }
             }
         },
-        "handler.RecommendResponse": {
+        "handler.SongResponse": {
             "type": "object",
             "properties": {
-                "songs": {
+                "singerName": {
+                    "type": "string"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                },
+                "tags": {
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -121,14 +198,5 @@
                 }
             }
         }
-    },
-    "securityDefinitions": {
-        "BasicAuth": {
-            "type": "basic"
-        }
-    },
-    "externalDocs": {
-        "description": "OpenAPI",
-        "url": "https://swagger.io/resources/open-api/"
     }
 }
