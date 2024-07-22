@@ -109,7 +109,8 @@ func main() {
 
 	// 404 에러
 	r.NoRoute(func(c *gin.Context) {
-		c.JSON(http.StatusNotFound, handler.NewBaseResponse("error - invalid api", nil))
+		handler.BaseResponse(c, http.StatusNotFound, "error - invalid api", nil)
+		return
 	})
 
 	// 서버 실행

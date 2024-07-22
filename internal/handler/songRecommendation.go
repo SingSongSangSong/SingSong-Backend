@@ -32,8 +32,7 @@ type songRecommendResponse struct {
 func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 	request := &songRecommendRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, NewBaseResponse("error - "+err.Error(), nil))
-		//c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 		return
 	}
 
@@ -69,9 +68,9 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 			IncludeMetadata: true,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, NewBaseResponse("error - "+err.Error(), nil))
-			//c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
+
 		}
 		// Iterate through the matches in the QueryVectorsResponse
 		for j := 0; j < len(values.Matches); j++ {
@@ -95,8 +94,8 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 		}
 	}
 
-	// Returning the result as a JSON response
-	c.JSON(http.StatusOK, NewBaseResponse("ok", returnSongs))
+	BaseResponse(c, http.StatusOK, "ok", returnSongs)
+	return
 }
 
 func parseTags(tags string) []string {

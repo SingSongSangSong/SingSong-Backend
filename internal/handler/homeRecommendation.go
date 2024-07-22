@@ -1,12 +1,10 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/pinecone-io/go-pinecone/pinecone"
-	"golang.org/x/net/context"
 	"google.golang.org/protobuf/types/known/structpb"
 	"log"
-	"math/rand"
 	"net/http"
 	"strconv"
 )
@@ -40,14 +38,14 @@ type HomeResponse struct {
 func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 	request := &HomeRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, NewBaseResponse("error - "+err.Error(), nil))
+		BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 		return
 	}
 
 	//
 	englishTags, err := mapTagsKoreanToEnglish(request.Tags)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, NewBaseResponse("error - "+err.Error(), nil))
+		BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 		return
 	}
 
@@ -63,6 +61,7 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 				},
 			},
 		})
+		fmt.Print(filterConditions[i])
 	}
 
 	filterStruct := &structpb.Struct{
@@ -76,25 +75,11 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 			},
 		},
 	}
+	fmt.Println(filterStruct)
 
-	// Define a dummy vector (e.g., zero vector) for the query
-	dummyVector := make([]float32, 30) // Assuming the vector length is 1536, adjust as necessary
-	for i := range dummyVector {
-		dummyVector[i] = rand.Float32() //random vector
-	}
-
-	// 쿼리 요청을 보냅니다.
-	values, err := pineconeHandler.pinecone.QueryByVectorValues(context.Background(), &pinecone.QueryByVectorValuesRequest{
-		Vector:          dummyVector,
-		TopK:            100,
-		Filter:          filterStruct,
-		SparseValues:    nil,
-		IncludeValues:   true,
-		IncludeMetadata: true,
-	})
+	values, err := pineconeHandler.queryPineconeWithTag(filterStruct)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, NewBaseResponse("error - "+err.Error(), nil))
-		//c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 		return
 	}
 
@@ -138,6 +123,6 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 			Songs: songs,
 		})
 	}
-
-	c.JSON(http.StatusOK, NewBaseResponse("ok", homeResponses))
+	BaseResponse(c, http.StatusOK, "ok", homeResponses)
+	return
 }
