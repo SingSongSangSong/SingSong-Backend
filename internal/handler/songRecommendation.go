@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type songRecommendRequest struct {
@@ -32,8 +33,7 @@ type songRecommendResponse struct {
 func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 	request := &songRecommendRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, NewBaseResponse("error - "+err.Error(), nil))
-		//c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 		return
 	}
 
@@ -49,54 +49,63 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 		log.Printf("Failed to fetch vectors, error: %+v", err)
 	}
 
-	returnSongs := make([]songRecommendResponse, 0, len(res.Vectors))
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	returnSongs := make([]songRecommendResponse, 0)
+
 	for i := 0; i < len(songs); i++ {
-		vector, exists := res.Vectors[songs[i]]
+		wg.Add(1)
+		go func(songID string) {
+			defer wg.Done()
+			vector, exists := res.Vectors[songID]
 
-		if !exists {
-			log.Printf("Vector with ID %s not found in response", songs[i])
-			continue
-		}
-
-		queryVector := vector.Values
-
-		values, err := pineconeHandler.pinecone.QueryByVectorValues(c, &pinecone.QueryByVectorValuesRequest{
-			Vector:          queryVector,
-			TopK:            uint32(20 / len(songs)),
-			Filter:          nil,
-			SparseValues:    nil,
-			IncludeValues:   true,
-			IncludeMetadata: true,
-		})
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, NewBaseResponse("error - "+err.Error(), nil))
-			//c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		// Iterate through the matches in the QueryVectorsResponse
-		for j := 0; j < len(values.Matches); j++ {
-			v := values.Matches[j].Vector
-			songNumber, err := strconv.Atoi(v.Id)
-			if err != nil {
-				log.Printf("Failed to convert ID to int, error: %+v", err)
-			}
-			koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
-			if err != nil {
-				log.Printf("Failed to convert tags to korean, error: %+v", err)
-				koreanTags = []string{}
+			if !exists {
+				log.Printf("Vector with ID %s not found in response", songID)
+				return
 			}
 
-			returnSongs = append(returnSongs, songRecommendResponse{
-				songNumber,
-				v.Metadata.Fields["song_name"].GetStringValue(),
-				v.Metadata.Fields["singer_name"].GetStringValue(),
-				koreanTags,
+			queryVector := vector.Values
+
+			values, err := pineconeHandler.pinecone.QueryByVectorValues(c, &pinecone.QueryByVectorValuesRequest{
+				Vector:          queryVector,
+				TopK:            uint32(20 / len(songs)),
+				Filter:          nil,
+				SparseValues:    nil,
+				IncludeValues:   true,
+				IncludeMetadata: true,
 			})
-		}
+			if err != nil {
+				log.Printf("Failed to query by vector values, error: %+v", err)
+				return
+			}
+
+			for j := 0; j < len(values.Matches); j++ {
+				v := values.Matches[j].Vector
+				songNumber, err := strconv.Atoi(v.Id)
+				if err != nil {
+					log.Printf("Failed to convert ID to int, error: %+v", err)
+				}
+				koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
+				if err != nil {
+					log.Printf("Failed to convert tags to korean, error: %+v", err)
+					koreanTags = []string{}
+				}
+
+				mu.Lock()
+				returnSongs = append(returnSongs, songRecommendResponse{
+					songNumber,
+					v.Metadata.Fields["song_name"].GetStringValue(),
+					v.Metadata.Fields["singer_name"].GetStringValue(),
+					koreanTags,
+				})
+				mu.Unlock()
+			}
+		}(songs[i])
 	}
 
-	// Returning the result as a JSON response
-	c.JSON(http.StatusOK, NewBaseResponse("ok", returnSongs))
+	wg.Wait()
+	BaseResponse(c, http.StatusOK, "ok", returnSongs)
+	return
 }
 
 func parseTags(tags string) []string {
