@@ -41,14 +41,13 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 	request := &HomeRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, NewBaseResponse("error - "+err.Error(), nil))
-		//c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	//
 	englishTags, err := mapTagsKoreanToEnglish(request.Tags)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, NewBaseResponse("error - "+err.Error(), nil))
-		//c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

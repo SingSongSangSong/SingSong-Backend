@@ -7,15 +7,22 @@ import (
 )
 
 var tagMapToEnglish = map[string]string{
-	"댄스본능":    "Dance Actively",
-	"쉬어가는노래":  "I want to Rest",
-	"헤어졌을때":   "when i Break up with someone who i care a lot",
-	"신남과잔잔사이": "Between Exciting and Calm mood",
-	"비":       "in rainday, i am sad",
-	"크리스마스":   "Christmas for both children and adult",
-	"저음노래":    "Bass songs that are easy",
-	"고음노래":    "really hard Soprano",
-	"썸":       "early stage of crush",
+	"Dance The Night Away": "Dance Actively",
+	"잠깐! 쉬어가실게요~":          "I want to Rest",
+	"이별후... 나는 가끔 눈물을 흘린다": "when i Break up with someone who i care a lot",
+	"신남에 잔잔 두스푼":           "Between Exciting and Calm mood",
+	"비도오고 그래서..":           "rainday i am sad",
+	"산타도 인정한 캐롤송":          "Christmas for both children and adult",
+	"음치 탈출 넘버원!":           "Bass songs that are easy",
+	"지붕 뚫는 고음":             "really hard Soprano",
+	"내꺼인듯 내꺼아닌 너":          "early stage of crush",
+	"그 시절 띵곡":              "reminiscence of the past",
+	"두근두근 듀엣송 ":            "Duet",
+	"결혼 축하축가송~":            "Celebrate the Wedding",
+	"필승! 입대를 명 받았습니다!":     "army",
+	"마무리 1분 노래!":           "ending songs",
+	"사회생활 S.O.S":           "for old people or senior",
+	"내가바로팝스타":              "pop songs which are famous",
 }
 
 var tagMapToKorean = make(map[string]string)
