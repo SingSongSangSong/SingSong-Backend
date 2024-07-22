@@ -47,7 +47,8 @@ func (handler *Handler) ListSsssTags(c *gin.Context) {
 	for tag := range tagMapToEnglish {
 		tags = append(tags, tag)
 	}
-	c.JSON(http.StatusOK, BaseResponse{"ok", tags})
+	BaseResponse(c, http.StatusOK, "ok", tags)
+	return
 }
 
 func mapTagKoreanToEnglish(koreanTag string) (string, error) {
