@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"sync"
 )
 
@@ -85,7 +84,14 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 				if err != nil {
 					log.Printf("Failed to convert ID to int, error: %+v", err)
 				}
-				koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
+
+				ssssField := v.Metadata.Fields["ssss"].GetListValue().AsSlice()
+				ssssArray := make([]string, len(ssssField))
+				for i, eTag := range ssssField {
+					ssssArray[i] = eTag.(string)
+				}
+				koreanTags, err := mapTagsEnglishToKorean(ssssArray)
+
 				if err != nil {
 					log.Printf("Failed to convert tags to korean, error: %+v", err)
 					koreanTags = []string{}
@@ -106,12 +112,4 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 	wg.Wait()
 	BaseResponse(c, http.StatusOK, "ok", returnSongs)
 	return
-}
-
-func parseTags(tags string) []string {
-	tagList := strings.Split(tags, ",")
-	for i := range tagList {
-		tagList[i] = strings.TrimSpace(tagList[i])
-	}
-	return tagList
 }
