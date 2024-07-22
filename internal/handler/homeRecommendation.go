@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 type songHomeResponse struct {
@@ -48,55 +49,62 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 		BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 		return
 	}
-	// 각 태그에 대해서 돌면서 값을 가져온다!
-	filterConditions := make([]*structpb.Struct, len(englishTags))
-	//[]songResponse를 request.Tags(한국어태그)에 들어있는 태그들로 분류해서 []HomeResponse로 변환하는 코드
 	var homeResponses []HomeResponse
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	// 각 태그에 대해서 돌면서 값을 가져온다!
 	for i, tag := range englishTags {
-		// structpb.Struct 생성
+		// 각 태그에 대해서 고루틴을 실행할때 WaitGroup을 추가하여 모두 마무리가 되었을때 넘어가도록 한다
+		wg.Add(1)
+		go func(i int, tag string) {
+			defer wg.Done()
 
-		filterStruct := &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"ssss": structpb.NewStringValue(tag),
-			},
-		}
-		filterConditions[i] = filterStruct
-		// 입력받을 노래들의 리스트를 할당합니다
-		returnSongs := make([]songHomeResponse, 0, len(englishTags))
-
-		// 노래들을 입력을 받습니다
-		values, err := pineconeHandler.queryPineconeWithTag(filterConditions[i])
-		if err != nil {
-			BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-			return
-		}
-
-		// 받아온 입력들의 아이디 및 다른 값들을 할당합니다
-		for _, match := range values.Matches {
-			v := match.Vector
-			songNumber, err := strconv.Atoi(v.Id)
-			if err != nil {
-				log.Printf("Failed to convert ID to int, error: %+v", err)
+			// structpb.Struct 생성
+			filterStruct := &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"ssss": structpb.NewStringValue(tag),
+				},
 			}
-			koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
+			// 입력받을 노래들의 리스트를 할당합니다
+			returnSongs := make([]songHomeResponse, 0, len(englishTags))
+
+			// 노래들을 입력을 받습니다
+			values, err := pineconeHandler.queryPineconeWithTag(filterStruct)
 			if err != nil {
-				log.Printf("Failed to convert tags to korean, error: %+v", err)
-				koreanTags = []string{}
+				BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
 			}
-			returnSongs = append(returnSongs, songHomeResponse{
-				SongNumber: songNumber,
-				SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
-				SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
-				Tags:       koreanTags,
+
+			// 받아온 입력들의 아이디 및 다른 값들을 할당합니다
+			for _, match := range values.Matches {
+				v := match.Vector
+				songNumber, err := strconv.Atoi(v.Id)
+				if err != nil {
+					log.Printf("Failed to convert ID to int, error: %+v", err)
+				}
+				koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
+				if err != nil {
+					log.Printf("Failed to convert tags to korean, error: %+v", err)
+					koreanTags = []string{}
+				}
+				returnSongs = append(returnSongs, songHomeResponse{
+					SongNumber: songNumber,
+					SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
+					SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
+					Tags:       koreanTags,
+				})
+			}
+
+			koreanTag, err := mapTagEnglishToKorean(tag)
+			mu.Lock()
+			homeResponses = append(homeResponses, HomeResponse{
+				Tag:   koreanTag,
+				Songs: returnSongs,
 			})
-		}
-		koreanTag, err := mapTagEnglishToKorean(tag)
-
-		homeResponses = append(homeResponses, HomeResponse{
-			Tag:   koreanTag,
-			Songs: returnSongs,
-		})
+			mu.Unlock()
+		}(i, tag)
 	}
+	wg.Wait()
 
 	BaseResponse(c, http.StatusOK, "ok", homeResponses)
 	return
