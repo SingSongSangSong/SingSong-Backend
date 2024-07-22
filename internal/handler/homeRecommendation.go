@@ -63,6 +63,7 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 			filterStruct := &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"ssss": structpb.NewStringValue(tag),
+					"MR":   structpb.NewBoolValue(false),
 				},
 			}
 			// 입력받을 노래들의 리스트를 할당합니다
