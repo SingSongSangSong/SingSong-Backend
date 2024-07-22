@@ -17,19 +17,32 @@ definitions:
     properties:
       songs:
         items:
-          $ref: '#/definitions/handler.SongResponse'
+          $ref: '#/definitions/handler.songHomeResponse'
         type: array
       tag:
         type: string
     type: object
-  handler.RecommendRequest:
+  handler.songHomeResponse:
+    properties:
+      singerName:
+        type: string
+      songName:
+        type: string
+      songNumber:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  handler.songRecommendRequest:
     properties:
       songs:
         items:
           type: integer
         type: array
     type: object
-  handler.SongResponse:
+  handler.songRecommendResponse:
     properties:
       singerName:
         type: string
@@ -58,7 +71,7 @@ paths:
         name: songs
         required: true
         schema:
-          $ref: '#/definitions/handler.RecommendRequest'
+          $ref: '#/definitions/handler.songRecommendRequest'
       produces:
       - application/json
       responses:
@@ -70,7 +83,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/handler.SongResponse'
+                    $ref: '#/definitions/handler.songRecommendResponse'
                   type: array
               type: object
       summary: 노래 추천 by 노래 번호 목록

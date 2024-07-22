@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RecommendRequest"
+                            "$ref": "#/definitions/handler.songRecommendRequest"
                         }
                     }
                 ],
@@ -53,7 +53,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.SongResponse"
+                                                "$ref": "#/definitions/handler.songRecommendResponse"
                                             }
                                         }
                                     }
@@ -167,7 +167,7 @@ const docTemplate = `{
                 "songs": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.SongResponse"
+                        "$ref": "#/definitions/handler.songHomeResponse"
                     }
                 },
                 "tag": {
@@ -175,7 +175,27 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RecommendRequest": {
+        "handler.songHomeResponse": {
+            "type": "object",
+            "properties": {
+                "singerName": {
+                    "type": "string"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "handler.songRecommendRequest": {
             "type": "object",
             "properties": {
                 "songs": {
@@ -186,7 +206,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.SongResponse": {
+        "handler.songRecommendResponse": {
             "type": "object",
             "properties": {
                 "singerName": {
