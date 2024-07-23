@@ -32,6 +32,14 @@ func main() {
 
 	ctx := context.Background()
 
+	//config.NewRedisConfig(os.Getenv("REDIS_ADDR"), os.Getenv("REDIS_PASSWORD"), 0)
+	redisConf := config.NewRedisConfig()
+	redisModel, err := model.NewRedisModel(ctx, redisConf)
+	if err != nil {
+		log.Printf("RedisModel 생성 실패: %v", err)
+	}
+	rh, err := user.NewRedisHandler(redisModel)
+
 	// MySQL 설정
 	port, err := strconv.Atoi(os.Getenv("DB_PORT"))
 	if err != nil {
@@ -91,6 +99,7 @@ func main() {
 		user.GET("", h.ListUser)
 		user.POST("", h.RegisterUser)
 		user.GET("/:user", h.GetUser)
+		user.GET("/redis", rh.SetPublicKeys)
 	}
 
 	// 추천 엔드포인트 설정
