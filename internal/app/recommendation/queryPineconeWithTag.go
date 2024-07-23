@@ -1,4 +1,4 @@
-package handler
+package recommendation
 
 import (
 	"github.com/pinecone-io/go-pinecone/pinecone"

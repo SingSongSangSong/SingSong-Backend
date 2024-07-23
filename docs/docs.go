@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.songRecommendRequest"
+                            "$ref": "#/definitions/app.songRecommendRequest"
                         }
                     }
                 ],
@@ -45,7 +45,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.BaseResponse"
+                                    "$ref": "#/definitions/app.BaseResponse"
                                 },
                                 {
                                     "type": "object",
@@ -53,7 +53,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.songRecommendResponse"
+                                                "$ref": "#/definitions/app.songRecommendResponse"
                                             }
                                         }
                                     }
@@ -84,7 +84,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.HomeRequest"
+                            "$ref": "#/definitions/app.HomeRequest"
                         }
                     }
                 ],
@@ -94,7 +94,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.BaseResponse"
+                                    "$ref": "#/definitions/app.BaseResponse"
                                 },
                                 {
                                     "type": "object",
@@ -102,7 +102,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.HomeResponse"
+                                                "$ref": "#/definitions/app.HomeResponse"
                                             }
                                         }
                                     }
@@ -141,7 +141,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.BaseResponse": {
+        "app.BaseResponse": {
             "type": "object",
             "properties": {
                 "data": {},
@@ -150,7 +150,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.HomeRequest": {
+        "app.HomeRequest": {
             "type": "object",
             "properties": {
                 "tags": {
@@ -161,13 +161,13 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.HomeResponse": {
+        "app.HomeResponse": {
             "type": "object",
             "properties": {
                 "songs": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.songHomeResponse"
+                        "$ref": "#/definitions/app.songHomeResponse"
                     }
                 },
                 "tag": {
@@ -175,7 +175,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.songHomeResponse": {
+        "app.songHomeResponse": {
             "type": "object",
             "properties": {
                 "singerName": {
@@ -195,7 +195,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.songRecommendRequest": {
+        "app.songRecommendRequest": {
             "type": "object",
             "properties": {
                 "songs": {
@@ -206,7 +206,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.songRecommendResponse": {
+        "app.songRecommendResponse": {
             "type": "object",
             "properties": {
                 "singerName": {

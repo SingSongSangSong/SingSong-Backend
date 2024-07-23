@@ -1,6 +1,8 @@
-package handler
+package recommendation
 
 import (
+	"SingSong-Backend/internal/app/user"
+	"SingSong-Backend/internal/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"log"
@@ -32,7 +34,7 @@ type songRecommendResponse struct {
 func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 	request := &songRecommendRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+		pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 		return
 	}
 
@@ -90,7 +92,7 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 				for i, eTag := range ssssField {
 					ssssArray[i] = eTag.(string)
 				}
-				koreanTags, err := mapTagsEnglishToKorean(ssssArray)
+				koreanTags, err := user.MapTagsEnglishToKorean(ssssArray)
 
 				if err != nil {
 					log.Printf("Failed to convert tags to korean, error: %+v", err)
@@ -110,6 +112,6 @@ func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 	}
 
 	wg.Wait()
-	BaseResponse(c, http.StatusOK, "ok", returnSongs)
+	pkg.BaseResponse(c, http.StatusOK, "ok", returnSongs)
 	return
 }
