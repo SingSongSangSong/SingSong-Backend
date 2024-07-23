@@ -3,8 +3,10 @@ package main
 import (
 	"SingSong-Backend/config"
 	_ "SingSong-Backend/docs"
-	"SingSong-Backend/internal/handler"
+	"SingSong-Backend/internal/app/recommendation"
+	"SingSong-Backend/internal/app/user"
 	"SingSong-Backend/internal/model"
+	"SingSong-Backend/internal/pkg"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -50,7 +52,7 @@ func main() {
 	}
 
 	// 핸들러 초기화
-	h, err := handler.NewHandler(m)
+	h, err := user.NewHandler(m)
 	if err != nil {
 		log.Fatalf("Handler 생성 실패: %v", err)
 	}
@@ -65,7 +67,7 @@ func main() {
 	}
 
 	// Pinecone 핸들러 초기화
-	ph, err := handler.NewPineconeHandler(pc)
+	ph, err := recommendation.NewPineconeHandler(pc)
 	if err != nil {
 		log.Fatalf("NewPineconeHandler 생성 실패")
 	}
@@ -109,7 +111,7 @@ func main() {
 
 	// 404 에러
 	r.NoRoute(func(c *gin.Context) {
-		handler.BaseResponse(c, http.StatusNotFound, "error - invalid api", nil)
+		pkg.BaseResponse(c, http.StatusNotFound, "error - invalid api", nil)
 		return
 	})
 

@@ -1,6 +1,8 @@
-package handler
+package recommendation
 
 import (
+	"SingSong-Backend/internal/app/user"
+	"SingSong-Backend/internal/pkg"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/protobuf/types/known/structpb"
 	"log"
@@ -39,14 +41,14 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 	// HomeRequest 형식으로 입력을 받습니다
 	request := &HomeRequest{}
 	if err := c.ShouldBindJSON(&request); err != nil {
-		BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+		pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 		return
 	}
 
 	// 한국어 태그가 들어오면 영어태그로 할당합니다
-	englishTags, err := mapTagsKoreanToEnglish(request.Tags)
+	englishTags, err := user.MapTagsKoreanToEnglish(request.Tags)
 	if err != nil {
-		BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+		pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 		return
 	}
 	var homeResponses []HomeResponse
@@ -72,7 +74,7 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 			// 노래들을 입력을 받습니다
 			values, err := pineconeHandler.queryPineconeWithTag(filterStruct)
 			if err != nil {
-				BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
 
@@ -89,7 +91,7 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 				for i, eTag := range ssssField {
 					ssssArray[i] = eTag.(string)
 				}
-				koreanTags, err := mapTagsEnglishToKorean(ssssArray)
+				koreanTags, err := user.MapTagsEnglishToKorean(ssssArray)
 
 				if err != nil {
 					log.Printf("Failed to convert tags to korean, error: %+v", err)
@@ -103,7 +105,7 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 				})
 			}
 
-			koreanTag, err := mapTagEnglishToKorean(tag)
+			koreanTag, err := user.MapTagEnglishToKorean(tag)
 			mu.Lock()
 			homeResponses = append(homeResponses, HomeResponse{
 				Tag:   koreanTag,
@@ -114,6 +116,6 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 	}
 	wg.Wait()
 
-	BaseResponse(c, http.StatusOK, "ok", homeResponses)
+	pkg.BaseResponse(c, http.StatusOK, "ok", homeResponses)
 	return
 }

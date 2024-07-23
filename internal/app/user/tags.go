@@ -1,6 +1,7 @@
-package handler
+package user
 
 import (
+	"SingSong-Backend/internal/pkg"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -47,28 +48,28 @@ func (handler *Handler) ListSsssTags(c *gin.Context) {
 	for tag := range tagMapToEnglish {
 		tags = append(tags, tag)
 	}
-	BaseResponse(c, http.StatusOK, "ok", tags)
+	pkg.BaseResponse(c, http.StatusOK, "ok", tags)
 	return
 }
 
-func mapTagKoreanToEnglish(koreanTag string) (string, error) {
+func MapTagKoreanToEnglish(koreanTag string) (string, error) {
 	if englishTag, exists := tagMapToEnglish[koreanTag]; exists {
 		return englishTag, nil
 	}
 	return "", errors.New("tag not found, tag cannot convert to english")
 }
 
-func mapTagEnglishToKorean(englishTag string) (string, error) {
+func MapTagEnglishToKorean(englishTag string) (string, error) {
 	if koreanTag, exists := tagMapToKorean[englishTag]; exists {
 		return koreanTag, nil
 	}
 	return "", errors.New("tag not found, tag cannot convert to english")
 }
 
-func mapTagsKoreanToEnglish(koreanTags []string) ([]string, error) {
+func MapTagsKoreanToEnglish(koreanTags []string) ([]string, error) {
 	englishTags := make([]string, len(koreanTags))
 	for i, tag := range koreanTags {
-		englishTag, err := mapTagKoreanToEnglish(tag)
+		englishTag, err := MapTagKoreanToEnglish(tag)
 		if err != nil {
 			return nil, err
 		}
@@ -77,10 +78,10 @@ func mapTagsKoreanToEnglish(koreanTags []string) ([]string, error) {
 	return englishTags, nil
 }
 
-func mapTagsEnglishToKorean(englishTags []string) ([]string, error) {
+func MapTagsEnglishToKorean(englishTags []string) ([]string, error) {
 	koreanTags := make([]string, len(englishTags))
 	for i, tag := range englishTags {
-		koreanTag, err := mapTagEnglishToKorean(tag)
+		koreanTag, err := MapTagKoreanToEnglish(tag)
 		if err != nil {
 			return nil, err
 		}
