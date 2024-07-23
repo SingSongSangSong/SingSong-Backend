@@ -63,6 +63,7 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 			filterStruct := &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"ssss": structpb.NewStringValue(tag),
+					"MR":   structpb.NewBoolValue(false),
 				},
 			}
 			// 입력받을 노래들의 리스트를 할당합니다
@@ -82,7 +83,14 @@ func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 				if err != nil {
 					log.Printf("Failed to convert ID to int, error: %+v", err)
 				}
-				koreanTags, err := mapTagsEnglishToKorean(parseTags(v.Metadata.Fields["ssss"].GetStringValue()))
+
+				ssssField := v.Metadata.Fields["ssss"].GetListValue().AsSlice()
+				ssssArray := make([]string, len(ssssField))
+				for i, eTag := range ssssField {
+					ssssArray[i] = eTag.(string)
+				}
+				koreanTags, err := mapTagsEnglishToKorean(ssssArray)
+
 				if err != nil {
 					log.Printf("Failed to convert tags to korean, error: %+v", err)
 					koreanTags = []string{}

@@ -17,12 +17,12 @@ var tagMapToEnglish = map[string]string{
 	"지붕 뚫는 고음":             "really hard Soprano",
 	"내꺼인듯 내꺼아닌 너":          "early stage of crush",
 	"그 시절 띵곡":              "reminiscence of the past",
-	"두근두근 듀엣송 ":            "Duet",
-	"결혼 축하축가송~":            "Celebrate the Wedding",
+	"두근두근 듀엣송":             "Duet",
+	"결혼 축하축가송~":            "celebrate the wedding",
 	"필승! 입대를 명 받았습니다!":     "army",
 	"마무리 1분 노래!":           "ending songs",
 	"사회생활 S.O.S":           "for old people or senior",
-	"내가바로팝스타":              "pop songs which are famous",
+	"내가바로팝스타":              "PopStar", //pop songs which are famous
 }
 
 var tagMapToKorean = make(map[string]string)
