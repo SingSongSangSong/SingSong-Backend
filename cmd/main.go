@@ -99,7 +99,7 @@ func main() {
 		user.GET("", h.ListUser)
 		user.POST("", h.RegisterUser)
 		user.GET("/:user", h.GetUser)
-		user.GET("/redis", rh.SetPublicKeys)
+		user.POST("/token", rh.GetUserEmailFromIdToken)
 	}
 
 	// 추천 엔드포인트 설정
