@@ -1,28 +1,35 @@
 basePath: /api/v1
 definitions:
-  handler.BaseResponse:
+  pkg.BaseResponseStruct:
     properties:
       data: {}
       message:
         type: string
     type: object
-  handler.HomeRequest:
+  usecase.HomeRequest:
     properties:
       tags:
         items:
           type: string
         type: array
     type: object
-  handler.HomeResponse:
+  usecase.HomeResponse:
     properties:
       songs:
         items:
-          $ref: '#/definitions/handler.songHomeResponse'
+          $ref: '#/definitions/usecase.songHomeResponse'
         type: array
       tag:
         type: string
     type: object
-  handler.songHomeResponse:
+  usecase.SongRecommendRequest:
+    properties:
+      songs:
+        items:
+          type: integer
+        type: array
+    type: object
+  usecase.SongRecommendResponse:
     properties:
       singerName:
         type: string
@@ -35,14 +42,7 @@ definitions:
           type: string
         type: array
     type: object
-  handler.songRecommendRequest:
-    properties:
-      songs:
-        items:
-          type: integer
-        type: array
-    type: object
-  handler.songRecommendResponse:
+  usecase.songHomeResponse:
     properties:
       singerName:
         type: string
@@ -71,7 +71,7 @@ paths:
         name: songs
         required: true
         schema:
-          $ref: '#/definitions/handler.songRecommendRequest'
+          $ref: '#/definitions/usecase.SongRecommendRequest'
       produces:
       - application/json
       responses:
@@ -79,11 +79,11 @@ paths:
           description: 성공
           schema:
             allOf:
-            - $ref: '#/definitions/handler.BaseResponse'
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/handler.songRecommendResponse'
+                    $ref: '#/definitions/usecase.SongRecommendResponse'
                   type: array
               type: object
       summary: 노래 추천 by 노래 번호 목록
@@ -100,7 +100,7 @@ paths:
         name: songs
         required: true
         schema:
-          $ref: '#/definitions/handler.HomeRequest'
+          $ref: '#/definitions/usecase.HomeRequest'
       produces:
       - application/json
       responses:
@@ -108,11 +108,11 @@ paths:
           description: 성공
           schema:
             allOf:
-            - $ref: '#/definitions/handler.BaseResponse'
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/handler.HomeResponse'
+                    $ref: '#/definitions/usecase.HomeResponse'
                   type: array
               type: object
       summary: 노래 추천 by 태그

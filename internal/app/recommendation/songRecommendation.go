@@ -13,8 +13,8 @@ import (
 // @Tags         Recommendation
 // @Accept       json
 // @Produce      json
-// @Param        songs   body      songRecommendRequest  true  "노래 번호 목록"
-// @Success      200 {object} BaseResponse{data=[]songRecommendResponse} "성공"
+// @Param        songs   body      usecase.SongRecommendRequest  true  "노래 번호 목록"
+// @Success      200 {object} pkg.BaseResponseStruct{data=[]usecase.SongRecommendResponse} "성공"
 // @Router       /recommend [post]
 func (pineconeHandler *PineconeHandler) RecommendBySongs(c *gin.Context) {
 	request := &usecase.SongRecommendRequest{}

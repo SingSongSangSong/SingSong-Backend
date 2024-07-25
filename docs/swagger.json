@@ -27,7 +27,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.songRecommendRequest"
+                            "$ref": "#/definitions/usecase.SongRecommendRequest"
                         }
                     }
                 ],
@@ -37,7 +37,7 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.BaseResponse"
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
                                 },
                                 {
                                     "type": "object",
@@ -45,7 +45,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.songRecommendResponse"
+                                                "$ref": "#/definitions/usecase.SongRecommendResponse"
                                             }
                                         }
                                     }
@@ -76,7 +76,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.HomeRequest"
+                            "$ref": "#/definitions/usecase.HomeRequest"
                         }
                     }
                 ],
@@ -86,7 +86,7 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.BaseResponse"
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
                                 },
                                 {
                                     "type": "object",
@@ -94,7 +94,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.HomeResponse"
+                                                "$ref": "#/definitions/usecase.HomeResponse"
                                             }
                                         }
                                     }
@@ -133,7 +133,7 @@
         }
     },
     "definitions": {
-        "handler.BaseResponse": {
+        "pkg.BaseResponseStruct": {
             "type": "object",
             "properties": {
                 "data": {},
@@ -142,7 +142,7 @@
                 }
             }
         },
-        "handler.HomeRequest": {
+        "usecase.HomeRequest": {
             "type": "object",
             "properties": {
                 "tags": {
@@ -153,13 +153,13 @@
                 }
             }
         },
-        "handler.HomeResponse": {
+        "usecase.HomeResponse": {
             "type": "object",
             "properties": {
                 "songs": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handler.songHomeResponse"
+                        "$ref": "#/definitions/usecase.songHomeResponse"
                     }
                 },
                 "tag": {
@@ -167,7 +167,18 @@
                 }
             }
         },
-        "handler.songHomeResponse": {
+        "usecase.SongRecommendRequest": {
+            "type": "object",
+            "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "usecase.SongRecommendResponse": {
             "type": "object",
             "properties": {
                 "singerName": {
@@ -187,18 +198,7 @@
                 }
             }
         },
-        "handler.songRecommendRequest": {
-            "type": "object",
-            "properties": {
-                "songs": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                }
-            }
-        },
-        "handler.songRecommendResponse": {
+        "usecase.songHomeResponse": {
             "type": "object",
             "properties": {
                 "singerName": {

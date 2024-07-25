@@ -13,8 +13,8 @@ import (
 // @Tags         Recommendation
 // @Accept       json
 // @Produce      json
-// @Param        songs   body      HomeRequest  true  "태그 목록"
-// @Success      200 {object} BaseResponse{data=[]HomeResponse} "성공"
+// @Param        songs   body      usecase.HomeRequest  true  "태그 목록"
+// @Success      200 {object} pkg.BaseResponseStruct{data=[]usecase.HomeResponse} "성공"
 // @Router       /recommend/tags [post]
 func (pineconeHandler *PineconeHandler) HomeRecommendation(c *gin.Context) {
 	// HomeRequest 형식으로 입력을 받습니다
