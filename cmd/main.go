@@ -7,6 +7,7 @@ import (
 	"SingSong-Backend/internal/app/user"
 	"SingSong-Backend/internal/model"
 	"SingSong-Backend/internal/pkg"
+	"SingSong-Backend/internal/usecase"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -65,17 +66,20 @@ func main() {
 		log.Fatalf("Handler 생성 실패: %v", err)
 	}
 
-	// Pinecone 설정
-	pineConf := config.NewPineconeConfig(os.Getenv("PINECONE_API_KEY"))
+	//// Pinecone 설정
+	//pineConf := config.NewPineconeConfig(os.Getenv("PINECONE_API_KEY"))
 
 	// Pinecone 클라이언트 초기화
-	pc, err := model.NewPineconeClient(ctx, pineConf)
+	pc, err := model.NewPineconeClient(ctx, config.PConf)
+
 	if err != nil {
 		log.Fatalf("Pinecone 생성 실패: %v", err)
 	}
 
+	recommendationUC := usecase.NewRecommendationUseCase(redisModel, pc)
+
 	// Pinecone 핸들러 초기화
-	ph, err := recommendation.NewPineconeHandler(pc)
+	ph, err := recommendation.NewPineconeHandler(recommendationUC)
 	if err != nil {
 		log.Fatalf("NewPineconeHandler 생성 실패")
 	}
