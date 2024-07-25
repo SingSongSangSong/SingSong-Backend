@@ -6,7 +6,8 @@ import (
 )
 
 type UserRegisterRequest struct {
-	Username string
+	id_token string
+	provider string
 }
 
 func (handler *Handler) RegisterUser(c *gin.Context) {
@@ -16,7 +17,7 @@ func (handler *Handler) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	if err := handler.model.RegisterUser(request.Username); err != nil {
+	if err := handler.model.RegisterUser("YOYO"); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
