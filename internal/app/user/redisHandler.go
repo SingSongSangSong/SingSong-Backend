@@ -61,7 +61,7 @@ func (handler *RedisHandler) SetPublicKeys(c *gin.Context) {
 	}
 
 	// Redis에 저장
-	key := handler.redisModel.SavePublicKey(c, PROVIDER, jsonData, 0)
+	key := handler.redisModel.SavePublicKey(c, PROVIDER, jsonData, 24*time.Hour)
 	log.Println("데이터가 성공적으로 Redis에 저장되었습니다." + key.Val())
 
 	pkg.BaseResponse(c, http.StatusOK, "공개키 저장 성공", key)
