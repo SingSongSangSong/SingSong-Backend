@@ -4,6 +4,7 @@ import (
 	"SingSong-Backend/internal/pkg"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 )
 
@@ -33,6 +34,8 @@ func init() {
 	for korean, english := range tagMapToEnglish {
 		tagMapToKorean[english] = korean
 	}
+
+	log.Printf("init tagMapToKorean success")
 }
 
 // ListSsssTags godoc
@@ -56,14 +59,14 @@ func MapTagKoreanToEnglish(koreanTag string) (string, error) {
 	if englishTag, exists := tagMapToEnglish[koreanTag]; exists {
 		return englishTag, nil
 	}
-	return "", errors.New("tag not found, tag cannot convert to english")
+	return "", errors.New("tag not found, tag cannot convert to english:" + koreanTag)
 }
 
 func MapTagEnglishToKorean(englishTag string) (string, error) {
 	if koreanTag, exists := tagMapToKorean[englishTag]; exists {
 		return koreanTag, nil
 	}
-	return "", errors.New("tag not found, tag cannot convert to english")
+	return "", errors.New("tag not found, tag cannot convert to korean:" + englishTag)
 }
 
 func MapTagsKoreanToEnglish(koreanTags []string) ([]string, error) {
@@ -81,7 +84,7 @@ func MapTagsKoreanToEnglish(koreanTags []string) ([]string, error) {
 func MapTagsEnglishToKorean(englishTags []string) ([]string, error) {
 	koreanTags := make([]string, len(englishTags))
 	for i, tag := range englishTags {
-		koreanTag, err := MapTagKoreanToEnglish(tag)
+		koreanTag, err := MapTagEnglishToKorean(tag)
 		if err != nil {
 			return nil, err
 		}

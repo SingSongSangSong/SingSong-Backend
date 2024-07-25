@@ -1,15 +1,15 @@
 package recommendation
 
 import (
-	"github.com/pinecone-io/go-pinecone/pinecone"
+	"SingSong-Backend/internal/usecase"
 )
 
 type PineconeHandler struct {
-	pinecone *pinecone.IndexConnection
+	recommendationUC *usecase.RecommendationUseCase
 }
 
 // NewPineconeHandler는 PineconeHandler를 초기화하는 함수입니다.
-func NewPineconeHandler(pcIndex *pinecone.IndexConnection) (*PineconeHandler, error) {
-	pcHandler := &PineconeHandler{pinecone: pcIndex}
+func NewPineconeHandler(recommendationUC *usecase.RecommendationUseCase) (*PineconeHandler, error) {
+	pcHandler := &PineconeHandler{recommendationUC: recommendationUC}
 	return pcHandler, nil
 }
