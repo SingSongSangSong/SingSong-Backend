@@ -18,15 +18,15 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Create .env file
-        run: |
-          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" >> .env
-          echo "PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}" >> .env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
-          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
-          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+#      - name: Create .env file
+#        run: |
+#          echo "PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}" >> .env
+#          echo "PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}" >> .env
+#          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+#          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+#          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+#          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+#          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
 
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -72,7 +72,18 @@ jobs:
           echo "Pulling latest Docker image"
           docker pull $DOCKER_IMAGE
           echo "Running new Docker container"
-          docker run -d -p 8080:8080 --env-file /home/$PI_USER/.env $DOCKER_IMAGE
+          docker run -d \
+          -p 8080:8080 \
+          --env PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
+          --env PINECONE_INDEX="${{ secrets.PINECONE_INDEX }}" \
+          --env DB_HOST="${{ secrets.DB_HOST }}" \
+          --env DB_PORT="${{ secrets.DB_PORT }}" \
+          --env DB_NAME="${{ secrets.DB_NAME }}" \
+          --env DB_USER="${{ secrets.DB_USER }}" \
+          --env DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+          --env REDIS_ADDR="${{ secrets.REDIS_ADDR }}" \
+          --env REDIS_PASSWORD="" \
+          $DOCKER_IMAGE
           EOF
 
       - name: Verify Docker container
