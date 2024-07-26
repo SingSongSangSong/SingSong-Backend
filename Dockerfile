@@ -27,4 +27,4 @@ COPY --from=builder /app .
 EXPOSE 8080
 
 # Command to run the Go application
-CMD ["go", "run", "cmd/main.go"]
+CMD ["go", "run", "main.go"]
