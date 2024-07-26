@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-func SetConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
+func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
 	var err error
 	// MySQL 설정
 	err = godotenv.Load(".env")
