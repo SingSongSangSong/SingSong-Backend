@@ -4,9 +4,6 @@ FROM golang:1.22 as builder
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Check if the files were copied correctly
-RUN ls -al
-
 # Copy go.mod and go.sum files to the container
 COPY go.mod go.sum ./
 
