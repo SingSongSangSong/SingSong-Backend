@@ -34,6 +34,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	user := r.Group("/api/v1/user")
 	{
 		user.POST("/login", handler.OAuth(rdb, db))
+		user.POST("/reissue", handler.Reissue(rdb))
 	}
 
 	// 스웨거 설정

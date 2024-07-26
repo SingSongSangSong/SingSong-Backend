@@ -19,13 +19,14 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	REQUEST_URL = "https://kauth.kakao.com/.well-known/jwks.json" // 공개키 목록 조회 URL
-	PROVIDER    = "KAKAO"                                         // 공급자
+	REQUEST_URL    = "https://kauth.kakao.com/.well-known/jwks.json"
+	KAKAO_PROVIDER = "KAKAO" // 공개키 목록 조회 URL
 )
 
 type PublicKeyDto struct {
@@ -68,7 +69,7 @@ func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		}
 
 		// email 및 nickname 추출
-		payload, err := GetUserEmailFromIdToken(c, redis, loginRequest.IdToken)
+		payload, err := GetUserEmailFromIdToken(c, redis, loginRequest.IdToken, loginRequest.Provider)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
@@ -85,11 +86,11 @@ func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		//	return
 		//}
 
-		// email이 db에 있는지 확인
+		// email+Provider db에 있는지 확인
 		_, err = mysql.Members(qm.Where("email = ? AND provider = ?", payload.Email, loginRequest.Provider)).One(c, db)
 		if err != nil {
 			//DB에 없는경우
-			m := mysql.Member{Provider: PROVIDER, Email: payload.Email}
+			m := mysql.Member{Provider: loginRequest.Provider, Email: payload.Email}
 			err := m.Insert(c, db, boil.Infer())
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "Error inserting member", nil)
@@ -97,33 +98,7 @@ func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			}
 		}
 
-		// email이 db에 있을 경우 accessToken, refreshToken 반환
-		at := Claims{
-			Email: payload.Email,
-			StandardClaims: jwt.StandardClaims{
-				ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
-			},
-		}
-		rt := Claims{
-			StandardClaims: jwt.StandardClaims{
-				ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
-			},
-		}
-		// AccessToken 생성
-		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS512, at)
-		accessTokenString, err := accessToken.SignedString([]byte(os.Getenv("SECRET_KEY")))
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "Error generating access token", nil)
-			return
-		}
-
-		// RefreshToken 생성
-		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS512, rt)
-		refreshTokenString, err := refreshToken.SignedString([]byte(os.Getenv("SECRET_KEY")))
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "Error generating refresh token", nil)
-			return
-		}
+		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, payload.Email, redis)
 
 		// JSON 응답 생성
 		tokens := map[string]string{
@@ -136,12 +111,141 @@ func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// ID 토큰에서 사용자 이메일을 추출하는 함수
-func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string) (*Claims, error) {
-	ISSUER := os.Getenv("KAKAO_ISSUER")
-	KAKAO_REST_API_KEY := os.Getenv("KAKAO_REST_API_KEY")
+type ReissueRequest struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
 
-	keys, err := GetPublicKeys(c, PROVIDER, redis)
+// AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)
+func Reissue(redis *redis.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		reissueRequest := &ReissueRequest{}
+		if err := c.ShouldBindJSON(&reissueRequest); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "JSON BINDING error - "+err.Error(), nil)
+			return
+		}
+		// refreshToken이 redis에 있는지 확인
+		email, err := redis.Get(c, reissueRequest.RefreshToken).Result()
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "Get Redis error - "+err.Error(), nil)
+			return
+		}
+		// refreshToken삭제
+		_, err = redis.Del(c, reissueRequest.RefreshToken).Result()
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "Delete Redis error - "+err.Error(), nil)
+			return
+		}
+
+		// accessToken, refreshToken 생성
+		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, email, redis)
+		// JSON 응답 생성
+		tokens := map[string]string{
+			"accessToken":  accessTokenString,
+			"refreshToken": refreshTokenString,
+		}
+
+		// accessToken, refreshToken 반환
+		pkg.BaseResponse(c, http.StatusOK, "success", tokens)
+	}
+}
+
+func createAccessTokenAndRefreshToken(c *gin.Context, email string, redis *redis.Client) (string, string, error) {
+	jwtAccessValidityStr := os.Getenv("JWT_ACCESS_VALIDITY_SECONDS")
+	if jwtAccessValidityStr == "" {
+		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
+		return "", "", fmt.Errorf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
+	}
+
+	jwtAccessValidity, err := strconv.ParseInt(jwtAccessValidityStr, 10, 64)
+	if err != nil {
+		log.Printf("환경 변수 변환 실패: %v", err)
+		return "", "", fmt.Errorf("환경 변수 변환 실패: %v", err)
+	}
+
+	accessTokenExpiresAt := time.Now().Add(time.Duration(jwtAccessValidity) * time.Second).Unix()
+	at := Claims{
+		Email: email,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: accessTokenExpiresAt,
+			Issuer:    os.Getenv("JWT_ISSUER"),
+			IssuedAt:  time.Now().Unix(),
+			Subject:   "AccessToken",
+		},
+	}
+
+	jwtRefreshValidityStr := os.Getenv("JWT_REFRESH_VALIDITY_SECONDS")
+	if jwtRefreshValidityStr == "" {
+		log.Printf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
+		return "", "", fmt.Errorf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
+	}
+
+	jwtRefreshValidity, err := strconv.ParseInt(jwtRefreshValidityStr, 10, 64)
+	if err != nil {
+		log.Printf("환경 변수 변환 실패: %v", err)
+		return "", "", fmt.Errorf("환경 변수 변환 실패: %v", err)
+	}
+
+	refreshTokenExpiresAt := time.Now().Add(time.Duration(jwtRefreshValidity) * time.Second).Unix()
+	rt := Claims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: refreshTokenExpiresAt,
+			Issuer:    os.Getenv("JWT_ISSUER"),
+			IssuedAt:  time.Now().Unix(),
+			Subject:   "RefreshToken",
+		},
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS512, at)
+	accessTokenString, err := accessToken.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS512, rt)
+	refreshTokenString, err := refreshToken.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	if err != nil {
+		return "", "", err
+	}
+
+	_, err = redis.Set(c, refreshTokenString, email, time.Duration(jwtRefreshValidity)*time.Second).Result()
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessTokenString, refreshTokenString, nil
+}
+
+func main() {
+	// Example usage
+	r := gin.Default()
+	r.GET("/token", func(c *gin.Context) {
+		redisClient := redis.NewClient(&redis.Options{
+			Addr: "localhost:6379",
+		})
+
+		email := "example@example.com"
+		accessToken, refreshToken, err := createAccessTokenAndRefreshToken(c, email, redisClient)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"access_token":  accessToken,
+			"refresh_token": refreshToken,
+		})
+	})
+
+	r.Run()
+}
+
+// GetUserEmailFromIdToken ID 토큰에서 사용자 이메일을 추출하는 함수
+func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string, provider string) (*Claims, error) {
+	issuer := os.Getenv("KAKAO_ISSUER")
+	apiKey := os.Getenv("KAKAO_REST_API_KEY")
+
+	keys, err := GetPublicKeys(c, provider, redis)
 	if err != nil {
 		log.Printf("오류 발생 From GetPublicKeys: %v", err)
 	}
@@ -160,7 +264,7 @@ func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string
 				log.Printf("오류 발생 From getPayload: %v", err)
 			}
 
-			payload, err := validateSignature(idToken, publicKey, ISSUER, KAKAO_REST_API_KEY)
+			payload, err := validateSignature(idToken, publicKey, issuer, apiKey)
 			if err != nil {
 				log.Printf("오류 발생 From validateSignature: %v", err)
 			}
@@ -180,7 +284,7 @@ func getKidFromToken(idToken string) (string, error) {
 
 	decodedHeader, err := base64.RawURLEncoding.DecodeString(header)
 	if err != nil {
-		return "Base64", errors.New("Base64 디코딩 오류")
+		return "Base64", errors.New("base64 디코딩 오류")
 	}
 
 	var headerJSON map[string]interface{}
@@ -287,8 +391,8 @@ func base64UrlDecode(data string) ([]byte, error) {
 	return base64.RawURLEncoding.DecodeString(data)
 }
 
-// 공개키 목록 조회 URL 요청 함수
-func SetPublicKeys(c *gin.Context, redis *redis.Client) {
+// 카카오 공개키 목록 조회 URL 요청 함수
+func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(REQUEST_URL)
 	if err != nil {
@@ -310,7 +414,7 @@ func SetPublicKeys(c *gin.Context, redis *redis.Client) {
 
 	// PublicKeyDto 구조체 생성
 	publicKey := PublicKeyDto{
-		Provider: PROVIDER,
+		Provider: KAKAO_PROVIDER,
 		Key:      string(body),
 	}
 
@@ -322,7 +426,7 @@ func SetPublicKeys(c *gin.Context, redis *redis.Client) {
 	}
 
 	// Redis에 저장
-	key := redis.Set(c, PROVIDER, jsonData, 0)
+	key := redis.Set(c, KAKAO_PROVIDER, jsonData, 0)
 	log.Println("데이터가 성공적으로 Redis에 저장되었습니다." + key.Val())
 
 	pkg.BaseResponse(c, http.StatusOK, "공개키 저장 성공", key)
@@ -335,7 +439,7 @@ func GetPublicKeys(c *gin.Context, provider string, redis *redis.Client) ([]Json
 		log.Printf("오류 발생: %v", err)
 
 		// 공개키 설정 함수 호출
-		SetPublicKeys(c, redis)
+		GetKakaoPublicKeys(c, redis)
 
 		// 다시 시도하여 공개키 가져오기
 		response = redis.Get(c, provider)
