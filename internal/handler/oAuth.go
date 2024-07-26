@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/redis/go-redis/v9"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"io/ioutil"
@@ -46,7 +47,9 @@ type JsonWebKey struct {
 
 // Claims 구조체 정의 (필요에 따라 조정 가능)
 type Claims struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
+	Nickname string `json:"nickname"`
+	Picture  string `json:"picture"`
 	jwt.StandardClaims
 }
 
@@ -60,6 +63,20 @@ type LoginRequest struct {
 	Provider string `json:"Provider"`
 }
 
+type LoginResponse struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
+// OAuth godoc
+// @Summary      회원가입 및 로그인
+// @Description  IdToken을 이용한 회원가입 및 로그인
+// @Tags         Signup and Login
+// @Accept       json
+// @Produce      json
+// @Param        songs   body      LoginRequest  true  "idToken 및 Provider"
+// @Success      200 {object} pkg.BaseResponseStruct{data=LoginResponse} "성공"
+// @Router       /user/login [post]
 func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		loginRequest := &LoginRequest{}
@@ -81,16 +98,18 @@ func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			return
 		}
 		// nickname이 없을 경우 에러 반환
-		//if(payload.Nickname == "") {
-		//	pkg.BaseResponse(c, http.StatusBadRequest, "error - Nickname is empty", nil)
-		//	return
-		//}
+		if payload.Nickname == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - Nickname is empty", nil)
+			return
+		}
+		nickname := payload.Nickname
+		nullNickname := null.StringFrom(nickname)
 
 		// email+Provider db에 있는지 확인
 		_, err = mysql.Members(qm.Where("email = ? AND provider = ?", payload.Email, loginRequest.Provider)).One(c, db)
 		if err != nil {
 			//DB에 없는경우
-			m := mysql.Member{Provider: loginRequest.Provider, Email: payload.Email}
+			m := mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname}
 			err := m.Insert(c, db, boil.Infer())
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "Error inserting member", nil)
@@ -100,14 +119,13 @@ func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 
 		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, payload.Email, redis)
 
-		// JSON 응답 생성
-		tokens := map[string]string{
-			"accessToken":  accessTokenString,
-			"refreshToken": refreshTokenString,
+		loginResponse := LoginResponse{
+			AccessToken:  accessTokenString,
+			RefreshToken: refreshTokenString,
 		}
 
 		// accessToken, refreshToken 반환
-		pkg.BaseResponse(c, http.StatusOK, "success", tokens)
+		pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
 	}
 }
 
@@ -116,7 +134,15 @@ type ReissueRequest struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-// AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)
+// Reissue godoc
+// @Summary      AccessToken RefreshToken 재발급
+// @Description  AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)
+// @Tags         Reissue
+// @Accept       json
+// @Produce      json
+// @Param        songs   body      ReissueRequest  true  "accessToken 및 refreshToken"
+// @Success      200 {object} pkg.BaseResponseStruct{data=LoginResponse} "성공"
+// @Router       /user/reissue [post]
 func Reissue(redis *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reissueRequest := &ReissueRequest{}
@@ -139,14 +165,15 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 
 		// accessToken, refreshToken 생성
 		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, email, redis)
+
 		// JSON 응답 생성
-		tokens := map[string]string{
-			"accessToken":  accessTokenString,
-			"refreshToken": refreshTokenString,
+		loginResponse := LoginResponse{
+			AccessToken:  accessTokenString,
+			RefreshToken: refreshTokenString,
 		}
 
 		// accessToken, refreshToken 반환
-		pkg.BaseResponse(c, http.StatusOK, "success", tokens)
+		pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
 	}
 }
 
