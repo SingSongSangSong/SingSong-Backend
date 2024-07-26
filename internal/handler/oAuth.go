@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"crypto/rsa"
 	"database/sql"
@@ -11,6 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/redis/go-redis/v9"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"io/ioutil"
 	"log"
 	"math/big"
@@ -56,52 +59,80 @@ type LoginRequest struct {
 	Provider string `json:"Provider"`
 }
 
-func OAuth(c *gin.Context, redis *redis.Client, db *sql.DB) {
-	loginRequest := &LoginRequest{}
-	if err := c.ShouldBindJSON(&loginRequest); err != nil {
-		pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
-		return
-	}
-
-	// email 및 nickname 추출
-	payload, err := GetUserEmailFromIdToken(c, redis, loginRequest.IdToken)
-	if err != nil {
-		pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
-		return
-	}
-
-	// email이 없을 경우 에러 반환
-	if payload.Email == "" {
-		pkg.BaseResponse(c, http.StatusBadRequest, "error - Email is empty", nil)
-		return
-	}
-	// nickname이 없을 경우 에러 반환
-	//if(payload.Nickname == "") {
-	//	pkg.BaseResponse(c, http.StatusBadRequest, "error - Nickname is empty", nil)
-	//	return
-	//}
-
-	// email이 db에 있는지 확인
-	rows, err := db.Query("SELECT * FROM user WHERE email = ? and provider = ?", payload.Email, loginRequest.Provider)
-	if err != nil {
-		log.Printf("오류 발생 From db.Query: %v", err)
-	}
-
-	// email이 db에 없을 경우 db에 추가
-	if !rows.Next() {
-		db.Query("INSERT INTO user (email, provider) VALUES (?, ?)", payload.Email, loginRequest.Provider)
-		pkg.BaseResponse(c, http.StatusOK, "success", payload)
-		return
-	}
-
-	// email이 db에 있을 경우 accessToken, refreshToken 반환
-
-	pkg.BaseResponse(c, http.StatusOK, "success", payload)
-}
-
-func login(c *gin.Context, redis *redis.Client, db *sql.DB) {
+func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		loginRequest := &LoginRequest{}
+		if err := c.ShouldBindJSON(&loginRequest); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
 
+		// email 및 nickname 추출
+		payload, err := GetUserEmailFromIdToken(c, redis, loginRequest.IdToken)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
+
+		// email이 없을 경우 에러 반환
+		if payload.Email == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - Email is empty", nil)
+			return
+		}
+		// nickname이 없을 경우 에러 반환
+		//if(payload.Nickname == "") {
+		//	pkg.BaseResponse(c, http.StatusBadRequest, "error - Nickname is empty", nil)
+		//	return
+		//}
+
+		// email이 db에 있는지 확인
+		_, err = mysql.Members(qm.Where("email = ? AND provider = ?", payload.Email, loginRequest.Provider)).One(c, db)
+		if err != nil {
+			//DB에 없는경우
+			m := mysql.Member{Provider: PROVIDER, Email: payload.Email}
+			err := m.Insert(c, db, boil.Infer())
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "Error inserting member", nil)
+				return
+			}
+		}
+
+		// email이 db에 있을 경우 accessToken, refreshToken 반환
+		at := Claims{
+			Email: payload.Email,
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+			},
+		}
+		rt := Claims{
+			StandardClaims: jwt.StandardClaims{
+				ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+			},
+		}
+		// AccessToken 생성
+		accessToken := jwt.NewWithClaims(jwt.SigningMethodHS512, at)
+		accessTokenString, err := accessToken.SignedString([]byte(os.Getenv("SECRET_KEY")))
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "Error generating access token", nil)
+			return
+		}
+
+		// RefreshToken 생성
+		refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS512, rt)
+		refreshTokenString, err := refreshToken.SignedString([]byte(os.Getenv("SECRET_KEY")))
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "Error generating refresh token", nil)
+			return
+		}
+
+		// JSON 응답 생성
+		tokens := map[string]string{
+			"accessToken":  accessTokenString,
+			"refreshToken": refreshTokenString,
+		}
+
+		// accessToken, refreshToken 반환
+		pkg.BaseResponse(c, http.StatusOK, "success", tokens)
 	}
 }
 
@@ -313,7 +344,6 @@ func GetPublicKeys(c *gin.Context, provider string, redis *redis.Client) ([]Json
 			return nil, err
 		}
 	}
-	log.Printf("응답: %v", response.Val())
 	publicKeyDto, err := parsePublicKeyDto(response.Val())
 	if err != nil {
 		log.Printf("오류 발생: %v", err)

@@ -31,6 +31,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		tags.GET("", handler.ListTags())
 	}
 
+	user := r.Group("/api/v1/user")
+	{
+		user.POST("/login", handler.OAuth(rdb, db))
+	}
+
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

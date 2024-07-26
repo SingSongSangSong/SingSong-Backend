@@ -9,6 +9,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"log"
 	"os"
+	"os/exec"
 )
 
 func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
@@ -62,4 +63,13 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
 	}
+}
+
+func generateModels() {
+	cmd := "sqlboiler mysql"
+	err := exec.Command("sh", "-c", cmd).Run()
+	if err != nil {
+		log.Fatalf("sqlboiler 실행 실패: %v", err)
+	}
+	log.Println("SQLBoiler 모델 생성 성공")
 }

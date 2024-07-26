@@ -13,6 +13,9 @@ RUN go mod download
 # Copy the rest of the source code into the container
 COPY . .
 
+# Copy the .env file to the container
+COPY .env .
+
 # Build the Go application
 RUN go build -o main .
 
@@ -22,8 +25,9 @@ FROM alpine:latest
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Copy the binary from the builder stage
+# Copy the binary and .env file from the builder stage
 COPY --from=builder /app/main .
+COPY --from=builder /app/.env .
 
 # Expose port 8080 to the outside world
 EXPOSE 8080
