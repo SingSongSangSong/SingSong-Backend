@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.HomeRequest"
+                            "$ref": "#/definitions/handler.homeRequest"
                         }
                     }
                 ],
@@ -53,7 +53,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.HomeResponse"
+                                                "$ref": "#/definitions/handler.homeResponse"
                                             }
                                         }
                                     }
@@ -84,7 +84,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.SongRecommendRequest"
+                            "$ref": "#/definitions/handler.songRecommendRequest"
                         }
                     }
                 ],
@@ -102,7 +102,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.SongRecommendResponse"
+                                                "$ref": "#/definitions/handler.songRecommendResponse"
                                             }
                                         }
                                     }
@@ -138,10 +138,135 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/user/login": {
+            "post": {
+                "description": "IdToken을 이용한 회원가입 및 로그인",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Signup and Login"
+                ],
+                "summary": "회원가입 및 로그인",
+                "parameters": [
+                    {
+                        "description": "idToken 및 Provider",
+                        "name": "songs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/user/reissue": {
+            "post": {
+                "description": "AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reissue"
+                ],
+                "summary": "AccessToken RefreshToken 재발급",
+                "parameters": [
+                    {
+                        "description": "accessToken 및 refreshToken",
+                        "name": "songs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ReissueRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "handler.HomeRequest": {
+        "handler.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "IdToken": {
+                    "type": "string"
+                },
+                "Provider": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.ReissueRequest": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.homeRequest": {
             "type": "object",
             "properties": {
                 "tags": {
@@ -152,7 +277,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.HomeResponse": {
+        "handler.homeResponse": {
             "type": "object",
             "properties": {
                 "songs": {
@@ -166,18 +291,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.SongRecommendRequest": {
-            "type": "object",
-            "properties": {
-                "songs": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                }
-            }
-        },
-        "handler.SongRecommendResponse": {
+        "handler.songHomeResponse": {
             "type": "object",
             "properties": {
                 "singerName": {
@@ -197,7 +311,18 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.songHomeResponse": {
+        "handler.songRecommendRequest": {
+            "type": "object",
+            "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "handler.songRecommendResponse": {
             "type": "object",
             "properties": {
                 "singerName": {
