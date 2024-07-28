@@ -36,11 +36,11 @@ var (
 // @Tags         Recommendation
 // @Accept       json
 // @Produce      json
-// @Param        songs   body      refreshRequest  true  "태그 목록"
+// @Param        songs   body      refreshRequest  true  "태그"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]refreshResponse} "성공"
 // @Router       /recommend/refresh [post]
 func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
-	f := func(c *gin.Context) {
+	return func(c *gin.Context) {
 		//todo: 유저 정보 필요 -> accesstoken에서 추출
 		//일단 userEmail은 test@test.com 으로, provider는 kakao로 가정
 		email := "test@test.com"
@@ -57,7 +57,6 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
 		}
-		log.Printf("englishTag: %v", englishTag)
 
 		filterStruct := &structpb.Struct{
 			Fields: map[string]*structpb.Value{
@@ -67,14 +66,12 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		}
 
 		historySongs := getRefreshHistory(c, redisClient, email, provider, englishTag)
-		log.Printf("historySongs: %v", len(historySongs))
 		vectorQuerySize := pageSize + len(historySongs)
 		querySongs := make([]refreshResponse, 0, vectorQuerySize)
 		dummyVector := make([]float32, 30)
 		for i := range dummyVector {
 			dummyVector[i] = rand.Float32()
 		}
-		log.Printf("querySize: ", vectorQuerySize)
 		values, err := idxConnection.QueryByVectorValues(c, &pinecone.QueryByVectorValuesRequest{
 			Vector:          dummyVector,
 			TopK:            uint32(vectorQuerySize),
@@ -89,8 +86,6 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			return
 		}
 
-		log.Printf("조회 벡터 크기: ", strconv.Itoa(len(values.Matches)))
-
 		for _, match := range values.Matches {
 			v := match.Vector
 			songNumber, err := strconv.Atoi(v.Id)
@@ -103,8 +98,8 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			for i, eTag := range ssssField {
 				ssssArray[i] = eTag.(string)
 			}
-			koreanTags, err := MapTagsEnglishToKorean(ssssArray)
 
+			koreanTags, err := MapTagsEnglishToKorean(ssssArray)
 			if err != nil {
 				log.Printf("Failed to convert tags to korean, error: %+v", err)
 				koreanTags = []string{}
@@ -130,18 +125,36 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			}
 		}
 
-		// todo: 비동기?
+		// 무한 새로고침 - (페이지의 끝일 때/노래 개수가 애초에 PageSize수보다 작을때) 부족한 노래 수만큼 refreshedSongs를 채운다
+		if len(refreshedSongs) < pageSize {
+			refreshedSongNumbers := make([]int, 0, len(refreshedSongs))
+			for _, song := range refreshedSongs {
+				refreshedSongNumbers = append(refreshedSongNumbers, song.SongNumber)
+			}
+			refreshedSet := toSet(refreshedSongNumbers)
+
+			for _, song := range querySongs {
+				if len(refreshedSongs) >= pageSize {
+					break
+				}
+				// refreshedSongs 에 없는 곡으로 넣는다
+				if _, exists := refreshedSet[song.SongNumber]; !exists {
+					refreshedSongs = append(refreshedSongs, song)
+				}
+			}
+
+			// 기록 비우기
+			historySongs = []int{}
+		}
+
 		// 기존 history + 이번에 새로고침된 곡들 덧붙여서 저장
 		for _, song := range refreshedSongs {
 			historySongs = append(historySongs, song.SongNumber)
 		}
 		setRefreshHistory(c, redisClient, email, provider, historySongs, englishTag)
 
-		// todo: 이미 다 한번씩 조회했었다면? -> 다시 처음부터
-
 		pkg.BaseResponse(c, http.StatusOK, "ok", refreshedSongs)
 	}
-	return f
 }
 
 func getRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, provider string, englishTag string) []int {
@@ -151,12 +164,10 @@ func getRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, 
 	if err == redis.Nil {
 		return []int{}
 	} else if err != nil {
-		// 다른 에러가 발생한 경우 로그를 남기고 빈 슬라이스를 반환합니다.
 		log.Printf("Failed to get history from Redis: %v", err)
 		return []int{}
 	}
 
-	// JSON 데이터를 슬라이스로 역직렬화합니다.
 	var history []int
 	err = json.Unmarshal([]byte(val), &history)
 	if err != nil {
