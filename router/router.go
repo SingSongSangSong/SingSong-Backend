@@ -23,7 +23,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	{
 		recommend.POST("/home", handler.HomeRecommendation(db, rdb, idxConnection))
 		recommend.POST("/songs", handler.SongRecommendation(db, rdb, idxConnection))
-		recommend.POST("/refresh", handler.RefreshRecommendation(db, rdb, idxConnection))
+		recommend.POST("/refresh", handler.RefreshRecommendation(rdb, idxConnection))
 	}
 
 	// 태그 엔드포인트 설정

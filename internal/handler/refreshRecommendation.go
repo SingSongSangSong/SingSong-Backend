@@ -2,7 +2,6 @@ package handler
 
 import (
 	"SingSong-Server/internal/pkg"
-	"database/sql"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/pinecone-io/go-pinecone/pinecone"
@@ -39,7 +38,7 @@ var (
 // @Param        songs   body      refreshRequest  true  "태그"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]refreshResponse} "성공"
 // @Router       /recommend/refresh [post]
-func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
+func RefreshRecommendation(redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//todo: 유저 정보 필요 -> accesstoken에서 추출
 		//일단 userEmail은 test@test.com 으로, provider는 kakao로 가정
@@ -58,96 +57,27 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			return
 		}
 
-		filterStruct := &structpb.Struct{
-			Fields: map[string]*structpb.Value{
-				"ssss": structpb.NewStringValue(englishTag),
-				"MR":   structpb.NewBoolValue(false),
-			},
-		}
-
 		historySongs := getRefreshHistory(c, redisClient, email, provider, englishTag)
-		vectorQuerySize := pageSize + len(historySongs)
-		querySongs := make([]refreshResponse, 0, vectorQuerySize)
-		dummyVector := make([]float32, 30)
-		for i := range dummyVector {
-			dummyVector[i] = rand.Float32()
-		}
-		values, err := idxConnection.QueryByVectorValues(c, &pinecone.QueryByVectorValuesRequest{
-			Vector:          dummyVector,
-			TopK:            uint32(vectorQuerySize),
-			Filter:          filterStruct,
-			SparseValues:    nil,
-			IncludeValues:   true,
-			IncludeMetadata: true,
-		})
 
+		vectorQuerySize := pageSize + len(historySongs)
+		values, err := queryVectorByTag(c, englishTag, idxConnection, vectorQuerySize)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - failed to query", nil)
 			return
 		}
+		querySongs := extractSongInfo(vectorQuerySize, values)
 
-		for _, match := range values.Matches {
-			v := match.Vector
-			songNumber, err := strconv.Atoi(v.Id)
-			if err != nil {
-				log.Printf("Failed to convert ID to int, error: %+v", err)
-			}
+		// 이전에 조회한 노래 빼고 상위 pageSize개 선택
+		refreshedSongs := getTopSongsWithoutHistory(historySongs, querySongs)
 
-			ssssField := v.Metadata.Fields["ssss"].GetListValue().AsSlice()
-			ssssArray := make([]string, len(ssssField))
-			for i, eTag := range ssssField {
-				ssssArray[i] = eTag.(string)
-			}
-
-			koreanTags, err := MapTagsEnglishToKorean(ssssArray)
-			if err != nil {
-				log.Printf("Failed to convert tags to korean, error: %+v", err)
-				koreanTags = []string{}
-			}
-			querySongs = append(querySongs, refreshResponse{
-				SongNumber: songNumber,
-				SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
-				SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
-				Tags:       koreanTags,
-			})
-		}
-
-		// 이전에 조회한 노래 빼고 상위 pageSize개 반환
-		// golang에는 set이 없기 때문에 map을 구현해서 key만 사용하도록 했다
-		historySet := toSet(historySongs)
-		refreshedSongs := make([]refreshResponse, 0, pageSize)
-		for _, song := range querySongs {
-			if len(refreshedSongs) >= pageSize {
-				break
-			}
-			if _, exists := historySet[song.SongNumber]; !exists {
-				refreshedSongs = append(refreshedSongs, song)
-			}
-		}
-
-		// 무한 새로고침 - (페이지의 끝일 때/노래 개수가 애초에 PageSize수보다 작을때) 부족한 노래 수만큼 refreshedSongs를 채운다
+		// 무한 새로고침 - (페이지의 끝일 때/노래 개수가 애초에 PageSize수보다 작을때) 부족한 노래 수만큼 refreshedSongs를 마저 채운다
 		if len(refreshedSongs) < pageSize {
-			refreshedSongNumbers := make([]int, 0, len(refreshedSongs))
-			for _, song := range refreshedSongs {
-				refreshedSongNumbers = append(refreshedSongNumbers, song.SongNumber)
-			}
-			refreshedSet := toSet(refreshedSongNumbers)
-
-			for _, song := range querySongs {
-				if len(refreshedSongs) >= pageSize {
-					break
-				}
-				// refreshedSongs 에 없는 곡으로 넣는다
-				if _, exists := refreshedSet[song.SongNumber]; !exists {
-					refreshedSongs = append(refreshedSongs, song)
-				}
-			}
-
+			refreshedSongs = fillSongsAgain(refreshedSongs, querySongs)
 			// 기록 비우기
 			historySongs = []int{}
 		}
 
-		// 기존 history + 이번에 새로고침된 곡들 덧붙여서 저장
+		// history 갱신
 		for _, song := range refreshedSongs {
 			historySongs = append(historySongs, song.SongNumber)
 		}
@@ -180,6 +110,93 @@ func getRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, 
 
 func generateRefreshKey(email string, provider string, englishTag string) string {
 	return "refresh:" + email + ":" + provider + ":" + englishTag
+}
+
+func queryVectorByTag(c *gin.Context, englishTag string, idxConnection *pinecone.IndexConnection, vectorQuerySize int) (*pinecone.QueryVectorsResponse, error) {
+	dummyVector := make([]float32, 30)
+	for i := range dummyVector {
+		dummyVector[i] = rand.Float32()*2 - 1 // -1 ~ 1
+	}
+
+	filterStruct := &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"ssss": structpb.NewStringValue(englishTag),
+			"MR":   structpb.NewBoolValue(false),
+		},
+	}
+	values, err := idxConnection.QueryByVectorValues(c, &pinecone.QueryByVectorValuesRequest{
+		Vector:          dummyVector,
+		TopK:            uint32(vectorQuerySize),
+		Filter:          filterStruct,
+		SparseValues:    nil,
+		IncludeValues:   true,
+		IncludeMetadata: true,
+	})
+	return values, err
+}
+
+func extractSongInfo(vectorQuerySize int, values *pinecone.QueryVectorsResponse) []refreshResponse {
+	querySongs := make([]refreshResponse, 0, vectorQuerySize)
+	for _, match := range values.Matches {
+		v := match.Vector
+		songNumber, err := strconv.Atoi(v.Id)
+		if err != nil {
+			log.Printf("Failed to convert ID to int, error: %+v", err)
+		}
+
+		ssssField := v.Metadata.Fields["ssss"].GetListValue().AsSlice()
+		ssssArray := make([]string, len(ssssField))
+		for i, eTag := range ssssField {
+			ssssArray[i] = eTag.(string)
+		}
+
+		koreanTags, err := MapTagsEnglishToKorean(ssssArray)
+		if err != nil {
+			log.Printf("Failed to convert tags to korean, error: %+v", err)
+			koreanTags = []string{}
+		}
+		querySongs = append(querySongs, refreshResponse{
+			SongNumber: songNumber,
+			SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
+			SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
+			Tags:       koreanTags,
+		})
+	}
+	return querySongs
+}
+
+func getTopSongsWithoutHistory(historySongs []int, querySongs []refreshResponse) []refreshResponse {
+	// golang에는 set이 없기 때문에 map을 구현해서 key만 사용하도록 했다
+	refreshedSongs := make([]refreshResponse, 0, pageSize)
+	historySet := toSet(historySongs)
+	for _, song := range querySongs {
+		if len(refreshedSongs) >= pageSize {
+			break
+		}
+		if _, exists := historySet[song.SongNumber]; !exists {
+			refreshedSongs = append(refreshedSongs, song)
+		}
+	}
+	return refreshedSongs
+}
+
+func fillSongsAgain(refreshedSongs []refreshResponse, querySongs []refreshResponse) []refreshResponse {
+	refreshedSongNumbers := make([]int, 0, len(refreshedSongs))
+	for _, song := range refreshedSongs {
+		refreshedSongNumbers = append(refreshedSongNumbers, song.SongNumber)
+	}
+	refreshedSet := toSet(refreshedSongNumbers)
+
+	for _, song := range querySongs {
+		if len(refreshedSongs) >= pageSize {
+			break
+		}
+		// refreshedSongs 에 없는 곡으로 넣는다
+		if _, exists := refreshedSet[song.SongNumber]; !exists {
+			refreshedSongs = append(refreshedSongs, song)
+		}
+	}
+	return refreshedSongs
 }
 
 func setRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, provider string, history []int, englishTag string) {
