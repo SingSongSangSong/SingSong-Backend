@@ -37,6 +37,24 @@ definitions:
       tag:
         type: string
     type: object
+  handler.refreshRequest:
+    properties:
+      tag:
+        type: string
+    type: object
+  handler.refreshResponse:
+    properties:
+      singerName:
+        type: string
+      songName:
+        type: string
+      songNumber:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
   handler.songHomeResponse:
     properties:
       singerName:
@@ -108,6 +126,35 @@ paths:
                   type: array
               type: object
       summary: 노래 추천 by 태그
+      tags:
+      - Recommendation
+  /recommend/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 태그에 해당하는 노래를 새로고침합니다.
+      parameters:
+      - description: 태그 목록
+        in: body
+        name: songs
+        required: true
+        schema:
+          $ref: '#/definitions/handler.refreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.refreshResponse'
+                  type: array
+              type: object
+      summary: 새로고침 노래 추천
       tags:
       - Recommendation
   /recommend/songs:
