@@ -2,8 +2,8 @@ package handler
 
 import (
 	"SingSong-Server/internal/pkg"
-	"context"
 	"database/sql"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type refreshRequest struct {
@@ -39,8 +40,12 @@ var (
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]refreshResponse} "성공"
 // @Router       /recommend/refresh [post]
 func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		//todo: 유저 정보 필요 -> 어떤식으로 넘어오지?
+	f := func(c *gin.Context) {
+		//todo: 유저 정보 필요 -> accesstoken에서 추출
+		//일단 userEmail은 test@test.com 으로, provider는 kakao로 가정
+		email := "test@test.com"
+		provider := "kakao"
+
 		request := &refreshRequest{}
 		if err := c.ShouldBindJSON(&request); err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
@@ -61,19 +66,16 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			},
 		}
 
-		// todo: 레디스에서 조회해 온 숫자
-		historySize := 20
-
-		//refreshedSongs := make([]refreshResponse, 0, pageSize)
-		vectorQuerySize := pageSize + historySize
+		historySongs := getRefreshHistory(c, redisClient, email, provider, englishTag)
+		log.Printf("historySongs: %v", len(historySongs))
+		vectorQuerySize := pageSize + len(historySongs)
 		querySongs := make([]refreshResponse, 0, vectorQuerySize)
-
 		dummyVector := make([]float32, 30)
 		for i := range dummyVector {
 			dummyVector[i] = rand.Float32()
 		}
 		log.Printf("querySize: ", vectorQuerySize)
-		values, err := idxConnection.QueryByVectorValues(context.Background(), &pinecone.QueryByVectorValuesRequest{
+		values, err := idxConnection.QueryByVectorValues(c, &pinecone.QueryByVectorValuesRequest{
 			Vector:          dummyVector,
 			TopK:            uint32(vectorQuerySize),
 			Filter:          filterStruct,
@@ -115,8 +117,72 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			})
 		}
 
-		// todo: 이전에 조회한 노래 빼고 pageSize개 반환
+		// 이전에 조회한 노래 빼고 상위 pageSize개 반환
+		// golang에는 set이 없기 때문에 map을 구현해서 key만 사용하도록 했다
+		historySet := toSet(historySongs)
+		refreshedSongs := make([]refreshResponse, 0, pageSize)
+		for _, song := range querySongs {
+			if len(refreshedSongs) >= pageSize {
+				break
+			}
+			if _, exists := historySet[song.SongNumber]; !exists {
+				refreshedSongs = append(refreshedSongs, song)
+			}
+		}
 
-		pkg.BaseResponse(c, http.StatusOK, "ok", querySongs)
+		// todo: 비동기?
+		// 기존 history + 이번에 새로고침된 곡들 덧붙여서 저장
+		for _, song := range refreshedSongs {
+			historySongs = append(historySongs, song.SongNumber)
+		}
+		setRefreshHistory(c, redisClient, email, provider, historySongs, englishTag)
+
+		// todo: 이미 다 한번씩 조회했었다면? -> 다시 처음부터
+
+		pkg.BaseResponse(c, http.StatusOK, "ok", refreshedSongs)
 	}
+	return f
+}
+
+func getRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, provider string, englishTag string) []int {
+	key := "refresh:" + email + ":" + provider + ":" + englishTag
+
+	val, err := redisClient.Get(c, key).Result()
+	if err == redis.Nil {
+		return []int{}
+	} else if err != nil {
+		// 다른 에러가 발생한 경우 로그를 남기고 빈 슬라이스를 반환합니다.
+		log.Printf("Failed to get history from Redis: %v", err)
+		return []int{}
+	}
+
+	// JSON 데이터를 슬라이스로 역직렬화합니다.
+	var history []int
+	err = json.Unmarshal([]byte(val), &history)
+	if err != nil {
+		log.Printf("Failed to unmarshal history: %v", err)
+		return []int{}
+	}
+
+	return history
+}
+
+func setRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, provider string, history []int, englishTag string) {
+	key := "refresh:" + email + ":" + provider + ":" + englishTag
+
+	historyJSON, err := json.Marshal(history)
+	if err != nil {
+		log.Printf("Failed to marshal history: %v", err)
+		return
+	}
+
+	redisClient.Set(c, key, historyJSON, 30*time.Minute)
+}
+
+func toSet(slice []int) map[int]struct{} {
+	set := make(map[int]struct{}, len(slice))
+	for _, e := range slice {
+		set[e] = struct{}{}
+	}
+	return set
 }
