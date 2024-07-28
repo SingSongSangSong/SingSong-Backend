@@ -145,7 +145,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 }
 
 func getRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, provider string, englishTag string) []int {
-	key := "refresh:" + email + ":" + provider + ":" + englishTag
+	key := generateRefreshKey(email, provider, englishTag)
 
 	val, err := redisClient.Get(c, key).Result()
 	if err == redis.Nil {
@@ -167,8 +167,12 @@ func getRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, 
 	return history
 }
 
+func generateRefreshKey(email string, provider string, englishTag string) string {
+	return "refresh:" + email + ":" + provider + ":" + englishTag
+}
+
 func setRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, provider string, history []int, englishTag string) {
-	key := "refresh:" + email + ":" + provider + ":" + englishTag
+	key := generateRefreshKey(email, provider, englishTag)
 
 	historyJSON, err := json.Marshal(history)
 	if err != nil {
