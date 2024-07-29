@@ -49,6 +49,8 @@ func RefreshRecommendation(redisClient *redis.Client, idxConnection *pinecone.In
 			log.Printf("email: %v, provider: %v", emailAny, providerAny)
 
 		}
+		//value, exists := c.Get("memberId")
+		//log.Printf("memberId: %v, exists: %v", value, exists)
 		email := emailAny.(string)
 		provider := providerAny.(string)
 
