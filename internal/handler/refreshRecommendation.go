@@ -40,10 +40,17 @@ var (
 // @Router       /recommend/refresh [post]
 func RefreshRecommendation(redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//todo: 유저 정보 필요 -> accesstoken에서 추출
-		//일단 userEmail은 test@test.com 으로, provider는 kakao로 가정
-		email := "test@test.com"
-		provider := "kakao"
+		emailAny, emailExists := c.Get("email")
+		providerAny, providerExists := c.Get("provider")
+		if !emailExists || !providerExists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - user info not found", nil)
+			return
+		} else {
+			log.Printf("email: %v, provider: %v", emailAny, providerAny)
+
+		}
+		email := emailAny.(string)
+		provider := providerAny.(string)
 
 		request := &refreshRequest{}
 		if err := c.ShouldBindJSON(&request); err != nil {

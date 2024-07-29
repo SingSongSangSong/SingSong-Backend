@@ -12,6 +12,34 @@ import (
 	"os/exec"
 )
 
+type AuthConfig struct {
+	SECRET_KEY                   string
+	KAKAO_REST_API_KEY           string
+	KAKAO_ISSUER                 string
+	JWT_ISSUER                   string
+	JWT_ACCESS_VALIDITY_SECONDS  string
+	JWT_REFRESH_VALIDITY_SECONDS string
+}
+
+var (
+	AuthConfigInstance *AuthConfig
+)
+
+func init() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Printf("Error loading .env file during auth configuration. ") //개발환경용
+	}
+	AuthConfigInstance = &AuthConfig{
+		SECRET_KEY:                   os.Getenv("SECRET_KEY"),
+		KAKAO_REST_API_KEY:           os.Getenv("KAKAO_REST_API_KEY"),
+		KAKAO_ISSUER:                 os.Getenv("KAKAO_ISSUER"),
+		JWT_ISSUER:                   os.Getenv("JWT_ISSUER"),
+		JWT_ACCESS_VALIDITY_SECONDS:  os.Getenv("JWT_ACCESS_VALIDITY_SECONDS"),
+		JWT_REFRESH_VALIDITY_SECONDS: os.Getenv("JWT_REFRESH_VALIDITY_SECONDS"),
+	}
+}
+
 func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
 	var err error
 	// MySQL 설정

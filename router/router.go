@@ -20,10 +20,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 
 	// 추천 엔드포인트 설정
 	recommend := r.Group("/api/v1/recommend")
+	//recommend.Use(middleware.AuthMiddleware()) // 추천 엔드포인트 전체에서 인증을 쓴다면 이렇게도 가능
 	{
 		recommend.POST("/home", handler.HomeRecommendation(db, rdb, idxConnection))
 		recommend.POST("/songs", handler.SongRecommendation(db, rdb, idxConnection))
-		recommend.POST("/refresh", handler.RefreshRecommendation(rdb, idxConnection))
+		recommend.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendation(rdb, idxConnection)) //일단 새로고침에만 적용
 	}
 
 	// 태그 엔드포인트 설정
@@ -37,6 +38,9 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		user.POST("/login", handler.OAuth(rdb, db))
 		user.POST("/reissue", handler.Reissue(rdb))
 	}
+
+	// 테스트용
+	r.GET("/test-token", handler.GetTestAccessToken(rdb))
 
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
