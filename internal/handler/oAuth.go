@@ -452,7 +452,7 @@ func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) {
 	key := redis.Set(c, KAKAO_PROVIDER, jsonData, 0)
 	log.Println("데이터가 성공적으로 Redis에 저장되었습니다." + key.Val())
 
-	pkg.BaseResponse(c, http.StatusOK, "공개키 저장 성공", key)
+	//pkg.BaseResponse(c, http.StatusOK, "공개키 저장 성공", key)
 }
 
 // Redis에서 공개키 가져오기 함수
