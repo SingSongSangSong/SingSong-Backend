@@ -123,7 +123,6 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 					for i, eTag := range ssssField {
 						ssssArray[i] = eTag.(string)
 					}
-					log.Printf("ssssArray: %v", ssssArray)
 					koreanTags, err := MapTagsEnglishToKorean(ssssArray)
 
 					if err != nil {
