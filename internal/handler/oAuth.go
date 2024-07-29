@@ -178,6 +178,11 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 		// accessToken, refreshToken 생성
 		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, redis, email, KAKAO_PROVIDER)
 
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+err.Error(), nil)
+			return
+		}
+
 		// JSON 응답 생성
 		loginResponse := LoginResponse{
 			AccessToken:  accessTokenString,
