@@ -17,7 +17,7 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	// MySQL 설정
 	err = godotenv.Load(".env")
 	if err != nil {
-		log.Fatalf("Error loading .env file") //개발환경용
+		log.Printf("Error loading .env file") //개발환경용
 	}
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
