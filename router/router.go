@@ -39,8 +39,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		user.POST("/reissue", handler.Reissue(rdb))
 	}
 
-	// 테스트용
-	r.GET("/test-token", handler.GetTestAccessToken(rdb))
+	// 태그 엔드포인트 설정
+	keep := r.Group("/api/v1/keep")
+	{
+		keep.GET("", middleware.AuthMiddleware(db), handler.GetSongsFromPlaylist(db))
+		keep.POST("", middleware.AuthMiddleware(db), handler.AddSongsToPlaylist(db))
+		keep.DELETE("", middleware.AuthMiddleware(db), handler.DeleteSongsFromPlaylist(db))
+	}
 
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

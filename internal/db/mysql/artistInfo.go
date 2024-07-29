@@ -172,26 +172,15 @@ var ArtistInfoWhere = struct {
 
 // ArtistInfoRels is where relationship names are stored.
 var ArtistInfoRels = struct {
-	ArtistIdSongInfos string
-}{
-	ArtistIdSongInfos: "ArtistIdSongInfos",
-}
+}{}
 
 // artistInfoR is where relationships are stored.
 type artistInfoR struct {
-	ArtistIdSongInfos SongInfoSlice `boil:"ArtistIdSongInfos" json:"ArtistIdSongInfos" toml:"ArtistIdSongInfos" yaml:"ArtistIdSongInfos"`
 }
 
 // NewStruct creates a new relationship struct
 func (*artistInfoR) NewStruct() *artistInfoR {
 	return &artistInfoR{}
-}
-
-func (r *artistInfoR) GetArtistIdSongInfos() SongInfoSlice {
-	if r == nil {
-		return nil
-	}
-	return r.ArtistIdSongInfos
 }
 
 // artistInfoL is where Load methods for each relationship are stored.
@@ -481,187 +470,6 @@ func (q artistInfoQuery) Exists(ctx context.Context, exec boil.ContextExecutor) 
 	}
 
 	return count > 0, nil
-}
-
-// ArtistIdSongInfos retrieves all the songInfo's SongInfos with an executor via artistId column.
-func (o *ArtistInfo) ArtistIdSongInfos(mods ...qm.QueryMod) songInfoQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("`songInfo`.`artistId`=?", o.ArtistId),
-	)
-
-	return SongInfos(queryMods...)
-}
-
-// LoadArtistIdSongInfos allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (artistInfoL) LoadArtistIdSongInfos(ctx context.Context, e boil.ContextExecutor, singular bool, maybeArtistInfo interface{}, mods queries.Applicator) error {
-	var slice []*ArtistInfo
-	var object *ArtistInfo
-
-	if singular {
-		var ok bool
-		object, ok = maybeArtistInfo.(*ArtistInfo)
-		if !ok {
-			object = new(ArtistInfo)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeArtistInfo)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeArtistInfo))
-			}
-		}
-	} else {
-		s, ok := maybeArtistInfo.(*[]*ArtistInfo)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeArtistInfo)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeArtistInfo))
-			}
-		}
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &artistInfoR{}
-		}
-		args = append(args, object.ArtistId)
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &artistInfoR{}
-			}
-
-			for _, a := range args {
-				if a == obj.ArtistId {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.ArtistId)
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`songInfo`),
-		qm.WhereIn(`songInfo.artistId in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load songInfo")
-	}
-
-	var resultSlice []*SongInfo
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice songInfo")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on songInfo")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for songInfo")
-	}
-
-	if len(songInfoAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.ArtistIdSongInfos = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &songInfoR{}
-			}
-			foreign.R.ArtistIdArtistInfo = object
-		}
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.ArtistId == foreign.ArtistId {
-				local.R.ArtistIdSongInfos = append(local.R.ArtistIdSongInfos, foreign)
-				if foreign.R == nil {
-					foreign.R = &songInfoR{}
-				}
-				foreign.R.ArtistIdArtistInfo = local
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// AddArtistIdSongInfos adds the given related objects to the existing relationships
-// of the artistInfo, optionally inserting them as new records.
-// Appends related to o.R.ArtistIdSongInfos.
-// Sets related.R.ArtistIdArtistInfo appropriately.
-func (o *ArtistInfo) AddArtistIdSongInfos(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*SongInfo) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.ArtistId = o.ArtistId
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE `songInfo` SET %s WHERE %s",
-				strmangle.SetParamNames("`", "`", 0, []string{"artistId"}),
-				strmangle.WhereClause("`", "`", 0, songInfoPrimaryKeyColumns),
-			)
-			values := []interface{}{o.ArtistId, rel.SongId}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.ArtistId = o.ArtistId
-		}
-	}
-
-	if o.R == nil {
-		o.R = &artistInfoR{
-			ArtistIdSongInfos: related,
-		}
-	} else {
-		o.R.ArtistIdSongInfos = append(o.R.ArtistIdSongInfos, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &songInfoR{
-				ArtistIdArtistInfo: o,
-			}
-		} else {
-			rel.R.ArtistIdArtistInfo = o
-		}
-	}
-	return nil
 }
 
 // ArtistInfos retrieves all the records using an executor.
