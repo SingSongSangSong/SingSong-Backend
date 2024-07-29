@@ -129,7 +129,12 @@ func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.ID)
 		}
 
-		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, redis, payload.Email, KAKAO_PROVIDER)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload.Email, KAKAO_PROVIDER)
+
+		if tokenErr != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
+			return
+		}
 
 		loginResponse := LoginResponse{
 			AccessToken:  accessTokenString,
@@ -176,10 +181,10 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 		}
 
 		// accessToken, refreshToken 생성
-		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, redis, email, KAKAO_PROVIDER)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, email, KAKAO_PROVIDER)
 
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+err.Error(), nil)
+		if tokenErr != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 			return
 		}
 
@@ -198,7 +203,7 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 	jwtAccessValidityStr := JWT_ACCESS_VALIDITY_SECONDS
 	if jwtAccessValidityStr == "" {
 		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
-		return "", "", fmt.Errorf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
+		return "", "", fmt.Errorf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
 	}
 
 	jwtAccessValidity, err := strconv.ParseInt(jwtAccessValidityStr, 10, 64)
@@ -222,7 +227,7 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 	jwtRefreshValidityStr := JWT_REFRESH_VALIDITY_SECONDS
 	if jwtRefreshValidityStr == "" {
 		log.Printf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
-		return "", "", fmt.Errorf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
+		return "", "", fmt.Errorf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
 	}
 
 	jwtRefreshValidity, err := strconv.ParseInt(jwtRefreshValidityStr, 10, 64)
