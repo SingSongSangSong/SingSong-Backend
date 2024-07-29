@@ -30,6 +30,24 @@ const (
 	KAKAO_PROVIDER = "KAKAO" // 공개키 목록 조회 URL
 )
 
+//var (
+//	SECRET_KEY                   = os.Getenv("SECRET_KEY")
+//	KAKAO_REST_API_KEY           = os.Getenv("KAKAO_REST_API_KEY")
+//	KAKAO_ISSUER                 = os.Getenv("KAKAO_ISSUER")
+//	JWT_ISSUER                   = os.Getenv("JWT_ISSUER")
+//	JWT_ACCESS_VALIDITY_SECONDS  = os.Getenv("JWT_ACCESS_VALIDITY_SECONDS")
+//	JWT_REFRESH_VALIDITY_SECONDS = os.Getenv("JWT_REFRESH_VALIDITY_SECONDS")
+//)
+
+var (
+	SECRET_KEY                   = conf.AuthConfigInstance.SECRET_KEY
+	KAKAO_REST_API_KEY           = conf.AuthConfigInstance.KAKAO_REST_API_KEY
+	KAKAO_ISSUER                 = conf.AuthConfigInstance.KAKAO_ISSUER
+	JWT_ISSUER                   = conf.AuthConfigInstance.JWT_ISSUER
+	JWT_ACCESS_VALIDITY_SECONDS  = conf.AuthConfigInstance.JWT_ACCESS_VALIDITY_SECONDS
+	JWT_REFRESH_VALIDITY_SECONDS = conf.AuthConfigInstance.JWT_REFRESH_VALIDITY_SECONDS
+)
+
 type PublicKeyDto struct {
 	Provider string `json:"provider"`
 	Key      string `json:"key"`
@@ -78,7 +96,7 @@ type LoginResponse struct {
 // @Param        songs   body      LoginRequest  true  "idToken 및 Provider"
 // @Success      200 {object} pkg.BaseResponseStruct{data=LoginResponse} "성공"
 // @Router       /user/login [post]
-func OAuth(redis *redis.Client, db *sql.DB, config *conf.Config) gin.HandlerFunc {
+func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		loginRequest := &LoginRequest{}
 		if err := c.ShouldBindJSON(&loginRequest); err != nil {
@@ -87,7 +105,7 @@ func OAuth(redis *redis.Client, db *sql.DB, config *conf.Config) gin.HandlerFunc
 		}
 
 		// email 및 nickname 추출
-		payload, err := GetUserEmailFromIdToken(c, redis, loginRequest.IdToken, loginRequest.Provider, config)
+		payload, err := GetUserEmailFromIdToken(c, redis, loginRequest.IdToken, loginRequest.Provider)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
@@ -120,7 +138,7 @@ func OAuth(redis *redis.Client, db *sql.DB, config *conf.Config) gin.HandlerFunc
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.ID)
 		}
 
-		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, redis, payload.Email, KAKAO_PROVIDER, config)
+		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, redis, payload.Email, KAKAO_PROVIDER)
 
 		loginResponse := LoginResponse{
 			AccessToken:  accessTokenString,
@@ -146,7 +164,7 @@ type ReissueRequest struct {
 // @Param        songs   body      ReissueRequest  true  "accessToken 및 refreshToken"
 // @Success      200 {object} pkg.BaseResponseStruct{data=LoginResponse} "성공"
 // @Router       /user/reissue [post]
-func Reissue(redis *redis.Client, config *conf.Config) gin.HandlerFunc {
+func Reissue(redis *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reissueRequest := &ReissueRequest{}
 		if err := c.ShouldBindJSON(&reissueRequest); err != nil {
@@ -167,7 +185,7 @@ func Reissue(redis *redis.Client, config *conf.Config) gin.HandlerFunc {
 		}
 
 		// accessToken, refreshToken 생성
-		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, redis, email, KAKAO_PROVIDER, config)
+		accessTokenString, refreshTokenString, err := createAccessTokenAndRefreshToken(c, redis, email, KAKAO_PROVIDER)
 
 		// JSON 응답 생성
 		loginResponse := LoginResponse{
@@ -180,8 +198,8 @@ func Reissue(redis *redis.Client, config *conf.Config) gin.HandlerFunc {
 	}
 }
 
-func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email string, provider string, config *conf.Config) (string, string, error) {
-	jwtAccessValidityStr := config.JwtAccessValiditySeconds
+func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email string, provider string) (string, string, error) {
+	jwtAccessValidityStr := JWT_ACCESS_VALIDITY_SECONDS
 	if jwtAccessValidityStr == "" {
 		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
 		return "", "", fmt.Errorf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
@@ -199,13 +217,13 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 		Provider: provider,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: accessTokenExpiresAt,
-			Issuer:    config.JwtIssuer,
+			Issuer:    JWT_ISSUER,
 			IssuedAt:  time.Now().Unix(),
 			Subject:   "AccessToken",
 		},
 	}
 
-	jwtRefreshValidityStr := config.JwtRefreshValiditySeconds
+	jwtRefreshValidityStr := JWT_REFRESH_VALIDITY_SECONDS
 	if jwtRefreshValidityStr == "" {
 		log.Printf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
 		return "", "", fmt.Errorf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
@@ -221,20 +239,20 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 	rt := Claims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: refreshTokenExpiresAt,
-			Issuer:    config.JwtIssuer,
+			Issuer:    JWT_ISSUER,
 			IssuedAt:  time.Now().Unix(),
 			Subject:   "RefreshToken",
 		},
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS512, at)
-	accessTokenString, err := accessToken.SignedString([]byte(config.SecretKey))
+	accessTokenString, err := accessToken.SignedString([]byte(SECRET_KEY))
 	if err != nil {
 		return "", "", err
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS512, rt)
-	refreshTokenString, err := refreshToken.SignedString([]byte(config.SecretKey))
+	refreshTokenString, err := refreshToken.SignedString([]byte(SECRET_KEY))
 	if err != nil {
 		return "", "", err
 	}
@@ -248,9 +266,9 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 }
 
 // GetUserEmailFromIdToken ID 토큰에서 사용자 이메일을 추출하는 함수
-func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string, provider string, config *conf.Config) (*Claims, error) {
-	issuer := config.KakaoIssuer
-	apiKey := config.KakaoRestApiKey
+func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string, provider string) (*Claims, error) {
+	issuer := KAKAO_ISSUER
+	apiKey := KAKAO_REST_API_KEY
 
 	keys, err := GetPublicKeys(c, provider, redis)
 	if err != nil {
@@ -489,4 +507,21 @@ func parseKeysFromPublicKeyDto(publicKeyDto *PublicKeyDto) ([]JsonWebKey, error)
 		return nil, fmt.Errorf("키 필드 JSON 언마샬 오류: %v", err)
 	}
 	return keyContainer.Keys, nil
+}
+
+// 인증 토큰 발급 테스트용
+func GetTestAccessToken(redis *redis.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// accessToken, refreshToken 생성
+		accessTokenString, refreshTokenString, _ := createAccessTokenAndRefreshToken(c, redis, "test@test.com", KAKAO_PROVIDER)
+
+		// JSON 응답 생성
+		loginResponse := LoginResponse{
+			AccessToken:  accessTokenString,
+			RefreshToken: refreshTokenString,
+		}
+
+		// accessToken, refreshToken 반환
+		pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
+	}
 }

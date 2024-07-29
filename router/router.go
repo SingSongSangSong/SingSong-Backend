@@ -1,7 +1,6 @@
 package router
 
 import (
-	"SingSong-Server/conf"
 	"SingSong-Server/internal/handler"
 	"SingSong-Server/middleware"
 	"database/sql"
@@ -13,7 +12,7 @@ import (
 	"net/http"
 )
 
-func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, config *conf.Config) *gin.Engine {
+func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection) *gin.Engine {
 	r := gin.Default()
 
 	// CORS 설정 추가
@@ -21,10 +20,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 
 	// 추천 엔드포인트 설정
 	recommend := r.Group("/api/v1/recommend")
+	//recommend.Use(middleware.AuthMiddleware()) // 추천 엔드포인트 전체에서 인증을 쓴다면 이렇게도 가능
 	{
 		recommend.POST("/home", handler.HomeRecommendation(db, rdb, idxConnection))
 		recommend.POST("/songs", handler.SongRecommendation(db, rdb, idxConnection))
-		recommend.POST("/refresh", handler.RefreshRecommendation(rdb, idxConnection))
+		recommend.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendation(rdb, idxConnection)) //일단 새로고침에만 적용
 	}
 
 	// 태그 엔드포인트 설정
@@ -35,8 +35,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 
 	user := r.Group("/api/v1/user")
 	{
-		user.POST("/login", handler.OAuth(rdb, db, config))
-		user.POST("/reissue", handler.Reissue(rdb, config))
+		user.POST("/login", handler.OAuth(rdb, db))
+		user.POST("/reissue", handler.Reissue(rdb))
 	}
 
 	// 태그 엔드포인트 설정
@@ -46,6 +46,9 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		keep.POST("/add", handler.AddSongsToPlaylist(db))
 		keep.DELETE("/delete", handler.DeleteSongsFromPlaylist(db))
 	}
+
+	// 테스트용
+	r.GET("/test-token", handler.GetTestAccessToken(rdb))
 
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

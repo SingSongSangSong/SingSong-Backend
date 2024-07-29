@@ -12,37 +12,35 @@ import (
 	"os/exec"
 )
 
-type Config struct {
-	SecretKey                 string
-	KakaoRestApiKey           string
-	KakaoIssuer               string
-	JwtIssuer                 string
-	JwtAccessValiditySeconds  string
-	JwtRefreshValiditySeconds string
-	PineconeApiKey            string
-	// Other fields as needed
+type AuthConfig struct {
+	SECRET_KEY                   string
+	KAKAO_REST_API_KEY           string
+	KAKAO_ISSUER                 string
+	JWT_ISSUER                   string
+	JWT_ACCESS_VALIDITY_SECONDS  string
+	JWT_REFRESH_VALIDITY_SECONDS string
 }
 
-func LoadConfig() *Config {
-	return &Config{
-		SecretKey:                 getEnv("SECRET_KEY"),
-		KakaoRestApiKey:           getEnv("KAKAO_REST_API_KEY"),
-		KakaoIssuer:               getEnv("KAKAO_ISSUER"),
-		JwtIssuer:                 getEnv("JWT_ISSUER"),
-		JwtAccessValiditySeconds:  getEnv("JWT_ACCESS_VALIDITY_SECONDS"),
-		JwtRefreshValiditySeconds: getEnv("JWT_REFRESH_VALIDITY_SECONDS"),
+var (
+	AuthConfigInstance *AuthConfig
+)
+
+func init() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Printf("Error loading .env file during auth configuration. ") //개발환경용
+	}
+	AuthConfigInstance = &AuthConfig{
+		SECRET_KEY:                   os.Getenv("SECRET_KEY"),
+		KAKAO_REST_API_KEY:           os.Getenv("KAKAO_REST_API_KEY"),
+		KAKAO_ISSUER:                 os.Getenv("KAKAO_ISSUER"),
+		JWT_ISSUER:                   os.Getenv("JWT_ISSUER"),
+		JWT_ACCESS_VALIDITY_SECONDS:  os.Getenv("JWT_ACCESS_VALIDITY_SECONDS"),
+		JWT_REFRESH_VALIDITY_SECONDS: os.Getenv("JWT_REFRESH_VALIDITY_SECONDS"),
 	}
 }
 
-func getEnv(key string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		log.Fatalf("Environment variable %s is required but not set", key)
-	}
-	return value
-}
-
-func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) *Config {
+func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
 	var err error
 	// MySQL 설정
 	err = godotenv.Load(".env")
@@ -93,8 +91,6 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
 	}
-
-	return LoadConfig()
 }
 
 func generateModels() {
