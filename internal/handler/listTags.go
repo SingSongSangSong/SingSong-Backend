@@ -41,7 +41,7 @@ func init() {
 // @Tags         Tags
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} []string "성공"
+// @Success      200 {object} pkg.BaseResponseStruct(data=[]string) "성공"
 // @Router       /tags [get]
 func ListTags() gin.HandlerFunc {
 	return func(c *gin.Context) {

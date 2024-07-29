@@ -38,12 +38,20 @@ var (
 // @Param        songs   body      refreshRequest  true  "태그"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]refreshResponse} "성공"
 // @Router       /recommend/refresh [post]
+// @Security BearerAuth
 func RefreshRecommendation(redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//todo: 유저 정보 필요 -> accesstoken에서 추출
-		//일단 userEmail은 test@test.com 으로, provider는 kakao로 가정
-		email := "test@test.com"
-		provider := "kakao"
+		value, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
+		memberId, ok := value.(int64)
+		if !ok {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
+			return
+		}
 
 		request := &refreshRequest{}
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -57,7 +65,7 @@ func RefreshRecommendation(redisClient *redis.Client, idxConnection *pinecone.In
 			return
 		}
 
-		historySongs := getRefreshHistory(c, redisClient, email, provider, englishTag)
+		historySongs := getRefreshHistory(c, redisClient, memberId, englishTag)
 
 		vectorQuerySize := pageSize + len(historySongs)
 		values, err := queryVectorByTag(c, englishTag, idxConnection, vectorQuerySize)
@@ -81,14 +89,14 @@ func RefreshRecommendation(redisClient *redis.Client, idxConnection *pinecone.In
 		for _, song := range refreshedSongs {
 			historySongs = append(historySongs, song.SongNumber)
 		}
-		setRefreshHistory(c, redisClient, email, provider, historySongs, englishTag)
+		setRefreshHistory(c, redisClient, memberId, historySongs, englishTag)
 
 		pkg.BaseResponse(c, http.StatusOK, "ok", refreshedSongs)
 	}
 }
 
-func getRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, provider string, englishTag string) []int {
-	key := generateRefreshKey(email, provider, englishTag)
+func getRefreshHistory(c *gin.Context, redisClient *redis.Client, memberId int64, englishTag string) []int {
+	key := generateRefreshKey(memberId, englishTag)
 
 	val, err := redisClient.Get(c, key).Result()
 	if err == redis.Nil {
@@ -108,8 +116,8 @@ func getRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, 
 	return history
 }
 
-func generateRefreshKey(email string, provider string, englishTag string) string {
-	return "refresh:" + email + ":" + provider + ":" + englishTag
+func generateRefreshKey(memberId int64, englishTag string) string {
+	return "refresh:" + strconv.FormatInt(memberId, 10) + ":" + englishTag
 }
 
 func queryVectorByTag(c *gin.Context, englishTag string, idxConnection *pinecone.IndexConnection, vectorQuerySize int) (*pinecone.QueryVectorsResponse, error) {
@@ -199,8 +207,8 @@ func fillSongsAgain(refreshedSongs []refreshResponse, querySongs []refreshRespon
 	return refreshedSongs
 }
 
-func setRefreshHistory(c *gin.Context, redisClient *redis.Client, email string, provider string, history []int, englishTag string) {
-	key := generateRefreshKey(email, provider, englishTag)
+func setRefreshHistory(c *gin.Context, redisClient *redis.Client, memberId int64, history []int, englishTag string) {
+	key := generateRefreshKey(memberId, englishTag)
 
 	historyJSON, err := json.Marshal(history)
 	if err != nil {

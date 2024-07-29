@@ -134,7 +134,7 @@ paths:
       - application/json
       description: 태그에 해당하는 노래를 새로고침합니다.
       parameters:
-      - description: 태그 목록
+      - description: 태그
         in: body
         name: songs
         required: true
@@ -154,6 +154,8 @@ paths:
                     $ref: '#/definitions/handler.refreshResponse'
                   type: array
               type: object
+      security:
+      - BearerAuth: []
       summary: 새로고침 노래 추천
       tags:
       - Recommendation
@@ -195,11 +197,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 성공
+          description: OK
           schema:
-            items:
-              type: string
-            type: array
+            $ref: '#/definitions/pkg.BaseResponseStruct'
       summary: ssss 태그 목록 가져오기
       tags:
       - Tags
@@ -257,4 +257,9 @@ paths:
       summary: AccessToken RefreshToken 재발급
       tags:
       - Reissue
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

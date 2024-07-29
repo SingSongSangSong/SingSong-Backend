@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"SingSong-Server/conf"
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"crypto/rsa"
@@ -19,7 +20,6 @@ import (
 	"log"
 	"math/big"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -30,13 +30,22 @@ const (
 	KAKAO_PROVIDER = "KAKAO" // 공개키 목록 조회 URL
 )
 
+//var (
+//	SECRET_KEY                   = os.Getenv("SECRET_KEY")
+//	KAKAO_REST_API_KEY           = os.Getenv("KAKAO_REST_API_KEY")
+//	KAKAO_ISSUER                 = os.Getenv("KAKAO_ISSUER")
+//	JWT_ISSUER                   = os.Getenv("JWT_ISSUER")
+//	JWT_ACCESS_VALIDITY_SECONDS  = os.Getenv("JWT_ACCESS_VALIDITY_SECONDS")
+//	JWT_REFRESH_VALIDITY_SECONDS = os.Getenv("JWT_REFRESH_VALIDITY_SECONDS")
+//)
+
 var (
-	SECRET_KEY                   = os.Getenv("SECRET_KEY")
-	KAKAO_REST_API_KEY           = os.Getenv("KAKAO_REST_API_KEY")
-	KAKAO_ISSUER                 = os.Getenv("KAKAO_ISSUER")
-	JWT_ISSUER                   = os.Getenv("JWT_ISSUER")
-	JWT_ACCESS_VALIDITY_SECONDS  = os.Getenv("JWT_ACCESS_VALIDITY_SECONDS")
-	JWT_REFRESH_VALIDITY_SECONDS = os.Getenv("JWT_REFRESH_VALIDITY_SECONDS")
+	SECRET_KEY                   = conf.AuthConfigInstance.SECRET_KEY
+	KAKAO_REST_API_KEY           = conf.AuthConfigInstance.KAKAO_REST_API_KEY
+	KAKAO_ISSUER                 = conf.AuthConfigInstance.KAKAO_ISSUER
+	JWT_ISSUER                   = conf.AuthConfigInstance.JWT_ISSUER
+	JWT_ACCESS_VALIDITY_SECONDS  = conf.AuthConfigInstance.JWT_ACCESS_VALIDITY_SECONDS
+	JWT_REFRESH_VALIDITY_SECONDS = conf.AuthConfigInstance.JWT_REFRESH_VALIDITY_SECONDS
 )
 
 type PublicKeyDto struct {
@@ -496,4 +505,21 @@ func parseKeysFromPublicKeyDto(publicKeyDto *PublicKeyDto) ([]JsonWebKey, error)
 		return nil, fmt.Errorf("키 필드 JSON 언마샬 오류: %v", err)
 	}
 	return keyContainer.Keys, nil
+}
+
+// 인증 토큰 발급 테스트용
+func GetTestAccessToken(redis *redis.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// accessToken, refreshToken 생성
+		accessTokenString, refreshTokenString, _ := createAccessTokenAndRefreshToken(c, redis, "test@test.com", KAKAO_PROVIDER)
+
+		// JSON 응답 생성
+		loginResponse := LoginResponse{
+			AccessToken:  accessTokenString,
+			RefreshToken: refreshTokenString,
+		}
+
+		// accessToken, refreshToken 반환
+		pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
+	}
 }
