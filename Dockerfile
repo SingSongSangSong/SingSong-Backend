@@ -1,5 +1,5 @@
 # Use the official Golang image as a build stage
-FROM golang:1.22 as builder
+FROM golang:1.22
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -12,18 +12,6 @@ RUN go mod download
 
 # Copy the rest of the source code into the container
 COPY . .
-
-# Build the Go application
-RUN go build -o main .
-
-# Use a minimal Docker image for the final stage
-FROM alpine:latest
-
-# Set the Current Working Directory inside the container
-WORKDIR /app
-
-# Copy the binary from the builder stage
-COPY --from=builder /app/main .
 
 # Accept build arguments and set environment variables
 ARG PINECONE_API_KEY
@@ -62,4 +50,4 @@ ENV JWT_REFRESH_VALIDITY_SECONDS=$JWT_REFRESH_VALIDITY_SECONDS
 EXPOSE 8080
 
 # Command to run the Go application
-CMD ["./main"]
+CMD ["go", "run", "main.go"]
