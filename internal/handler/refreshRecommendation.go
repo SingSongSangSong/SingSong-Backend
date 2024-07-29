@@ -38,6 +38,7 @@ var (
 // @Param        songs   body      refreshRequest  true  "태그"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]refreshResponse} "성공"
 // @Router       /recommend/refresh [post]
+// @Security BearerAuth
 func RefreshRecommendation(redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		value, exists := c.Get("memberId")

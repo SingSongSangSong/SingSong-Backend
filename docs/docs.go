@@ -66,6 +66,11 @@ const docTemplate = `{
         },
         "/recommend/refresh": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "태그에 해당하는 노래를 새로고침합니다.",
                 "consumes": [
                     "application/json"
@@ -79,7 +84,7 @@ const docTemplate = `{
                 "summary": "새로고침 노래 추천",
                 "parameters": [
                     {
-                        "description": "태그 목록",
+                        "description": "태그",
                         "name": "songs",
                         "in": "body",
                         "required": true,
@@ -177,12 +182,9 @@ const docTemplate = `{
                 "summary": "ssss 태그 목록 가져오기",
                 "responses": {
                     "200": {
-                        "description": "성공",
+                        "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
                         }
                     }
                 }
@@ -427,6 +429,13 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
