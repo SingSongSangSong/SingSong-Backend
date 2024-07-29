@@ -19,7 +19,7 @@ create table if not exists member (
 create table if not exists keepList (
     keepId BIGINT AUTO_INCREMENT primary key,
     memberId BIGINT not null,
-    keep_name varchar(255),
+    keepName varchar(255),
     foreign key (memberId) references member(id)
     );
 
