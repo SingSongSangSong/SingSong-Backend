@@ -17,6 +17,11 @@ const docTemplate = `{
     "paths": {
         "/keep": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "플레이리스트에 있는 노래들을 가져온다",
                 "consumes": [
                     "application/json"
@@ -28,15 +33,6 @@ const docTemplate = `{
                     "Playlist"
                 ],
                 "summary": "플레이리스트에 노래를 가져온다",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Member ID",
-                        "name": "memberId",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "성공",
@@ -64,6 +60,11 @@ const docTemplate = `{
         },
         "/keep/add": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "노래들을 하나씩 플레이리스트에 추가한 후 적용된 플레이리스트의 노래들을 리턴한다",
                 "consumes": [
                     "application/json"
@@ -113,6 +114,11 @@ const docTemplate = `{
         },
         "/keep/delete": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "노래들을 하나씩 플레이리스트에서 삭제한다",
                 "consumes": [
                     "application/json"
@@ -319,12 +325,9 @@ const docTemplate = `{
                 "summary": "ssss 태그 목록 가져오기",
                 "responses": {
                     "200": {
-                        "description": "성공",
+                        "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
                         }
                     }
                 }
@@ -468,6 +471,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "songTempId": {
+                    "type": "integer"
                 }
             }
         },
@@ -605,6 +611,13 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

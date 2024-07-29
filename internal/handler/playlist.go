@@ -21,6 +21,7 @@ type PlaylistAddResponse struct {
 	SongNumber int    `json:"songNumber"`
 	SongName   string `json:"songName"`
 	SingerName string `json:"singerName"`
+	SongTempId int64  `json:"songTempId"`
 }
 
 // GoRoutine으로 회원가입시에 플레이리스트를 생성한다 (context따로 가져와야함)
@@ -43,6 +44,7 @@ func CreatePlaylist(db *sql.DB, keepName string, memberId int64) {
 // @Param        PlaylistAddRequest  body      PlaylistAddRequest  true  "노래 리스트"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]PlaylistAddResponse} "성공"
 // @Router       /keep/add [post]
+// @Security BearerAuth
 func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		playlistRequest := &PlaylistAddRequest{}
@@ -50,13 +52,13 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
 		}
-		memberId, err := c.Get("memberId")
-		if err != true {
+		memberId, exists := c.Get("memberId")
+		if !exists {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
 			return
 		}
 
-		// Playlist정보 가져오기
+		// Playlist 정보 가져오기
 		m := mysql.KeepLists(qm.Where("memberId = ?", memberId))
 		playlistRow, errors := m.One(c, db)
 		if errors != nil {
@@ -72,10 +74,20 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
+
+			// 기존에 같은 keepId와 songTempId가 있는지 확인
+			existsQuery := mysql.KeepSongs(qm.Where("keepId = ? AND songTempId = ?", playlistRow.KeepId, row.SongTempId))
+			existingRow, err := existsQuery.One(c, db)
+			if err == nil && existingRow != nil {
+				// 이미 존재하면 추가하지 않고 계속 진행
+				continue
+			}
+
 			keepSong := mysql.KeepSong{KeepId: playlistRow.KeepId, SongTempId: row.SongTempId}
-			err := keepSong.Insert(c, db, boil.Infer())
+			err = keepSong.Insert(c, db, boil.Infer())
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+				return
 			}
 		}
 
@@ -83,6 +95,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 		all, err2 := result.All(c, db)
 		if err2 != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
+			return
 		}
 
 		PlaylistAddResponseList := make([]PlaylistAddResponse, 0)
@@ -94,8 +107,8 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber}
-			_ = append(PlaylistAddResponseList, response)
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongTempId: row.SongTempId}
+			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "success", PlaylistAddResponseList)
@@ -116,6 +129,7 @@ type SongDeleteFromPlaylistRequest struct {
 // @Param        SongDeleteFromPlaylistRequest  body      SongDeleteFromPlaylistRequest  true  "노래 리스트"
 // @Success      200 {object} pkg.BaseResponseStruct{data=SongDeleteFromPlaylistRequest} "성공"
 // @Router       /keep/delete [delete]
+// @Security BearerAuth
 func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		songDeleteFromPlaylistRequest := &SongDeleteFromPlaylistRequest{}
@@ -157,9 +171,9 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 // @Tags         Playlist
 // @Accept       json
 // @Produce      json
-// @Param        memberId  query    int     true  "Member ID"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]PlaylistAddResponse} "성공"
 // @Router       /keep [get]
+// @Security BearerAuth
 func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, err := c.Get("memberId")
@@ -191,8 +205,8 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber}
-			_ = append(PlaylistAddResponseList, response)
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongTempId: row.SongTempId}
+			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "success", PlaylistAddResponseList)
