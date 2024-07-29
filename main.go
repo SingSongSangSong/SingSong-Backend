@@ -21,9 +21,9 @@ func main() {
 	var db *sql.DB
 	var rdb *redis.Client
 	var idxConnection *pinecone.IndexConnection
-	conf.SetupConfig(ctx, &db, &rdb, &idxConnection)
+	config := conf.SetupConfig(ctx, &db, &rdb, &idxConnection)
 
-	r := router.SetupRouter(db, rdb, idxConnection)
+	r := router.SetupRouter(db, rdb, idxConnection, config)
 
 	// 서버 실행
 	if err := r.Run(); err != nil {

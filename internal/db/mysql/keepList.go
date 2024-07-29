@@ -26,7 +26,7 @@ import (
 type KeepList struct {
 	KeepId   int64       `boil:"keepId" json:"keepId" toml:"keepId" yaml:"keepId"`
 	MemberId int64       `boil:"memberId" json:"memberId" toml:"memberId" yaml:"memberId"`
-	KeepName null.String `boil:"keep_name" json:"keep_name,omitempty" toml:"keep_name" yaml:"keep_name,omitempty"`
+	KeepName null.String `boil:"keepName" json:"keepName,omitempty" toml:"keepName" yaml:"keepName,omitempty"`
 
 	R *keepListR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L keepListL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -39,7 +39,7 @@ var KeepListColumns = struct {
 }{
 	KeepId:   "keepId",
 	MemberId: "memberId",
-	KeepName: "keep_name",
+	KeepName: "keepName",
 }
 
 var KeepListTableColumns = struct {
@@ -49,7 +49,7 @@ var KeepListTableColumns = struct {
 }{
 	KeepId:   "keepList.keepId",
 	MemberId: "keepList.memberId",
-	KeepName: "keepList.keep_name",
+	KeepName: "keepList.keepName",
 }
 
 // Generated where
@@ -61,22 +61,15 @@ var KeepListWhere = struct {
 }{
 	KeepId:   whereHelperint64{field: "`keepList`.`keepId`"},
 	MemberId: whereHelperint64{field: "`keepList`.`memberId`"},
-	KeepName: whereHelpernull_String{field: "`keepList`.`keep_name`"},
+	KeepName: whereHelpernull_String{field: "`keepList`.`keepName`"},
 }
 
 // KeepListRels is where relationship names are stored.
 var KeepListRels = struct {
-	MemberIdMember  string
-	KeepIdKeepSongs string
-}{
-	MemberIdMember:  "MemberIdMember",
-	KeepIdKeepSongs: "KeepIdKeepSongs",
-}
+}{}
 
 // keepListR is where relationships are stored.
 type keepListR struct {
-	MemberIdMember  *Member       `boil:"MemberIdMember" json:"MemberIdMember" toml:"MemberIdMember" yaml:"MemberIdMember"`
-	KeepIdKeepSongs KeepSongSlice `boil:"KeepIdKeepSongs" json:"KeepIdKeepSongs" toml:"KeepIdKeepSongs" yaml:"KeepIdKeepSongs"`
 }
 
 // NewStruct creates a new relationship struct
@@ -84,26 +77,12 @@ func (*keepListR) NewStruct() *keepListR {
 	return &keepListR{}
 }
 
-func (r *keepListR) GetMemberIdMember() *Member {
-	if r == nil {
-		return nil
-	}
-	return r.MemberIdMember
-}
-
-func (r *keepListR) GetKeepIdKeepSongs() KeepSongSlice {
-	if r == nil {
-		return nil
-	}
-	return r.KeepIdKeepSongs
-}
-
 // keepListL is where Load methods for each relationship are stored.
 type keepListL struct{}
 
 var (
-	keepListAllColumns            = []string{"keepId", "memberId", "keep_name"}
-	keepListColumnsWithoutDefault = []string{"memberId", "keep_name"}
+	keepListAllColumns            = []string{"keepId", "memberId", "keepName"}
+	keepListColumnsWithoutDefault = []string{"memberId", "keepName"}
 	keepListColumnsWithDefault    = []string{"keepId"}
 	keepListPrimaryKeyColumns     = []string{"keepId"}
 	keepListGeneratedColumns      = []string{}
@@ -385,365 +364,6 @@ func (q keepListQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 	}
 
 	return count > 0, nil
-}
-
-// MemberIdMember pointed to by the foreign key.
-func (o *KeepList) MemberIdMember(mods ...qm.QueryMod) memberQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("`id` = ?", o.MemberId),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return Members(queryMods...)
-}
-
-// KeepIdKeepSongs retrieves all the keepSong's KeepSongs with an executor via keepId column.
-func (o *KeepList) KeepIdKeepSongs(mods ...qm.QueryMod) keepSongQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("`keepSong`.`keepId`=?", o.KeepId),
-	)
-
-	return KeepSongs(queryMods...)
-}
-
-// LoadMemberIdMember allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (keepListL) LoadMemberIdMember(ctx context.Context, e boil.ContextExecutor, singular bool, maybeKeepList interface{}, mods queries.Applicator) error {
-	var slice []*KeepList
-	var object *KeepList
-
-	if singular {
-		var ok bool
-		object, ok = maybeKeepList.(*KeepList)
-		if !ok {
-			object = new(KeepList)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeKeepList)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeKeepList))
-			}
-		}
-	} else {
-		s, ok := maybeKeepList.(*[]*KeepList)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeKeepList)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeKeepList))
-			}
-		}
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &keepListR{}
-		}
-		args = append(args, object.MemberId)
-
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &keepListR{}
-			}
-
-			for _, a := range args {
-				if a == obj.MemberId {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.MemberId)
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`member`),
-		qm.WhereIn(`member.id in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load Member")
-	}
-
-	var resultSlice []*Member
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Member")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for member")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for member")
-	}
-
-	if len(memberAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.MemberIdMember = foreign
-		if foreign.R == nil {
-			foreign.R = &memberR{}
-		}
-		foreign.R.MemberIdKeepLists = append(foreign.R.MemberIdKeepLists, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.MemberId == foreign.ID {
-				local.R.MemberIdMember = foreign
-				if foreign.R == nil {
-					foreign.R = &memberR{}
-				}
-				foreign.R.MemberIdKeepLists = append(foreign.R.MemberIdKeepLists, local)
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadKeepIdKeepSongs allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (keepListL) LoadKeepIdKeepSongs(ctx context.Context, e boil.ContextExecutor, singular bool, maybeKeepList interface{}, mods queries.Applicator) error {
-	var slice []*KeepList
-	var object *KeepList
-
-	if singular {
-		var ok bool
-		object, ok = maybeKeepList.(*KeepList)
-		if !ok {
-			object = new(KeepList)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeKeepList)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeKeepList))
-			}
-		}
-	} else {
-		s, ok := maybeKeepList.(*[]*KeepList)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeKeepList)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeKeepList))
-			}
-		}
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &keepListR{}
-		}
-		args = append(args, object.KeepId)
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &keepListR{}
-			}
-
-			for _, a := range args {
-				if a == obj.KeepId {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.KeepId)
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`keepSong`),
-		qm.WhereIn(`keepSong.keepId in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load keepSong")
-	}
-
-	var resultSlice []*KeepSong
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice keepSong")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on keepSong")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for keepSong")
-	}
-
-	if len(keepSongAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.KeepIdKeepSongs = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &keepSongR{}
-			}
-			foreign.R.KeepIdKeepList = object
-		}
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.KeepId == foreign.KeepId {
-				local.R.KeepIdKeepSongs = append(local.R.KeepIdKeepSongs, foreign)
-				if foreign.R == nil {
-					foreign.R = &keepSongR{}
-				}
-				foreign.R.KeepIdKeepList = local
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// SetMemberIdMember of the keepList to the related item.
-// Sets o.R.MemberIdMember to related.
-// Adds o to related.R.MemberIdKeepLists.
-func (o *KeepList) SetMemberIdMember(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Member) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE `keepList` SET %s WHERE %s",
-		strmangle.SetParamNames("`", "`", 0, []string{"memberId"}),
-		strmangle.WhereClause("`", "`", 0, keepListPrimaryKeyColumns),
-	)
-	values := []interface{}{related.ID, o.KeepId}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.MemberId = related.ID
-	if o.R == nil {
-		o.R = &keepListR{
-			MemberIdMember: related,
-		}
-	} else {
-		o.R.MemberIdMember = related
-	}
-
-	if related.R == nil {
-		related.R = &memberR{
-			MemberIdKeepLists: KeepListSlice{o},
-		}
-	} else {
-		related.R.MemberIdKeepLists = append(related.R.MemberIdKeepLists, o)
-	}
-
-	return nil
-}
-
-// AddKeepIdKeepSongs adds the given related objects to the existing relationships
-// of the keepList, optionally inserting them as new records.
-// Appends related to o.R.KeepIdKeepSongs.
-// Sets related.R.KeepIdKeepList appropriately.
-func (o *KeepList) AddKeepIdKeepSongs(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*KeepSong) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.KeepId = o.KeepId
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE `keepSong` SET %s WHERE %s",
-				strmangle.SetParamNames("`", "`", 0, []string{"keepId"}),
-				strmangle.WhereClause("`", "`", 0, keepSongPrimaryKeyColumns),
-			)
-			values := []interface{}{o.KeepId, rel.KeepSongId}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.KeepId = o.KeepId
-		}
-	}
-
-	if o.R == nil {
-		o.R = &keepListR{
-			KeepIdKeepSongs: related,
-		}
-	} else {
-		o.R.KeepIdKeepSongs = append(o.R.KeepIdKeepSongs, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &keepSongR{
-				KeepIdKeepList: o,
-			}
-		} else {
-			rel.R.KeepIdKeepList = o
-		}
-	}
-	return nil
 }
 
 // KeepLists retrieves all the records using an executor.

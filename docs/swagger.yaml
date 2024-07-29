@@ -14,12 +14,35 @@ definitions:
       refreshToken:
         type: string
     type: object
+  handler.PlaylistAddRequest:
+    properties:
+      songs:
+        items:
+          type: string
+        type: array
+    type: object
+  handler.PlaylistAddResponse:
+    properties:
+      singerName:
+        type: string
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
   handler.ReissueRequest:
     properties:
       accessToken:
         type: string
       refreshToken:
         type: string
+    type: object
+  handler.SongDeleteFromPlaylistRequest:
+    properties:
+      songs:
+        items:
+          type: string
+        type: array
     type: object
   handler.homeRequest:
     properties:
@@ -99,6 +122,90 @@ info:
   title: 싱송생송 API
   version: "1.0"
 paths:
+  /keep:
+    get:
+      consumes:
+      - application/json
+      description: 플레이리스트에 있는 노래들을 가져온다
+      parameters:
+      - description: Member ID
+        in: query
+        name: memberId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.PlaylistAddResponse'
+                  type: array
+              type: object
+      summary: 플레이리스트에 노래를 가져온다
+      tags:
+      - Playlist
+  /keep/add:
+    post:
+      consumes:
+      - application/json
+      description: 노래들을 하나씩 플레이리스트에 추가한 후 적용된 플레이리스트의 노래들을 리턴한다
+      parameters:
+      - description: 노래 리스트
+        in: body
+        name: PlaylistAddRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PlaylistAddRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.PlaylistAddResponse'
+                  type: array
+              type: object
+      summary: 플레이리스트에 노래를 추가한다
+      tags:
+      - Playlist
+  /keep/delete:
+    delete:
+      consumes:
+      - application/json
+      description: 노래들을 하나씩 플레이리스트에서 삭제한다
+      parameters:
+      - description: 노래 리스트
+        in: body
+        name: SongDeleteFromPlaylistRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SongDeleteFromPlaylistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.SongDeleteFromPlaylistRequest'
+              type: object
+      summary: 플레이리스트에 노래를 제거한다
+      tags:
+      - Playlist
   /recommend/home:
     post:
       consumes:
@@ -134,7 +241,7 @@ paths:
       - application/json
       description: 태그에 해당하는 노래를 새로고침합니다.
       parameters:
-      - description: 태그 목록
+      - description: 태그
         in: body
         name: songs
         required: true

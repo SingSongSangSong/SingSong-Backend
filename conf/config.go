@@ -12,7 +12,37 @@ import (
 	"os/exec"
 )
 
-func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
+type Config struct {
+	SecretKey                 string
+	KakaoRestApiKey           string
+	KakaoIssuer               string
+	JwtIssuer                 string
+	JwtAccessValiditySeconds  string
+	JwtRefreshValiditySeconds string
+	PineconeApiKey            string
+	// Other fields as needed
+}
+
+func LoadConfig() *Config {
+	return &Config{
+		SecretKey:                 getEnv("SECRET_KEY"),
+		KakaoRestApiKey:           getEnv("KAKAO_REST_API_KEY"),
+		KakaoIssuer:               getEnv("KAKAO_ISSUER"),
+		JwtIssuer:                 getEnv("JWT_ISSUER"),
+		JwtAccessValiditySeconds:  getEnv("JWT_ACCESS_VALIDITY_SECONDS"),
+		JwtRefreshValiditySeconds: getEnv("JWT_REFRESH_VALIDITY_SECONDS"),
+	}
+}
+
+func getEnv(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("Environment variable %s is required but not set", key)
+	}
+	return value
+}
+
+func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) *Config {
 	var err error
 	// MySQL 설정
 	err = godotenv.Load(".env")
@@ -63,6 +93,8 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
 	}
+
+	return LoadConfig()
 }
 
 func generateModels() {

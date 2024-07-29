@@ -1,6 +1,7 @@
 package router
 
 import (
+	"SingSong-Server/conf"
 	"SingSong-Server/internal/handler"
 	"SingSong-Server/middleware"
 	"database/sql"
@@ -12,7 +13,7 @@ import (
 	"net/http"
 )
 
-func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection) *gin.Engine {
+func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, config *conf.Config) *gin.Engine {
 	r := gin.Default()
 
 	// CORS 설정 추가
@@ -34,8 +35,16 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 
 	user := r.Group("/api/v1/user")
 	{
-		user.POST("/login", handler.OAuth(rdb, db))
-		user.POST("/reissue", handler.Reissue(rdb))
+		user.POST("/login", handler.OAuth(rdb, db, config))
+		user.POST("/reissue", handler.Reissue(rdb, config))
+	}
+
+	// 태그 엔드포인트 설정
+	keep := r.Group("/api/v1/keep")
+	{
+		keep.GET("", handler.GetSongsFromPlaylist(db))
+		keep.POST("/add", handler.AddSongsToPlaylist(db))
+		keep.DELETE("/delete", handler.DeleteSongsFromPlaylist(db))
 	}
 
 	// 스웨거 설정

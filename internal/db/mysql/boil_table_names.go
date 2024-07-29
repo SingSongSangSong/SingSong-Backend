@@ -4,15 +4,17 @@
 package mysql
 
 var TableNames = struct {
-	ArtistInfo string
-	KeepList   string
-	KeepSong   string
-	Member     string
-	SongInfo   string
+	ArtistInfo   string
+	KeepList     string
+	KeepSong     string
+	Member       string
+	SongInfo     string
+	SongTempInfo string
 }{
-	ArtistInfo: "artistInfo",
-	KeepList:   "keepList",
-	KeepSong:   "keepSong",
-	Member:     "member",
-	SongInfo:   "songInfo",
+	ArtistInfo:   "artistInfo",
+	KeepList:     "keepList",
+	KeepSong:     "keepSong",
+	Member:       "member",
+	SongInfo:     "songInfo",
+	SongTempInfo: "songTempInfo",
 }

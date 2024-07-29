@@ -1,55 +1,65 @@
 -- 테이블이 존재할 경우 삭제
 DROP TABLE IF EXISTS keepSong;
-DROP TABLE IF EXISTS keepList;
-DROP TABLE IF EXISTS member;
+DROP TABLE IF EXISTS songTempInfo;
 DROP TABLE IF EXISTS songInfo;
 DROP TABLE IF EXISTS artistInfo;
+DROP TABLE IF EXISTS keepList;
+DROP TABLE IF EXISTS member;
 
 -- member 테이블 생성
-create table if not exists member (
-  id BIGINT AUTO_INCREMENT primary key,
-  nickname varchar(255),
-    email varchar(50) not null,
-    gender varchar(20),
-    birthday date,
-    provider varchar(20) not null
+CREATE TABLE IF NOT EXISTS member (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nickname VARCHAR(255),
+    email VARCHAR(50) NOT NULL,
+    gender VARCHAR(20),
+    birthday DATE,
+    provider VARCHAR(20) NOT NULL,
+    UNIQUE(email, provider) -- 이메일과 제공자는 유니크하도록 설정
     );
 
 -- keepList 테이블 생성
-create table if not exists keepList (
-    keepId BIGINT AUTO_INCREMENT primary key,
-    memberId BIGINT not null,
-    keepName varchar(255),
-    foreign key (memberId) references member(id)
+CREATE TABLE IF NOT EXISTS keepList (
+    keepId BIGINT AUTO_INCREMENT PRIMARY KEY,
+    memberId BIGINT NOT NULL,
+    keepName VARCHAR(255)
     );
 
 -- artistInfo 테이블 생성
-create table if not exists artistInfo (
-  artistId BIGINT AUTO_INCREMENT primary key,
-  artistName varchar(255) not null,
-    artistType varchar(100),
-    relatedArtists varchar(255),
-    country varchar(255)
+CREATE TABLE IF NOT EXISTS artistInfo (
+  artistId BIGINT AUTO_INCREMENT PRIMARY KEY,
+  artistName VARCHAR(255) NOT NULL,
+    artistType VARCHAR(100),
+    relatedArtists VARCHAR(255),
+    country VARCHAR(255)
     );
 
 -- songInfo 테이블 생성
-create table if not exists songInfo (
-    songId BIGINT AUTO_INCREMENT primary key,
-    songName varchar(255) not null,
-    artistId BIGINT not null,
-    album varchar(255),
-    songNumber int not null,
-    octave varchar(10),
-    tjLink varchar(255),
-    tags varchar(255),
-    foreign key (artistId) references artistInfo(artistId)
+CREATE TABLE IF NOT EXISTS songInfo (
+    songId BIGINT AUTO_INCREMENT PRIMARY KEY,
+    songName VARCHAR(255) NOT NULL,
+    artistId BIGINT NOT NULL,
+    album VARCHAR(255),
+    songNumber INT NOT NULL,
+    octave VARCHAR(10),
+    tjLink VARCHAR(255),
+    tags VARCHAR(255)
+    );
+
+-- songTempInfo 테이블 생성
+CREATE TABLE IF NOT EXISTS songTempInfo (
+    songTempId BIGINT AUTO_INCREMENT PRIMARY KEY,
+    songName VARCHAR(255) NOT NULL,
+    artistName VARCHAR(255) NOT NULL,
+    album VARCHAR(255),
+    songNumber INT NOT NULL,
+    octave VARCHAR(10),
+    tjLink VARCHAR(255),
+    tags VARCHAR(255)
     );
 
 -- keepSong 테이블 생성
-create table if not exists keepSong (
-    keepSongId BIGINT AUTO_INCREMENT primary key,
-    keepId BIGINT not null,
-    songId BIGINT not null,
-    foreign key (keepId) references keepList(keepId),
-    foreign key (songId) references songInfo(songId)
-    );
+CREATE TABLE IF NOT EXISTS keepSong (
+    keepSongId BIGINT AUTO_INCREMENT PRIMARY KEY,
+    keepId BIGINT NOT NULL,
+    songTempId BIGINT NOT NULL
+);
