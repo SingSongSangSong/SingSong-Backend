@@ -43,8 +43,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	keep := r.Group("/api/v1/keep")
 	{
 		keep.GET("", middleware.AuthMiddleware(db), handler.GetSongsFromPlaylist(db))
-		keep.POST("/add", middleware.AuthMiddleware(db), handler.AddSongsToPlaylist(db))
-		keep.DELETE("/delete", middleware.AuthMiddleware(db), handler.DeleteSongsFromPlaylist(db))
+		keep.POST("", middleware.AuthMiddleware(db), handler.AddSongsToPlaylist(db))
+		keep.DELETE("", middleware.AuthMiddleware(db), handler.DeleteSongsFromPlaylist(db))
 	}
 
 	// 스웨거 설정

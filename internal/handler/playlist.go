@@ -43,7 +43,7 @@ func CreatePlaylist(db *sql.DB, keepName string, memberId int64) {
 // @Produce      json
 // @Param        PlaylistAddRequest  body      PlaylistAddRequest  true  "노래 리스트"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]PlaylistAddResponse} "성공"
-// @Router       /keep/add [post]
+// @Router       /keep [post]
 // @Security BearerAuth
 func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -128,7 +128,7 @@ type SongDeleteFromPlaylistRequest struct {
 // @Produce      json
 // @Param        SongDeleteFromPlaylistRequest  body      SongDeleteFromPlaylistRequest  true  "노래 리스트"
 // @Success      200 {object} pkg.BaseResponseStruct{data=SongDeleteFromPlaylistRequest} "성공"
-// @Router       /keep/delete [delete]
+// @Router       /keep [delete]
 // @Security BearerAuth
 func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
