@@ -65,11 +65,13 @@ jobs:
         run: |
           sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST << EOF
           echo "Connected to Raspberry Pi"
-          CONTAINER_ID=\$(docker ps -q -f ancestor=$DOCKER_IMAGE)
-          if [ "\$CONTAINER_ID" ]; then
+          CONTAINER_ID=\$(docker ps -q --filter ancestor=$DOCKER_IMAGE)
+          if [ -n "\$CONTAINER_ID" ]; then
             echo "Stopping and removing existing container"
             docker stop \$CONTAINER_ID
             docker rm \$CONTAINER_ID
+          else
+            echo "No existing container found for image $DOCKER_IMAGE"
           fi
           echo "Pruning Docker system"
           docker system prune -f
