@@ -28,7 +28,7 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			pkg.BaseResponse(c, http.StatusUnauthorized, "error - Authorization header is required", nil)
-			c.Abort() // 다음 처리를 중단
+			c.Abort()
 			return
 		}
 
@@ -41,24 +41,21 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 
 		token, err := jwt.ParseWithClaims(tokenString, &claims{}, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("invalid signing method: %v", token.Header["alg"])
+				return nil, fmt.Errorf("error - invalid signing method")
 			}
 			return secretKey, nil
 		})
 
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusUnauthorized, "error - invalid token "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusUnauthorized, "error - invalid token", nil)
 			c.Abort()
 			return
 		}
 
-		// 컨텍스트에 email과 provider를 저장
 		var email, provider string
 		if claims, ok := token.Claims.(*claims); ok && token.Valid {
 			email = claims.Email
 			provider = claims.Provider
-			c.Set("email", claims.Email)
-			c.Set("provider", claims.Provider)
 		} else {
 			pkg.BaseResponse(c, http.StatusUnauthorized, "error - invalid token", nil)
 			c.Abort()
@@ -67,11 +64,11 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 
 		one, err := mysql.Members(qm.Where("email = ? AND provider = ?", email, provider)).One(c, db)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusUnauthorized, "error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusUnauthorized, "error - invalid member", nil)
 			c.Abort()
 			return
 		}
 		c.Set("memberId", one.ID)
-		c.Next() // 다음 핸들러로 고고싱
+		c.Next()
 	}
 }
