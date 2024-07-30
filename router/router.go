@@ -18,6 +18,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	// CORS 설정 추가
 	r.Use(middleware.CORSMiddleware())
 
+	r.GET("/", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "Welcome to SingSong-Server"}) })
+
 	// 추천 엔드포인트 설정
 	recommend := r.Group("/api/v1/recommend")
 	//recommend.Use(middleware.AuthMiddleware()) // 추천 엔드포인트 전체에서 인증을 쓴다면 이렇게도 가능
