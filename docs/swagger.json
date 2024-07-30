@@ -534,6 +534,9 @@
                 "singerName": {
                     "type": "string"
                 },
+                "songId": {
+                    "type": "integer"
+                },
                 "songName": {
                     "type": "string"
                 },
@@ -553,6 +556,9 @@
             "properties": {
                 "singerName": {
                     "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
                 },
                 "songName": {
                     "type": "string"

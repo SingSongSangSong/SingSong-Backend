@@ -542,6 +542,9 @@ const docTemplate = `{
                 "singerName": {
                     "type": "string"
                 },
+                "songId": {
+                    "type": "integer"
+                },
                 "songName": {
                     "type": "string"
                 },
@@ -561,6 +564,9 @@ const docTemplate = `{
             "properties": {
                 "singerName": {
                     "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
                 },
                 "songName": {
                     "type": "string"
