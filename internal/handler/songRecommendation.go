@@ -13,7 +13,7 @@ import (
 )
 
 type songRecommendRequest struct {
-	Songs []int `json:"songs"`
+	Songs []int `json:"songNumbers"`
 }
 
 type songRecommendResponse struct {

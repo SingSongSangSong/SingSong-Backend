@@ -48,9 +48,7 @@
                         }
                     }
                 }
-            }
-        },
-        "/keep/add": {
+            },
             "post": {
                 "security": [
                     {
@@ -102,9 +100,7 @@
                         }
                     }
                 }
-            }
-        },
-        "/keep/delete": {
+            },
             "delete": {
                 "security": [
                     {
@@ -449,10 +445,10 @@
         "handler.PlaylistAddRequest": {
             "type": "object",
             "properties": {
-                "songs": {
+                "songNumbers": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     }
                 }
             }
@@ -463,13 +459,13 @@
                 "singerName": {
                     "type": "string"
                 },
+                "songId": {
+                    "type": "integer"
+                },
                 "songName": {
                     "type": "string"
                 },
                 "songNumber": {
-                    "type": "integer"
-                },
-                "songTempId": {
                     "type": "integer"
                 }
             }
@@ -488,10 +484,10 @@
         "handler.SongDeleteFromPlaylistRequest": {
             "type": "object",
             "properties": {
-                "songs": {
+                "songNumbers": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     }
                 }
             }
@@ -572,7 +568,7 @@
         "handler.songRecommendRequest": {
             "type": "object",
             "properties": {
-                "songs": {
+                "songNumbers": {
                     "type": "array",
                     "items": {
                         "type": "integer"
