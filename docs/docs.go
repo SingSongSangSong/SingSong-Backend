@@ -536,6 +536,9 @@ const docTemplate = `{
         "handler.refreshResponse": {
             "type": "object",
             "properties": {
+                "isKeep": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },

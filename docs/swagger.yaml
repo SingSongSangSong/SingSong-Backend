@@ -69,6 +69,8 @@ definitions:
     type: object
   handler.refreshResponse:
     properties:
+      isKeep:
+        type: boolean
       singerName:
         type: string
       songName:
