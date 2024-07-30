@@ -61,5 +61,6 @@ CREATE TABLE IF NOT EXISTS songTempInfo (
 CREATE TABLE IF NOT EXISTS keepSong (
     keepSongId BIGINT AUTO_INCREMENT PRIMARY KEY,
     keepId BIGINT NOT NULL,
-    songTempId BIGINT NOT NULL
+    songTempId BIGINT NOT NULL,
+    songNumber INT NOT NULL,
 );

@@ -14,14 +14,14 @@ import (
 )
 
 type PlaylistAddRequest struct {
-	Songs []string `json:"songs"`
+	Songs []int `json:"songNumbers"`
 }
 
 type PlaylistAddResponse struct {
 	SongNumber int    `json:"songNumber"`
 	SongName   string `json:"songName"`
 	SingerName string `json:"singerName"`
-	SongTempId int64  `json:"songTempId"`
+	SongTempId int64  `json:"songId"`
 }
 
 // GoRoutine으로 회원가입시에 플레이리스트를 생성한다 (context따로 가져와야함)
@@ -41,7 +41,7 @@ func CreatePlaylist(db *sql.DB, keepName string, memberId int64) {
 // @Tags         Playlist
 // @Accept       json
 // @Produce      json
-// @Param        PlaylistAddRequest  body      PlaylistAddRequest  true  "노래 리스트"
+// @Param        PlaylistAddRequest  body   PlaylistAddRequest  true  "노래 리스트"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]PlaylistAddResponse} "성공"
 // @Router       /keep [post]
 // @Security BearerAuth
@@ -83,7 +83,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 				continue
 			}
 
-			keepSong := mysql.KeepSong{KeepId: playlistRow.KeepId, SongTempId: row.SongTempId}
+			keepSong := mysql.KeepSong{KeepId: playlistRow.KeepId, SongTempId: row.SongTempId, SongNumber: row.SongNumber}
 			err = keepSong.Insert(c, db, boil.Infer())
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
@@ -116,7 +116,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 }
 
 type SongDeleteFromPlaylistRequest struct {
-	Songs []string `json:"songs"`
+	Songs []int `json:"songNumbers"`
 }
 
 // 플레이리스트에 노래리스트 삭제
@@ -154,7 +154,7 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 
 		// 노래 정보들 가져오기
 		for _, song := range songDeleteFromPlaylistRequest.Songs {
-			_, err := mysql.KeepSongs(qm.Where("keepId = ? AND songTempId = ?", playlistInfo.KeepId, song)).DeleteAll(c, db)
+			_, err := mysql.KeepSongs(qm.Where("keepId = ? AND songNumber = ?", playlistInfo.KeepId, song)).DeleteAll(c, db)
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			}
