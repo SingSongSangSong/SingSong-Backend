@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - testing_ecs
-      - master
 
 jobs:
   build-and-push:
