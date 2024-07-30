@@ -56,9 +56,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/keep/add": {
+            },
             "post": {
                 "security": [
                     {
@@ -110,9 +108,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/keep/delete": {
+            },
             "delete": {
                 "security": [
                     {
@@ -457,10 +453,10 @@ const docTemplate = `{
         "handler.PlaylistAddRequest": {
             "type": "object",
             "properties": {
-                "songs": {
+                "songNumbers": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     }
                 }
             }
@@ -471,13 +467,13 @@ const docTemplate = `{
                 "singerName": {
                     "type": "string"
                 },
+                "songId": {
+                    "type": "integer"
+                },
                 "songName": {
                     "type": "string"
                 },
                 "songNumber": {
-                    "type": "integer"
-                },
-                "songTempId": {
                     "type": "integer"
                 }
             }
@@ -496,10 +492,10 @@ const docTemplate = `{
         "handler.SongDeleteFromPlaylistRequest": {
             "type": "object",
             "properties": {
-                "songs": {
+                "songNumbers": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "integer"
                     }
                 }
             }
@@ -580,7 +576,7 @@ const docTemplate = `{
         "handler.songRecommendRequest": {
             "type": "object",
             "properties": {
-                "songs": {
+                "songNumbers": {
                     "type": "array",
                     "items": {
                         "type": "integer"
