@@ -91,7 +91,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 				// 쿼리 요청을 보냅니다.
 				values, err := idxConnection.QueryByVectorValues(context.Background(), &pinecone.QueryByVectorValuesRequest{
 					Vector:          dummyVector,
-					TopK:            100,
+					TopK:            20,
 					Filter:          filterStruct,
 					SparseValues:    nil,
 					IncludeValues:   true,
