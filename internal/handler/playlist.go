@@ -127,7 +127,7 @@ type SongDeleteFromPlaylistRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        SongDeleteFromPlaylistRequest  body      SongDeleteFromPlaylistRequest  true  "노래 리스트"
-// @Success      200 {object} pkg.BaseResponseStruct{data=SongDeleteFromPlaylistRequest} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=PlaylistAddResponse} "성공"
 // @Router       /keep [delete]
 // @Security BearerAuth
 func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
@@ -160,7 +160,26 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 			}
 		}
 
-		pkg.BaseResponse(c, http.StatusOK, "success", songDeleteFromPlaylistRequest)
+		// 응답에 keep 목록 넣기
+		all, errors := mysql.KeepSongs(qm.Where("keepId = ?", playlistInfo.KeepId)).All(c, db)
+		if errors != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
+			return
+		}
+
+		keepSongs := make([]PlaylistAddResponse, 0)
+
+		for _, v := range all {
+			tempSong := mysql.SongTempInfos(qm.Where("songTempId = ?", v.SongTempId))
+			row, errors := tempSong.One(c, db)
+			if errors != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
+				return
+			}
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongTempId: row.SongTempId}
+			keepSongs = append(keepSongs, response)
+		}
+		pkg.BaseResponse(c, http.StatusOK, "success", keepSongs)
 	}
 }
 
@@ -194,6 +213,7 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 		all, err2 := result.All(c, db)
 		if err2 != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
+			return
 		}
 
 		PlaylistAddResponseList := make([]PlaylistAddResponse, 0)

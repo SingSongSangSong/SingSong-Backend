@@ -149,7 +149,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.SongDeleteFromPlaylistRequest"
+                                            "$ref": "#/definitions/handler.PlaylistAddResponse"
                                         }
                                     }
                                 }
