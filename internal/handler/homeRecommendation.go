@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"context"
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/protobuf/types/known/structpb"
 	"log"
 	"math/rand"
@@ -21,6 +23,7 @@ type songHomeResponse struct {
 	SongName   string   `json:"songName"`
 	SingerName string   `json:"singerName"`
 	Tags       []string `json:"tags"`
+	SongTempId int64    `json:"songId"`
 }
 
 type homeRequest struct {
@@ -51,8 +54,6 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 
 		// 한국어 태그가 들어오면 영어태그로 할당합니다
 		englishTags, err := MapTagsKoreanToEnglish(request.Tags)
-		log.Printf("englishTags: %v", englishTags)
-		log.Printf("request.Tags: %v", request.Tags)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
@@ -86,8 +87,6 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 					dummyVector[i] = rand.Float32() //random vector
 				}
 
-				mu.Lock()
-
 				// 쿼리 요청을 보냅니다.
 				values, err := idxConnection.QueryByVectorValues(context.Background(), &pinecone.QueryByVectorValuesRequest{
 					Vector:          dummyVector,
@@ -97,8 +96,6 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 					IncludeValues:   true,
 					IncludeMetadata: true,
 				})
-
-				mu.Unlock()
 
 				if err != nil {
 					//pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
@@ -151,6 +148,38 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 		if overallErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
+		}
+
+		// 모든 태그의 노래 정보를 한 번에 가져옵니다.
+		var songNumbers []interface{}
+		for _, homeResponse := range homeResponses {
+			for _, song := range homeResponse.Songs {
+				songNumbers = append(songNumbers, song.SongNumber)
+			}
+		}
+
+		allSongs, err := mysql.SongTempInfos(qm.WhereIn("songNumber IN ?", songNumbers...)).All(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		songsMap := make(map[int]int64, len(allSongs))
+		for _, song := range allSongs {
+			songsMap[song.SongNumber] = song.SongTempId
+		}
+
+		// homeResponses 업데이트
+		for _, homeResponse := range homeResponses {
+			for i := range homeResponse.Songs {
+				songNumber := homeResponse.Songs[i].SongNumber
+				if tempId, ok := songsMap[songNumber]; ok {
+					homeResponse.Songs[i].SongTempId = tempId
+				} else {
+					log.Printf("SongTempId not found for SongNumber: %v", songNumber)
+					homeResponse.Songs[i].SongTempId = 0 // 혹은 디폴트 값 설정
+				}
+			}
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "ok", homeResponses)
