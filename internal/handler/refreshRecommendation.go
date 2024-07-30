@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
+	"database/sql"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/protobuf/types/known/structpb"
 	"log"
 	"math/rand"
@@ -23,6 +26,7 @@ type refreshResponse struct {
 	SongName   string   `json:"songName"`
 	SingerName string   `json:"singerName"`
 	Tags       []string `json:"tags"`
+	IsKeep     bool     `json:"isKeep"`
 }
 
 var (
@@ -39,7 +43,7 @@ var (
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]refreshResponse} "성공"
 // @Router       /recommend/refresh [post]
 // @Security BearerAuth
-func RefreshRecommendation(redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
+func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		value, exists := c.Get("memberId")
 		if !exists {
@@ -83,6 +87,31 @@ func RefreshRecommendation(redisClient *redis.Client, idxConnection *pinecone.In
 			refreshedSongs = fillSongsAgain(refreshedSongs, querySongs)
 			// 기록 비우기
 			historySongs = []int{}
+		}
+
+		//list
+		one, err := mysql.KeepLists(qm.Where("memberId = ?", memberId)).One(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// 모든 KeepSongs 가져오기
+		keepSongs, err := mysql.KeepSongs(qm.Where("keepId = ?", one.KeepId)).All(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// Map으로 KeepSongs를 구성하여 존재 여부를 빠르게 확인
+		keepSongsMap := make(map[int]bool)
+		for _, keepSong := range keepSongs {
+			keepSongsMap[keepSong.SongNumber] = true
+		}
+
+		// refreshSongs에 isKeep 여부 추가
+		for _, song := range refreshedSongs {
+			song.IsKeep = keepSongsMap[song.SongNumber]
 		}
 
 		// history 갱신
