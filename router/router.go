@@ -16,7 +16,15 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	r := gin.Default()
 
 	// CORS 설정 추가
-	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.PlatformMiddleware())
+
+	// 버전 확인
+	version := r.Group("/api/v1/version")
+	{
+		version.GET("/", handler.AllVersion(db))
+		version.POST("/check", middleware.PlatformMiddleware(), handler.VersionCheck(db))
+		version.POST("/update", handler.LatestVersionUpdate(db))
+	}
 
 	// 추천 엔드포인트 설정
 	recommend := r.Group("/api/v1/recommend")

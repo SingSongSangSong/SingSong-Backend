@@ -208,44 +208,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommend/home/songs": {
-            "get": {
-                "description": "앨범 이미지와 함께 노래를 추천",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Recommendation"
-                ],
-                "summary": "노래 추천 5곡",
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.homeSongResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/recommend/refresh": {
             "post": {
                 "security": [
@@ -463,6 +425,91 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/version": {
+            "get": {
+                "description": "등록되어 있는 모든 버전 확인 가능",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App Version"
+                ],
+                "summary": "모든 버전 확인",
+                "responses": {
+                    "200": {
+                        "description": "성공\" {object} pkg.BaseResponseStruct{data=[]versionResponse} \"성공"
+                    }
+                }
+            }
+        },
+        "/version/check": {
+            "post": {
+                "description": "헤더에 플랫폼 정보를 포함하고, request body 앱의 버전을 보내면, 최신 버전인지 여부와 강제 업데이트 필요 여부를 응답",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App Version"
+                ],
+                "summary": "버전 확인",
+                "parameters": [
+                    {
+                        "description": "현재 앱 버전 정보",
+                        "name": "version",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.versionCheckRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/version/update": {
+            "post": {
+                "description": "새로운 버전이 나왔을때 버전을 추가할 수 있음 (플랫폼(ios, android), 버전, 이전 버전들을 강제 업데이트 할지 여부)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App Version"
+                ],
+                "summary": "버전 추가",
+                "parameters": [
+                    {
+                        "description": "등록 버전 정보",
+                        "name": "version",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.latestVersionUpdateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -563,29 +610,17 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.homeSongResponse": {
+        "handler.latestVersionUpdateRequest": {
             "type": "object",
             "properties": {
-                "album": {
+                "forceUpdate": {
+                    "type": "boolean"
+                },
+                "platform": {
                     "type": "string"
                 },
-                "singerName": {
+                "version": {
                     "type": "string"
-                },
-                "songId": {
-                    "type": "integer"
-                },
-                "songName": {
-                    "type": "string"
-                },
-                "songNumber": {
-                    "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
@@ -674,6 +709,14 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "handler.versionCheckRequest": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string"
                 }
             }
         },
