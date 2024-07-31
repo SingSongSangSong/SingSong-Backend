@@ -17,10 +17,7 @@ import (
 
 func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection) *gin.Engine {
 	// Initialize Datadog tracer
-	tracer.Start(
-		tracer.WithService("singsong-service"),
-		tracer.WithEnv("prod"),
-	)
+	tracer.Start()
 	defer tracer.Stop()
 
 	r := gin.Default()
