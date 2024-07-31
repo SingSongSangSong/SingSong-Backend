@@ -1,12 +1,22 @@
-name: Build and Push Docker Image to ECR
+name: Build and Deploy to ECS
 
 on:
   push:
-    branches: ["master", "testing_ecs"]
+    branches:
+      - master
+      - testing_ecs
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ECS_CLUSTER_NAME: ${{ secrets.ECS_CLUSTER_NAME }}
+      ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
+      ECS_CONTAINER_NAME: ${{ secrets.ECS_CONTAINER_NAME }}
+      ECS_SERVICE_NAME: ${{ secrets.ECS_SERVICE_NAME }}
+      TASK_DEFINITION_NAME: ${{ secrets.TASK_DEFINITION_NAME }}
 
     steps:
       - name: Checkout repository
@@ -47,10 +57,25 @@ jobs:
             JWT_ACCESS_VALIDITY_SECONDS=${{ secrets.JWT_ACCESS_VALIDITY_SECONDS }}
             JWT_REFRESH_VALIDITY_SECONDS=${{ secrets.JWT_REFRESH_VALIDITY_SECONDS }}
 
-      - name: Trigger CodePipeline
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+      - name: Download Task Definition Template
         run: |
-          aws codepipeline start-pipeline-execution --name singsong-pipeline
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.TASK_DEFINITION_NAME }} \
+            --query taskDefinition \
+            > task-definition.json
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.ECS_CONTAINER_NAME }}
+          image: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_NAME }}
+          cluster: ${{ env.ECS_CLUSTER_NAME }}
+          wait-for-service-stability: true
