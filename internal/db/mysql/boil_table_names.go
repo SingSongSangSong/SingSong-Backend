@@ -4,6 +4,7 @@
 package mysql
 
 var TableNames = struct {
+	AppVersion   string
 	ArtistInfo   string
 	KeepList     string
 	KeepSong     string
@@ -11,6 +12,7 @@ var TableNames = struct {
 	SongInfo     string
 	SongTempInfo string
 }{
+	AppVersion:   "appVersion",
 	ArtistInfo:   "artistInfo",
 	KeepList:     "keepList",
 	KeepSong:     "keepSong",

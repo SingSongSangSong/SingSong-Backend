@@ -62,6 +62,15 @@ definitions:
       tag:
         type: string
     type: object
+  handler.latestVersionUpdateRequest:
+    properties:
+      forceUpdate:
+        type: boolean
+      platform:
+        type: string
+      version:
+        type: string
+    type: object
   handler.refreshRequest:
     properties:
       tag:
@@ -118,6 +127,11 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  handler.versionCheckRequest:
+    properties:
+      version:
+        type: string
     type: object
   pkg.BaseResponseStruct:
     properties:
@@ -370,6 +384,64 @@ paths:
       summary: AccessToken RefreshToken 재발급
       tags:
       - Reissue
+  /version:
+    get:
+      consumes:
+      - application/json
+      description: 등록되어 있는 모든 버전 확인 가능
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공" {object} pkg.BaseResponseStruct{data=[]versionResponse}
+            "성공
+      summary: 모든 버전 확인
+      tags:
+      - App Version
+  /version/check:
+    post:
+      consumes:
+      - application/json
+      description: 헤더에 플랫폼 정보를 포함하고, request body 앱의 버전을 보내면, 최신 버전인지 여부와 강제 업데이트
+        필요 여부를 응답
+      parameters:
+      - description: 현재 앱 버전 정보
+        in: body
+        name: version
+        required: true
+        schema:
+          $ref: '#/definitions/handler.versionCheckRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 버전 확인
+      tags:
+      - App Version
+  /version/update:
+    post:
+      consumes:
+      - application/json
+      description: 새로운 버전이 나왔을때 버전을 추가할 수 있음 (플랫폼(ios, android), 버전, 이전 버전들을 강제 업데이트
+        할지 여부)
+      parameters:
+      - description: 등록 버전 정보
+        in: body
+        name: version
+        required: true
+        schema:
+          $ref: '#/definitions/handler.latestVersionUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+      summary: 버전 추가
+      tags:
+      - App Version
 securityDefinitions:
   BearerAuth:
     in: header
