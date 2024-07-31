@@ -2,8 +2,7 @@ name: Build and Push Docker Image to ECR
 
 on:
   push:
-    branches:
-      - testing_ecs
+    branches: ["master", "testing_ecs"]
 
 jobs:
   build-and-push:
@@ -47,3 +46,11 @@ jobs:
             JWT_ISSUER=${{ secrets.JWT_ISSUER }}
             JWT_ACCESS_VALIDITY_SECONDS=${{ secrets.JWT_ACCESS_VALIDITY_SECONDS }}
             JWT_REFRESH_VALIDITY_SECONDS=${{ secrets.JWT_REFRESH_VALIDITY_SECONDS }}
+
+      - name: Trigger CodePipeline
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          aws codepipeline start-pipeline-execution --name singsong-pipeline
