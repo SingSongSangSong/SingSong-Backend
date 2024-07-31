@@ -9,11 +9,21 @@ import (
 	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
+	ddgin "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"net/http"
 )
 
 func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection) *gin.Engine {
+	// Initialize Datadog tracer
+	tracer.Start()
+	defer tracer.Stop()
+
 	r := gin.Default()
+
+	// Wrap the router with Datadog middleware
+	r.Use(ddgin.Middleware("singsong-service"))
 
 	// CORS 설정 추가
 	r.Use(middleware.CORSMiddleware())

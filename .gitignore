@@ -2,3 +2,5 @@
 .idea/
 *.toml
 *.tmpl
+.terraform/
+.terraform*
