@@ -104,3 +104,31 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 		pkg.BaseResponse(c, http.StatusOK, "success", nil)
 	}
 }
+
+// Logout godoc
+// @Summary      멤버 회원 로그아웃
+// @Description  멤버 회원 로그아웃
+// @Tags         Member
+// @Accept       json
+// @Produce      json
+// @Success      200 {object} pkg.BaseResponseStruct{} "성공"
+// @Router       /member/logout [post]
+// @Security BearerAuth
+func Logout(redis *redis.Client) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		withdrawRequest := &WithdrawRequest{}
+		if err := c.ShouldBindJSON(&withdrawRequest); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
+
+		// Delete redis
+		_, err := redis.Del(c, withdrawRequest.RefreshToken).Result()
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "success", nil)
+	}
+}
