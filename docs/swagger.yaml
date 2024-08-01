@@ -62,6 +62,23 @@ definitions:
       tag:
         type: string
     type: object
+  handler.homeSongResponse:
+    properties:
+      album:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
   handler.latestVersionUpdateRequest:
     properties:
       forceUpdate:
@@ -253,6 +270,28 @@ paths:
                   type: array
               type: object
       summary: 노래 추천 by 태그
+      tags:
+      - Recommendation
+  /recommend/home/songs:
+    get:
+      consumes:
+      - application/json
+      description: 앨범 이미지와 함께 노래를 추천
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.homeSongResponse'
+                  type: array
+              type: object
+      summary: 노래 추천 5곡
       tags:
       - Recommendation
   /recommend/refresh:
