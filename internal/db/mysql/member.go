@@ -24,65 +24,124 @@ import (
 
 // Member is an object representing the database table.
 type Member struct {
-	ID       int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Nickname null.String `boil:"nickname" json:"nickname,omitempty" toml:"nickname" yaml:"nickname,omitempty"`
-	Email    string      `boil:"email" json:"email" toml:"email" yaml:"email"`
-	Gender   null.String `boil:"gender" json:"gender,omitempty" toml:"gender" yaml:"gender,omitempty"`
-	Birthday null.Time   `boil:"birthday" json:"birthday,omitempty" toml:"birthday" yaml:"birthday,omitempty"`
-	Provider string      `boil:"provider" json:"provider" toml:"provider" yaml:"provider"`
+	ID        int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Nickname  null.String `boil:"nickname" json:"nickname,omitempty" toml:"nickname" yaml:"nickname,omitempty"`
+	Email     string      `boil:"email" json:"email" toml:"email" yaml:"email"`
+	Gender    null.String `boil:"gender" json:"gender,omitempty" toml:"gender" yaml:"gender,omitempty"`
+	Birthyear null.Int    `boil:"birthyear" json:"birthyear,omitempty" toml:"birthyear" yaml:"birthyear,omitempty"`
+	Provider  string      `boil:"provider" json:"provider" toml:"provider" yaml:"provider"`
+	CreatedAt null.Time   `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
+	UpdatedAt null.Time   `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
+	DeletedAt null.Time   `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
 
 	R *memberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L memberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var MemberColumns = struct {
-	ID       string
-	Nickname string
-	Email    string
-	Gender   string
-	Birthday string
-	Provider string
+	ID        string
+	Nickname  string
+	Email     string
+	Gender    string
+	Birthyear string
+	Provider  string
+	CreatedAt string
+	UpdatedAt string
+	DeletedAt string
 }{
-	ID:       "id",
-	Nickname: "nickname",
-	Email:    "email",
-	Gender:   "gender",
-	Birthday: "birthday",
-	Provider: "provider",
+	ID:        "id",
+	Nickname:  "nickname",
+	Email:     "email",
+	Gender:    "gender",
+	Birthyear: "birthyear",
+	Provider:  "provider",
+	CreatedAt: "createdAt",
+	UpdatedAt: "updatedAt",
+	DeletedAt: "deletedAt",
 }
 
 var MemberTableColumns = struct {
-	ID       string
-	Nickname string
-	Email    string
-	Gender   string
-	Birthday string
-	Provider string
+	ID        string
+	Nickname  string
+	Email     string
+	Gender    string
+	Birthyear string
+	Provider  string
+	CreatedAt string
+	UpdatedAt string
+	DeletedAt string
 }{
-	ID:       "member.id",
-	Nickname: "member.nickname",
-	Email:    "member.email",
-	Gender:   "member.gender",
-	Birthday: "member.birthday",
-	Provider: "member.provider",
+	ID:        "member.id",
+	Nickname:  "member.nickname",
+	Email:     "member.email",
+	Gender:    "member.gender",
+	Birthyear: "member.birthyear",
+	Provider:  "member.provider",
+	CreatedAt: "member.createdAt",
+	UpdatedAt: "member.updatedAt",
+	DeletedAt: "member.deletedAt",
 }
 
 // Generated where
 
+type whereHelpernull_Int struct{ field string }
+
+func (w whereHelpernull_Int) EQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Int) NEQ(x null.Int) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Int) LT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Int) LTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Int) GT(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Int) GTE(x null.Int) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Int) IN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Int) NIN(slice []int) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var MemberWhere = struct {
-	ID       whereHelperint64
-	Nickname whereHelpernull_String
-	Email    whereHelperstring
-	Gender   whereHelpernull_String
-	Birthday whereHelpernull_Time
-	Provider whereHelperstring
+	ID        whereHelperint64
+	Nickname  whereHelpernull_String
+	Email     whereHelperstring
+	Gender    whereHelpernull_String
+	Birthyear whereHelpernull_Int
+	Provider  whereHelperstring
+	CreatedAt whereHelpernull_Time
+	UpdatedAt whereHelpernull_Time
+	DeletedAt whereHelpernull_Time
 }{
-	ID:       whereHelperint64{field: "`member`.`id`"},
-	Nickname: whereHelpernull_String{field: "`member`.`nickname`"},
-	Email:    whereHelperstring{field: "`member`.`email`"},
-	Gender:   whereHelpernull_String{field: "`member`.`gender`"},
-	Birthday: whereHelpernull_Time{field: "`member`.`birthday`"},
-	Provider: whereHelperstring{field: "`member`.`provider`"},
+	ID:        whereHelperint64{field: "`member`.`id`"},
+	Nickname:  whereHelpernull_String{field: "`member`.`nickname`"},
+	Email:     whereHelperstring{field: "`member`.`email`"},
+	Gender:    whereHelpernull_String{field: "`member`.`gender`"},
+	Birthyear: whereHelpernull_Int{field: "`member`.`birthyear`"},
+	Provider:  whereHelperstring{field: "`member`.`provider`"},
+	CreatedAt: whereHelpernull_Time{field: "`member`.`createdAt`"},
+	UpdatedAt: whereHelpernull_Time{field: "`member`.`updatedAt`"},
+	DeletedAt: whereHelpernull_Time{field: "`member`.`deletedAt`"},
 }
 
 // MemberRels is where relationship names are stored.
@@ -102,9 +161,9 @@ func (*memberR) NewStruct() *memberR {
 type memberL struct{}
 
 var (
-	memberAllColumns            = []string{"id", "nickname", "email", "gender", "birthday", "provider"}
-	memberColumnsWithoutDefault = []string{"nickname", "email", "gender", "birthday", "provider"}
-	memberColumnsWithDefault    = []string{"id"}
+	memberAllColumns            = []string{"id", "nickname", "email", "gender", "birthyear", "provider", "createdAt", "updatedAt", "deletedAt"}
+	memberColumnsWithoutDefault = []string{"nickname", "email", "gender", "birthyear", "provider", "deletedAt"}
+	memberColumnsWithDefault    = []string{"id", "createdAt", "updatedAt"}
 	memberPrimaryKeyColumns     = []string{"id"}
 	memberGeneratedColumns      = []string{}
 )

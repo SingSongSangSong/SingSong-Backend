@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -23,10 +24,13 @@ import (
 
 // KeepSong is an object representing the database table.
 type KeepSong struct {
-	KeepSongId int64 `boil:"keepSongId" json:"keepSongId" toml:"keepSongId" yaml:"keepSongId"`
-	KeepId     int64 `boil:"keepId" json:"keepId" toml:"keepId" yaml:"keepId"`
-	SongTempId int64 `boil:"songTempId" json:"songTempId" toml:"songTempId" yaml:"songTempId"`
-	SongNumber int   `boil:"songNumber" json:"songNumber" toml:"songNumber" yaml:"songNumber"`
+	KeepSongId int64     `boil:"keepSongId" json:"keepSongId" toml:"keepSongId" yaml:"keepSongId"`
+	KeepId     int64     `boil:"keepId" json:"keepId" toml:"keepId" yaml:"keepId"`
+	SongTempId int64     `boil:"songTempId" json:"songTempId" toml:"songTempId" yaml:"songTempId"`
+	SongNumber int       `boil:"songNumber" json:"songNumber" toml:"songNumber" yaml:"songNumber"`
+	CreatedAt  null.Time `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
+	UpdatedAt  null.Time `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
+	DeletedAt  null.Time `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
 
 	R *keepSongR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L keepSongL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -37,11 +41,17 @@ var KeepSongColumns = struct {
 	KeepId     string
 	SongTempId string
 	SongNumber string
+	CreatedAt  string
+	UpdatedAt  string
+	DeletedAt  string
 }{
 	KeepSongId: "keepSongId",
 	KeepId:     "keepId",
 	SongTempId: "songTempId",
 	SongNumber: "songNumber",
+	CreatedAt:  "createdAt",
+	UpdatedAt:  "updatedAt",
+	DeletedAt:  "deletedAt",
 }
 
 var KeepSongTableColumns = struct {
@@ -49,11 +59,17 @@ var KeepSongTableColumns = struct {
 	KeepId     string
 	SongTempId string
 	SongNumber string
+	CreatedAt  string
+	UpdatedAt  string
+	DeletedAt  string
 }{
 	KeepSongId: "keepSong.keepSongId",
 	KeepId:     "keepSong.keepId",
 	SongTempId: "keepSong.songTempId",
 	SongNumber: "keepSong.songNumber",
+	CreatedAt:  "keepSong.createdAt",
+	UpdatedAt:  "keepSong.updatedAt",
+	DeletedAt:  "keepSong.deletedAt",
 }
 
 // Generated where
@@ -86,11 +102,17 @@ var KeepSongWhere = struct {
 	KeepId     whereHelperint64
 	SongTempId whereHelperint64
 	SongNumber whereHelperint
+	CreatedAt  whereHelpernull_Time
+	UpdatedAt  whereHelpernull_Time
+	DeletedAt  whereHelpernull_Time
 }{
 	KeepSongId: whereHelperint64{field: "`keepSong`.`keepSongId`"},
 	KeepId:     whereHelperint64{field: "`keepSong`.`keepId`"},
 	SongTempId: whereHelperint64{field: "`keepSong`.`songTempId`"},
 	SongNumber: whereHelperint{field: "`keepSong`.`songNumber`"},
+	CreatedAt:  whereHelpernull_Time{field: "`keepSong`.`createdAt`"},
+	UpdatedAt:  whereHelpernull_Time{field: "`keepSong`.`updatedAt`"},
+	DeletedAt:  whereHelpernull_Time{field: "`keepSong`.`deletedAt`"},
 }
 
 // KeepSongRels is where relationship names are stored.
@@ -110,9 +132,9 @@ func (*keepSongR) NewStruct() *keepSongR {
 type keepSongL struct{}
 
 var (
-	keepSongAllColumns            = []string{"keepSongId", "keepId", "songTempId", "songNumber"}
-	keepSongColumnsWithoutDefault = []string{"keepId", "songTempId", "songNumber"}
-	keepSongColumnsWithDefault    = []string{"keepSongId"}
+	keepSongAllColumns            = []string{"keepSongId", "keepId", "songTempId", "songNumber", "createdAt", "updatedAt", "deletedAt"}
+	keepSongColumnsWithoutDefault = []string{"keepId", "songTempId", "songNumber", "deletedAt"}
+	keepSongColumnsWithDefault    = []string{"keepSongId", "createdAt", "updatedAt"}
 	keepSongPrimaryKeyColumns     = []string{"keepSongId"}
 	keepSongGeneratedColumns      = []string{}
 )

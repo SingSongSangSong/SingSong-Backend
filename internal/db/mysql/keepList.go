@@ -24,44 +24,65 @@ import (
 
 // KeepList is an object representing the database table.
 type KeepList struct {
-	KeepId   int64       `boil:"keepId" json:"keepId" toml:"keepId" yaml:"keepId"`
-	MemberId int64       `boil:"memberId" json:"memberId" toml:"memberId" yaml:"memberId"`
-	KeepName null.String `boil:"keepName" json:"keepName,omitempty" toml:"keepName" yaml:"keepName,omitempty"`
+	KeepId    int64       `boil:"keepId" json:"keepId" toml:"keepId" yaml:"keepId"`
+	MemberId  int64       `boil:"memberId" json:"memberId" toml:"memberId" yaml:"memberId"`
+	KeepName  null.String `boil:"keepName" json:"keepName,omitempty" toml:"keepName" yaml:"keepName,omitempty"`
+	CreatedAt null.Time   `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
+	UpdatedAt null.Time   `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
+	DeletedAt null.Time   `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
 
 	R *keepListR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L keepListL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var KeepListColumns = struct {
-	KeepId   string
-	MemberId string
-	KeepName string
+	KeepId    string
+	MemberId  string
+	KeepName  string
+	CreatedAt string
+	UpdatedAt string
+	DeletedAt string
 }{
-	KeepId:   "keepId",
-	MemberId: "memberId",
-	KeepName: "keepName",
+	KeepId:    "keepId",
+	MemberId:  "memberId",
+	KeepName:  "keepName",
+	CreatedAt: "createdAt",
+	UpdatedAt: "updatedAt",
+	DeletedAt: "deletedAt",
 }
 
 var KeepListTableColumns = struct {
-	KeepId   string
-	MemberId string
-	KeepName string
+	KeepId    string
+	MemberId  string
+	KeepName  string
+	CreatedAt string
+	UpdatedAt string
+	DeletedAt string
 }{
-	KeepId:   "keepList.keepId",
-	MemberId: "keepList.memberId",
-	KeepName: "keepList.keepName",
+	KeepId:    "keepList.keepId",
+	MemberId:  "keepList.memberId",
+	KeepName:  "keepList.keepName",
+	CreatedAt: "keepList.createdAt",
+	UpdatedAt: "keepList.updatedAt",
+	DeletedAt: "keepList.deletedAt",
 }
 
 // Generated where
 
 var KeepListWhere = struct {
-	KeepId   whereHelperint64
-	MemberId whereHelperint64
-	KeepName whereHelpernull_String
+	KeepId    whereHelperint64
+	MemberId  whereHelperint64
+	KeepName  whereHelpernull_String
+	CreatedAt whereHelpernull_Time
+	UpdatedAt whereHelpernull_Time
+	DeletedAt whereHelpernull_Time
 }{
-	KeepId:   whereHelperint64{field: "`keepList`.`keepId`"},
-	MemberId: whereHelperint64{field: "`keepList`.`memberId`"},
-	KeepName: whereHelpernull_String{field: "`keepList`.`keepName`"},
+	KeepId:    whereHelperint64{field: "`keepList`.`keepId`"},
+	MemberId:  whereHelperint64{field: "`keepList`.`memberId`"},
+	KeepName:  whereHelpernull_String{field: "`keepList`.`keepName`"},
+	CreatedAt: whereHelpernull_Time{field: "`keepList`.`createdAt`"},
+	UpdatedAt: whereHelpernull_Time{field: "`keepList`.`updatedAt`"},
+	DeletedAt: whereHelpernull_Time{field: "`keepList`.`deletedAt`"},
 }
 
 // KeepListRels is where relationship names are stored.
@@ -81,9 +102,9 @@ func (*keepListR) NewStruct() *keepListR {
 type keepListL struct{}
 
 var (
-	keepListAllColumns            = []string{"keepId", "memberId", "keepName"}
-	keepListColumnsWithoutDefault = []string{"memberId", "keepName"}
-	keepListColumnsWithDefault    = []string{"keepId"}
+	keepListAllColumns            = []string{"keepId", "memberId", "keepName", "createdAt", "updatedAt", "deletedAt"}
+	keepListColumnsWithoutDefault = []string{"memberId", "keepName", "deletedAt"}
+	keepListColumnsWithDefault    = []string{"keepId", "createdAt", "updatedAt"}
 	keepListPrimaryKeyColumns     = []string{"keepId"}
 	keepListGeneratedColumns      = []string{}
 )

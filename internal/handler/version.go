@@ -142,7 +142,7 @@ func AllVersion(db *sql.DB) gin.HandlerFunc {
 				Platform:    v.Platform,
 				Version:     v.Version,
 				ForceUpdate: v.ForceUpdate,
-				ReleaseDate: v.ReleaseDate.Time.Format(time.RFC3339),
+				ReleaseDate: v.CreatedAt.Time.Format(time.RFC3339),
 			})
 		}
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)

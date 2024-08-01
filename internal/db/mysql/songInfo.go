@@ -32,6 +32,9 @@ type SongInfo struct {
 	Octave     null.String `boil:"octave" json:"octave,omitempty" toml:"octave" yaml:"octave,omitempty"`
 	TjLink     null.String `boil:"tjLink" json:"tjLink,omitempty" toml:"tjLink" yaml:"tjLink,omitempty"`
 	Tags       null.String `boil:"tags" json:"tags,omitempty" toml:"tags" yaml:"tags,omitempty"`
+	CreatedAt  null.Time   `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
+	UpdatedAt  null.Time   `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
+	DeletedAt  null.Time   `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
 
 	R *songInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L songInfoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -46,6 +49,9 @@ var SongInfoColumns = struct {
 	Octave     string
 	TjLink     string
 	Tags       string
+	CreatedAt  string
+	UpdatedAt  string
+	DeletedAt  string
 }{
 	SongId:     "songId",
 	SongName:   "songName",
@@ -55,6 +61,9 @@ var SongInfoColumns = struct {
 	Octave:     "octave",
 	TjLink:     "tjLink",
 	Tags:       "tags",
+	CreatedAt:  "createdAt",
+	UpdatedAt:  "updatedAt",
+	DeletedAt:  "deletedAt",
 }
 
 var SongInfoTableColumns = struct {
@@ -66,6 +75,9 @@ var SongInfoTableColumns = struct {
 	Octave     string
 	TjLink     string
 	Tags       string
+	CreatedAt  string
+	UpdatedAt  string
+	DeletedAt  string
 }{
 	SongId:     "songInfo.songId",
 	SongName:   "songInfo.songName",
@@ -75,6 +87,9 @@ var SongInfoTableColumns = struct {
 	Octave:     "songInfo.octave",
 	TjLink:     "songInfo.tjLink",
 	Tags:       "songInfo.tags",
+	CreatedAt:  "songInfo.createdAt",
+	UpdatedAt:  "songInfo.updatedAt",
+	DeletedAt:  "songInfo.deletedAt",
 }
 
 // Generated where
@@ -88,6 +103,9 @@ var SongInfoWhere = struct {
 	Octave     whereHelpernull_String
 	TjLink     whereHelpernull_String
 	Tags       whereHelpernull_String
+	CreatedAt  whereHelpernull_Time
+	UpdatedAt  whereHelpernull_Time
+	DeletedAt  whereHelpernull_Time
 }{
 	SongId:     whereHelperint64{field: "`songInfo`.`songId`"},
 	SongName:   whereHelperstring{field: "`songInfo`.`songName`"},
@@ -97,6 +115,9 @@ var SongInfoWhere = struct {
 	Octave:     whereHelpernull_String{field: "`songInfo`.`octave`"},
 	TjLink:     whereHelpernull_String{field: "`songInfo`.`tjLink`"},
 	Tags:       whereHelpernull_String{field: "`songInfo`.`tags`"},
+	CreatedAt:  whereHelpernull_Time{field: "`songInfo`.`createdAt`"},
+	UpdatedAt:  whereHelpernull_Time{field: "`songInfo`.`updatedAt`"},
+	DeletedAt:  whereHelpernull_Time{field: "`songInfo`.`deletedAt`"},
 }
 
 // SongInfoRels is where relationship names are stored.
@@ -116,9 +137,9 @@ func (*songInfoR) NewStruct() *songInfoR {
 type songInfoL struct{}
 
 var (
-	songInfoAllColumns            = []string{"songId", "songName", "artistId", "album", "songNumber", "octave", "tjLink", "tags"}
-	songInfoColumnsWithoutDefault = []string{"songName", "artistId", "album", "songNumber", "octave", "tjLink", "tags"}
-	songInfoColumnsWithDefault    = []string{"songId"}
+	songInfoAllColumns            = []string{"songId", "songName", "artistId", "album", "songNumber", "octave", "tjLink", "tags", "createdAt", "updatedAt", "deletedAt"}
+	songInfoColumnsWithoutDefault = []string{"songName", "artistId", "album", "songNumber", "octave", "tjLink", "tags", "deletedAt"}
+	songInfoColumnsWithDefault    = []string{"songId", "createdAt", "updatedAt"}
 	songInfoPrimaryKeyColumns     = []string{"songId"}
 	songInfoGeneratedColumns      = []string{}
 )

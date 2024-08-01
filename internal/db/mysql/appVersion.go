@@ -28,7 +28,9 @@ type AppVersion struct {
 	Platform     string    `boil:"platform" json:"platform" toml:"platform" yaml:"platform"`
 	Version      string    `boil:"version" json:"version" toml:"version" yaml:"version"`
 	ForceUpdate  bool      `boil:"forceUpdate" json:"forceUpdate" toml:"forceUpdate" yaml:"forceUpdate"`
-	ReleaseDate  null.Time `boil:"releaseDate" json:"releaseDate,omitempty" toml:"releaseDate" yaml:"releaseDate,omitempty"`
+	CreatedAt    null.Time `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
+	UpdatedAt    null.Time `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
+	DeletedAt    null.Time `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
 
 	R *appVersionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L appVersionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -39,13 +41,17 @@ var AppVersionColumns = struct {
 	Platform     string
 	Version      string
 	ForceUpdate  string
-	ReleaseDate  string
+	CreatedAt    string
+	UpdatedAt    string
+	DeletedAt    string
 }{
 	AppVersionId: "appVersionId",
 	Platform:     "platform",
 	Version:      "version",
 	ForceUpdate:  "forceUpdate",
-	ReleaseDate:  "releaseDate",
+	CreatedAt:    "createdAt",
+	UpdatedAt:    "updatedAt",
+	DeletedAt:    "deletedAt",
 }
 
 var AppVersionTableColumns = struct {
@@ -53,13 +59,17 @@ var AppVersionTableColumns = struct {
 	Platform     string
 	Version      string
 	ForceUpdate  string
-	ReleaseDate  string
+	CreatedAt    string
+	UpdatedAt    string
+	DeletedAt    string
 }{
 	AppVersionId: "appVersion.appVersionId",
 	Platform:     "appVersion.platform",
 	Version:      "appVersion.version",
 	ForceUpdate:  "appVersion.forceUpdate",
-	ReleaseDate:  "appVersion.releaseDate",
+	CreatedAt:    "appVersion.createdAt",
+	UpdatedAt:    "appVersion.updatedAt",
+	DeletedAt:    "appVersion.deletedAt",
 }
 
 // Generated where
@@ -150,13 +160,17 @@ var AppVersionWhere = struct {
 	Platform     whereHelperstring
 	Version      whereHelperstring
 	ForceUpdate  whereHelperbool
-	ReleaseDate  whereHelpernull_Time
+	CreatedAt    whereHelpernull_Time
+	UpdatedAt    whereHelpernull_Time
+	DeletedAt    whereHelpernull_Time
 }{
 	AppVersionId: whereHelperint64{field: "`appVersion`.`appVersionId`"},
 	Platform:     whereHelperstring{field: "`appVersion`.`platform`"},
 	Version:      whereHelperstring{field: "`appVersion`.`version`"},
 	ForceUpdate:  whereHelperbool{field: "`appVersion`.`forceUpdate`"},
-	ReleaseDate:  whereHelpernull_Time{field: "`appVersion`.`releaseDate`"},
+	CreatedAt:    whereHelpernull_Time{field: "`appVersion`.`createdAt`"},
+	UpdatedAt:    whereHelpernull_Time{field: "`appVersion`.`updatedAt`"},
+	DeletedAt:    whereHelpernull_Time{field: "`appVersion`.`deletedAt`"},
 }
 
 // AppVersionRels is where relationship names are stored.
@@ -176,9 +190,9 @@ func (*appVersionR) NewStruct() *appVersionR {
 type appVersionL struct{}
 
 var (
-	appVersionAllColumns            = []string{"appVersionId", "platform", "version", "forceUpdate", "releaseDate"}
-	appVersionColumnsWithoutDefault = []string{"platform", "version"}
-	appVersionColumnsWithDefault    = []string{"appVersionId", "forceUpdate", "releaseDate"}
+	appVersionAllColumns            = []string{"appVersionId", "platform", "version", "forceUpdate", "createdAt", "updatedAt", "deletedAt"}
+	appVersionColumnsWithoutDefault = []string{"platform", "version", "deletedAt"}
+	appVersionColumnsWithDefault    = []string{"appVersionId", "forceUpdate", "createdAt", "updatedAt"}
 	appVersionPrimaryKeyColumns     = []string{"appVersionId"}
 	appVersionGeneratedColumns      = []string{}
 )
