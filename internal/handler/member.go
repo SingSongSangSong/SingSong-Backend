@@ -59,14 +59,15 @@ func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 
 // Withdraw godoc
 // @Summary      멤버 회원 탈퇴
-// @Description  사용자 정보 조회
+// @Description  멤버 회원 탈퇴
 // @Tags         Member
 // @Accept       json
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct{data=MemberResponse} "성공"
-// @Router       /member [get]
+// @Router       /member/withdraw [get]
 // @Security BearerAuth
 func Withdraw(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 	}
 }

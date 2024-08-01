@@ -30,6 +30,9 @@ type Member struct {
 	Gender    null.String `boil:"gender" json:"gender,omitempty" toml:"gender" yaml:"gender,omitempty"`
 	Birthyear null.Int    `boil:"birthyear" json:"birthyear,omitempty" toml:"birthyear" yaml:"birthyear,omitempty"`
 	Provider  string      `boil:"provider" json:"provider" toml:"provider" yaml:"provider"`
+	CreatedAt null.Time   `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
+	UpdatedAt null.Time   `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
+	DeletedAt null.Time   `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
 
 	R *memberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L memberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -42,6 +45,9 @@ var MemberColumns = struct {
 	Gender    string
 	Birthyear string
 	Provider  string
+	CreatedAt string
+	UpdatedAt string
+	DeletedAt string
 }{
 	ID:        "id",
 	Nickname:  "nickname",
@@ -49,6 +55,9 @@ var MemberColumns = struct {
 	Gender:    "gender",
 	Birthyear: "birthyear",
 	Provider:  "provider",
+	CreatedAt: "createdAt",
+	UpdatedAt: "updatedAt",
+	DeletedAt: "deletedAt",
 }
 
 var MemberTableColumns = struct {
@@ -58,6 +67,9 @@ var MemberTableColumns = struct {
 	Gender    string
 	Birthyear string
 	Provider  string
+	CreatedAt string
+	UpdatedAt string
+	DeletedAt string
 }{
 	ID:        "member.id",
 	Nickname:  "member.nickname",
@@ -65,6 +77,9 @@ var MemberTableColumns = struct {
 	Gender:    "member.gender",
 	Birthyear: "member.birthyear",
 	Provider:  "member.provider",
+	CreatedAt: "member.createdAt",
+	UpdatedAt: "member.updatedAt",
+	DeletedAt: "member.deletedAt",
 }
 
 // Generated where
@@ -114,6 +129,9 @@ var MemberWhere = struct {
 	Gender    whereHelpernull_String
 	Birthyear whereHelpernull_Int
 	Provider  whereHelperstring
+	CreatedAt whereHelpernull_Time
+	UpdatedAt whereHelpernull_Time
+	DeletedAt whereHelpernull_Time
 }{
 	ID:        whereHelperint64{field: "`member`.`id`"},
 	Nickname:  whereHelpernull_String{field: "`member`.`nickname`"},
@@ -121,6 +139,9 @@ var MemberWhere = struct {
 	Gender:    whereHelpernull_String{field: "`member`.`gender`"},
 	Birthyear: whereHelpernull_Int{field: "`member`.`birthyear`"},
 	Provider:  whereHelperstring{field: "`member`.`provider`"},
+	CreatedAt: whereHelpernull_Time{field: "`member`.`createdAt`"},
+	UpdatedAt: whereHelpernull_Time{field: "`member`.`updatedAt`"},
+	DeletedAt: whereHelpernull_Time{field: "`member`.`deletedAt`"},
 }
 
 // MemberRels is where relationship names are stored.
@@ -140,9 +161,9 @@ func (*memberR) NewStruct() *memberR {
 type memberL struct{}
 
 var (
-	memberAllColumns            = []string{"id", "nickname", "email", "gender", "birthyear", "provider"}
-	memberColumnsWithoutDefault = []string{"nickname", "email", "gender", "birthyear", "provider"}
-	memberColumnsWithDefault    = []string{"id"}
+	memberAllColumns            = []string{"id", "nickname", "email", "gender", "birthyear", "provider", "createdAt", "updatedAt", "deletedAt"}
+	memberColumnsWithoutDefault = []string{"nickname", "email", "gender", "birthyear", "provider", "deletedAt"}
+	memberColumnsWithDefault    = []string{"id", "createdAt", "updatedAt"}
 	memberPrimaryKeyColumns     = []string{"id"}
 	memberGeneratedColumns      = []string{}
 )

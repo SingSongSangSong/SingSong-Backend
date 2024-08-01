@@ -277,7 +277,7 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: 멤버 회원 탈퇴
+      summary: Member의 정보를 가져온다
       tags:
       - Member
   /member/login:
@@ -334,6 +334,28 @@ paths:
       summary: AccessToken RefreshToken 재발급
       tags:
       - Reissue
+  /member/withdraw:
+    get:
+      consumes:
+      - application/json
+      description: 멤버 회원 탈퇴
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.MemberResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 멤버 회원 탈퇴
+      tags:
+      - Member
   /recommend/home:
     post:
       consumes:
