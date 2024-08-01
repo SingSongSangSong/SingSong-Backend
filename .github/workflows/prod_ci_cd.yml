@@ -2,9 +2,7 @@ name: Build and Deploy to ECS
 
 on:
   push:
-    branches:
-      - master
-      - testing_ecs
+    branches: [ "master" ]
 
 jobs:
   build-and-deploy:
