@@ -30,10 +30,12 @@ func main() {
 
 	r := router.SetupRouter(db, rdb, idxConnection)
 
+	log.WithFields(log.Fields{"string": "foo", "int": 1, "float": 1.1}).Info("My first event from golang to stdout")
+	log.WithFields(log.Fields{"string": "231", "int": 2, "float": 2.1}).Error("My second event from golang to stdout")
+
 	// 서버 실행
 	if err := r.Run(); err != nil {
 		log.Fatalf("서버 실행 실패: %v", err)
 	}
 
-	log.WithFields(log.Fields{"string": "foo", "int": 1, "float": 1.1}).Info("My first event from golang to stdout")
 }
