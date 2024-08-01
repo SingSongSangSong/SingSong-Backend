@@ -29,6 +29,9 @@ type ArtistInfo struct {
 	ArtistType     null.String `boil:"artistType" json:"artistType,omitempty" toml:"artistType" yaml:"artistType,omitempty"`
 	RelatedArtists null.String `boil:"relatedArtists" json:"relatedArtists,omitempty" toml:"relatedArtists" yaml:"relatedArtists,omitempty"`
 	Country        null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
+	CreatedAt      null.Time   `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
+	UpdatedAt      null.Time   `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
+	DeletedAt      null.Time   `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
 
 	R *artistInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L artistInfoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -40,12 +43,18 @@ var ArtistInfoColumns = struct {
 	ArtistType     string
 	RelatedArtists string
 	Country        string
+	CreatedAt      string
+	UpdatedAt      string
+	DeletedAt      string
 }{
 	ArtistId:       "artistId",
 	ArtistName:     "artistName",
 	ArtistType:     "artistType",
 	RelatedArtists: "relatedArtists",
 	Country:        "country",
+	CreatedAt:      "createdAt",
+	UpdatedAt:      "updatedAt",
+	DeletedAt:      "deletedAt",
 }
 
 var ArtistInfoTableColumns = struct {
@@ -54,12 +63,18 @@ var ArtistInfoTableColumns = struct {
 	ArtistType     string
 	RelatedArtists string
 	Country        string
+	CreatedAt      string
+	UpdatedAt      string
+	DeletedAt      string
 }{
 	ArtistId:       "artistInfo.artistId",
 	ArtistName:     "artistInfo.artistName",
 	ArtistType:     "artistInfo.artistType",
 	RelatedArtists: "artistInfo.relatedArtists",
 	Country:        "artistInfo.country",
+	CreatedAt:      "artistInfo.createdAt",
+	UpdatedAt:      "artistInfo.updatedAt",
+	DeletedAt:      "artistInfo.deletedAt",
 }
 
 // Generated where
@@ -114,12 +129,18 @@ var ArtistInfoWhere = struct {
 	ArtistType     whereHelpernull_String
 	RelatedArtists whereHelpernull_String
 	Country        whereHelpernull_String
+	CreatedAt      whereHelpernull_Time
+	UpdatedAt      whereHelpernull_Time
+	DeletedAt      whereHelpernull_Time
 }{
 	ArtistId:       whereHelperint64{field: "`artistInfo`.`artistId`"},
 	ArtistName:     whereHelperstring{field: "`artistInfo`.`artistName`"},
 	ArtistType:     whereHelpernull_String{field: "`artistInfo`.`artistType`"},
 	RelatedArtists: whereHelpernull_String{field: "`artistInfo`.`relatedArtists`"},
 	Country:        whereHelpernull_String{field: "`artistInfo`.`country`"},
+	CreatedAt:      whereHelpernull_Time{field: "`artistInfo`.`createdAt`"},
+	UpdatedAt:      whereHelpernull_Time{field: "`artistInfo`.`updatedAt`"},
+	DeletedAt:      whereHelpernull_Time{field: "`artistInfo`.`deletedAt`"},
 }
 
 // ArtistInfoRels is where relationship names are stored.
@@ -139,9 +160,9 @@ func (*artistInfoR) NewStruct() *artistInfoR {
 type artistInfoL struct{}
 
 var (
-	artistInfoAllColumns            = []string{"artistId", "artistName", "artistType", "relatedArtists", "country"}
-	artistInfoColumnsWithoutDefault = []string{"artistName", "artistType", "relatedArtists", "country"}
-	artistInfoColumnsWithDefault    = []string{"artistId"}
+	artistInfoAllColumns            = []string{"artistId", "artistName", "artistType", "relatedArtists", "country", "createdAt", "updatedAt", "deletedAt"}
+	artistInfoColumnsWithoutDefault = []string{"artistName", "artistType", "relatedArtists", "country", "deletedAt"}
+	artistInfoColumnsWithDefault    = []string{"artistId", "createdAt", "updatedAt"}
 	artistInfoPrimaryKeyColumns     = []string{"artistId"}
 	artistInfoGeneratedColumns      = []string{}
 )
