@@ -9,11 +9,21 @@ import (
 	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	_ "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
+	ddgin "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"net/http"
 )
 
 func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection) *gin.Engine {
+	// Initialize Datadog tracer
+	tracer.Start()
+	defer tracer.Stop()
+
 	r := gin.Default()
+
+	// Wrap the router with Datadog middleware
+	r.Use(ddgin.Middleware("singsong-service"))
 
 	// CORS 설정 추가
 	r.Use(middleware.PlatformMiddleware())
@@ -25,6 +35,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		version.POST("/check", middleware.PlatformMiddleware(), handler.VersionCheck(db))
 		version.POST("/update", handler.LatestVersionUpdate(db))
 	}
+
+	r.GET("/", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "Welcome to SingSong-Server"}) })
 
 	// 추천 엔드포인트 설정
 	recommend := r.Group("/api/v1/recommend")
