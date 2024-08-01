@@ -5,8 +5,10 @@ import (
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
+	"time"
 )
 
 type MemberResponse struct {
@@ -57,17 +59,48 @@ func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+type WithdrawRequest struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
 // Withdraw godoc
 // @Summary      멤버 회원 탈퇴
 // @Description  멤버 회원 탈퇴
 // @Tags         Member
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} pkg.BaseResponseStruct{data=MemberResponse} "성공"
-// @Router       /member/withdraw [get]
+// @Success      200 {object} pkg.BaseResponseStruct{} "성공"
+// @Router       /member/withdraw [post]
 // @Security BearerAuth
-func Withdraw(db *sql.DB) gin.HandlerFunc {
+func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		withdrawRequest := &WithdrawRequest{}
+		if err := c.ShouldBindJSON(&withdrawRequest); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
 
+		// Get memberId from context
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
+
+		// Delete member
+		_, err := mysql.Members(qm.Where("id = ?", memberId)).UpdateAll(c, db, mysql.M{"deletedAt": time.Now()})
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// Delete redis
+		_, err = redis.Del(c, withdrawRequest.RefreshToken).Result()
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "success", nil)
 	}
 }

@@ -345,12 +345,7 @@ paths:
         "200":
           description: 성공
           schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.MemberResponse'
-              type: object
+            $ref: '#/definitions/pkg.BaseResponseStruct'
       security:
       - BearerAuth: []
       summary: 멤버 회원 탈퇴

@@ -57,6 +57,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		member.POST("/login", handler.Login(rdb, db))
 		member.POST("/reissue", handler.Reissue(rdb))
 		member.GET("", middleware.AuthMiddleware(db), handler.GetMemberInfo(db))
+		member.POST("/withdraw", middleware.AuthMiddleware(db), handler.Withdraw(db, rdb))
 	}
 
 	// 태그 엔드포인트 설정

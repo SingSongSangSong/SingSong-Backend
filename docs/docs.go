@@ -313,19 +313,7 @@ const docTemplate = `{
                     "200": {
                         "description": "성공",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.MemberResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
                         }
                     }
                 }
