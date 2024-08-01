@@ -26,7 +26,15 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	r.Use(ddgin.Middleware("singsong-service"))
 
 	// CORS 설정 추가
-	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.PlatformMiddleware())
+
+	// 버전 확인
+	version := r.Group("/api/v1/version")
+	{
+		version.GET("/", handler.AllVersion(db))
+		version.POST("/check", middleware.PlatformMiddleware(), handler.VersionCheck(db))
+		version.POST("/update", handler.LatestVersionUpdate(db))
+	}
 
 	r.GET("/", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "Welcome to SingSong-Server"}) })
 
@@ -35,6 +43,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	//recommend.Use(middleware.AuthMiddleware()) // 추천 엔드포인트 전체에서 인증을 쓴다면 이렇게도 가능
 	{
 		recommend.POST("/home", handler.HomeRecommendation(db, rdb, idxConnection))
+		recommend.GET("/home/songs", handler.HomeSongRecommendation(db))
 		recommend.POST("/songs", handler.SongRecommendation(db, rdb, idxConnection))
 		recommend.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendation(db, rdb, idxConnection)) //일단 새로고침에만 적용
 	}

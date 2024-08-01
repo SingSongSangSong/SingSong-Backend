@@ -1,4 +1,5 @@
 -- 테이블이 존재할 경우 삭제
+DROP TABLE IF EXISTS appVersion;
 DROP TABLE IF EXISTS keepSong;
 DROP TABLE IF EXISTS songTempInfo;
 DROP TABLE IF EXISTS songInfo;
@@ -63,4 +64,12 @@ CREATE TABLE IF NOT EXISTS keepSong (
     keepId BIGINT NOT NULL,
     songTempId BIGINT NOT NULL,
     songNumber INT NOT NULL,
+);
+
+CREATE TABLE IF NOT EXISTS appVersion (
+    appVersionId BIGINT AUTO_INCREMENT PRIMARY KEY,
+    platform VARCHAR(10) NOT NULL,
+    version VARCHAR(20) NOT NULL,
+    forceUpdate BOOLEAN NOT NULL DEFAULT FALSE,
+    releaseDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

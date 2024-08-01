@@ -27,6 +27,7 @@ type refreshResponse struct {
 	SingerName string   `json:"singerName"`
 	Tags       []string `json:"tags"`
 	IsKeep     bool     `json:"isKeep"`
+	SongTempId int64    `json:"songId"`
 }
 
 var (
@@ -104,14 +105,36 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		}
 
 		// Map으로 KeepSongs를 구성하여 존재 여부를 빠르게 확인
-		keepSongsMap := make(map[int]bool)
+		isKeepMap := make(map[int]bool)
 		for _, keepSong := range keepSongs {
-			keepSongsMap[keepSong.SongNumber] = true
+			isKeepMap[keepSong.SongNumber] = true
 		}
 
 		// refreshSongs에 isKeep 여부 추가
+		for i, song := range refreshedSongs {
+			refreshedSongs[i].IsKeep = isKeepMap[song.SongNumber]
+		}
+
+		// SongTempId 가져오기
+		songNumbers := make([]interface{}, 0, len(refreshedSongs))
 		for _, song := range refreshedSongs {
-			song.IsKeep = keepSongsMap[song.SongNumber]
+			songNumbers = append(songNumbers, song.SongNumber)
+		}
+
+		all, err := mysql.SongTempInfos(qm.WhereIn("songNumber IN ?", songNumbers...)).All(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		songTempIdMap := make(map[int]int64)
+		for _, song := range all {
+			songTempIdMap[song.SongNumber] = song.SongTempId
+		}
+
+		// refreshSongs에 songTempId 추가
+		for i, song := range refreshedSongs {
+			refreshedSongs[i].SongTempId = songTempIdMap[song.SongNumber]
 		}
 
 		// history 갱신
