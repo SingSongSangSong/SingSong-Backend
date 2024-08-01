@@ -246,7 +246,6 @@ func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string
 
 	for _, key := range keys {
 		if kid == key.Kid {
-			// idToken을 파싱하여 Payload 추출
 			publicKey, err := getRSAPublicKey(key)
 			if err != nil {
 				log.Printf("오류 발생 From getPayload: %v", err)

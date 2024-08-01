@@ -307,6 +307,23 @@ paths:
       summary: 회원가입 및 로그인
       tags:
       - Signup and Login
+  /member/logout:
+    post:
+      consumes:
+      - application/json
+      description: 멤버 회원 로그아웃
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 멤버 회원 로그아웃
+      tags:
+      - Member
   /member/reissue:
     post:
       consumes:
@@ -335,7 +352,7 @@ paths:
       tags:
       - Reissue
   /member/withdraw:
-    get:
+    post:
       consumes:
       - application/json
       description: 멤버 회원 탈퇴
@@ -345,12 +362,7 @@ paths:
         "200":
           description: 성공
           schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.MemberResponse'
-              type: object
+            $ref: '#/definitions/pkg.BaseResponseStruct'
       security:
       - BearerAuth: []
       summary: 멤버 회원 탈퇴

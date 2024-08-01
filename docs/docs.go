@@ -245,6 +245,34 @@ const docTemplate = `{
                 }
             }
         },
+        "/member/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "멤버 회원 로그아웃",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "멤버 회원 로그아웃",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
         "/member/reissue": {
             "post": {
                 "description": "AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)",
@@ -292,7 +320,7 @@ const docTemplate = `{
             }
         },
         "/member/withdraw": {
-            "get": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -313,19 +341,7 @@ const docTemplate = `{
                     "200": {
                         "description": "성공",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.MemberResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
                         }
                     }
                 }
