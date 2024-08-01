@@ -410,7 +410,30 @@ paths:
           description: 성공
       summary: 노래 평가 선택지를 추가합니다.
       tags:
-      - song review option CR for admin
+      - Song review option CR for admin
+  /songs/{songNumber}:
+    get:
+      consumes:
+      - application/json
+      description: 노래 상세 정보를 조회합니다
+      parameters:
+      - description: 노래 번호
+        in: path
+        name: songNumber
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 노래 상세 정보를 조회합니다
+      tags:
+      - Songs
   /songs/{songNumber}/reviews:
     get:
       consumes:
@@ -440,7 +463,7 @@ paths:
       - BearerAuth: []
       summary: 노래 평가를 조회합니다.
       tags:
-      - songs
+      - Songs
   /tags:
     get:
       consumes:

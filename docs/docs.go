@@ -395,7 +395,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "song review option CR for admin"
+                    "Song review option CR for admin"
                 ],
                 "summary": "노래 평가 선택지를 추가합니다.",
                 "parameters": [
@@ -416,6 +416,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/songs/{songNumber}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 상세 정보를 조회합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "노래 상세 정보를 조회합니다",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "노래 번호",
+                        "name": "songNumber",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
         "/songs/{songNumber}/reviews": {
             "get": {
                 "security": [
@@ -431,7 +468,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "songs"
+                    "Songs"
                 ],
                 "summary": "노래 평가를 조회합니다.",
                 "parameters": [

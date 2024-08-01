@@ -19,7 +19,7 @@ type songReviewOptionGetResponse struct {
 // SongReviewGet godoc
 // @Summary      노래 평가를 조회합니다.
 // @Description  노래 평가를 조회합니다.
-// @Tags         songs
+// @Tags         Songs
 // @Accept       json
 // @Produce      json
 // @Param        songNumber path string true "노래 번호"

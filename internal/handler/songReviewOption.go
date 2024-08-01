@@ -17,7 +17,7 @@ type songReviewOptionAddRequest struct {
 // AddSongReviewOption godoc
 // @Summary      노래 평가 선택지를 추가합니다.
 // @Description  노래 평가 선택지를 추가합니다.
-// @Tags         song review option CR for admin
+// @Tags         Song review option CR for admin
 // @Accept       json
 // @Produce      json
 // @Param        songReviewOptionAddRequest body songReviewOptionAddRequest true "평가 선택지"
