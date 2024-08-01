@@ -434,6 +434,33 @@ paths:
       summary: 노래 상세 정보를 조회합니다
       tags:
       - Songs
+  /songs/{songNumber}/related:
+    get:
+      consumes:
+      - application/json
+      description: 연관된 노래들을 조회합니다
+      parameters:
+      - description: 노래 번호
+        in: path
+        name: songNumber
+        required: true
+        type: string
+      - description: 한번에 조회할 노래 개수
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 연관된 노래들을 조회합니다
+      tags:
+      - Songs
   /songs/{songNumber}/reviews:
     get:
       consumes:

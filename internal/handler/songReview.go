@@ -16,7 +16,7 @@ type songReviewOptionGetResponse struct {
 	Selected           bool   `json:"selected"`
 }
 
-// SongReviewGet godoc
+// GetSongReview godoc
 // @Summary      노래 평가를 조회합니다.
 // @Description  노래 평가를 조회합니다.
 // @Tags         Songs
@@ -26,7 +26,7 @@ type songReviewOptionGetResponse struct {
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]songReviewOptionGetResponse} "성공"
 // @Router       /songs/{songNumber}/reviews [get]
 // @Security BearerAuth
-func SongReviewGet(db *sql.DB) gin.HandlerFunc {
+func GetSongReview(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		songNumber := c.Param("songNumber")
 		if songNumber == "" {
@@ -86,3 +86,42 @@ func SongReviewGet(db *sql.DB) gin.HandlerFunc {
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }
+
+type songReviewOptionPutRequest struct {
+	SongReviewOptionId int64 `json:"songReviewOptionId"`
+	Selected           bool  `json:"selected"`
+}
+
+//// PutSongReview godoc
+//// @Summary      노래 평가를 등록합니다.
+//// @Description  노래 평가를 등록합니다.
+//// @Tags         Songs
+//// @Accept       json
+//// @Produce      json
+//// @Param        songNumber path string true "노래 번호"
+//// @Success      200 {object} pkg.BaseResponseStruct{data=[]songReviewOptionPutRequest} "성공"
+//// @Router       /songs/{songNumber}/reviews [put]
+//// @Security BearerAuth
+//func PutSongReview(db *sql.DB) gin.HandlerFunc {
+//	return func(c *gin.Context) {
+//		songNumber := c.Param("songNumber")
+//		if songNumber == "" {
+//			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songNumber in path variable", nil)
+//			return
+//		}
+//
+//		value, exists := c.Get("memberId")
+//		if !exists {
+//			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+//			return
+//		}
+//
+//		memberId, ok := value.(int64)
+//		if !ok {
+//			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
+//			return
+//		}
+//
+//		pkg.BaseResponse(c, http.StatusOK, "ok", response)
+//	}
+//}

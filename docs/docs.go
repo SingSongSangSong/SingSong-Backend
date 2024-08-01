@@ -453,6 +453,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/songs/{songNumber}/related": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "연관된 노래들을 조회합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "연관된 노래들을 조회합니다",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "노래 번호",
+                        "name": "songNumber",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
         "/songs/{songNumber}/reviews": {
             "get": {
                 "security": [

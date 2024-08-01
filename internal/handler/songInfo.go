@@ -69,7 +69,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 		for i, keep := range all {
 			keepIds[i] = keep.KeepId
 		}
-		isKeep, err := mysql.KeepSongs(qm.WhereIn("keepId in ?", keepIds...)).Exists(c, db)
+		isKeep, err := mysql.KeepSongs(qm.WhereIn("keepId in ?", keepIds...)).Exists(c, db) // todo:
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
