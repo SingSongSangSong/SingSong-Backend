@@ -10,10 +10,10 @@ DROP TABLE IF EXISTS member;
 -- member 테이블 생성
 CREATE TABLE IF NOT EXISTS member (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  nickname VARCHAR(255),
+    nickname VARCHAR(255),
     email VARCHAR(50) NOT NULL,
     gender VARCHAR(20),
-    birthday DATE,
+    birthyear INT,
     provider VARCHAR(20) NOT NULL,
     UNIQUE(email, provider) -- 이메일과 제공자는 유니크하도록 설정
     );
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS keepSong (
     keepSongId BIGINT AUTO_INCREMENT PRIMARY KEY,
     keepId BIGINT NOT NULL,
     songTempId BIGINT NOT NULL,
-    songNumber INT NOT NULL,
+    songNumber INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS appVersion (

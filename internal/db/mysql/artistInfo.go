@@ -773,7 +773,7 @@ func (o *ArtistInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			artistInfoAllColumns,
 			artistInfoColumnsWithDefault,
 			artistInfoColumnsWithoutDefault,
@@ -789,7 +789,8 @@ func (o *ArtistInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 			return errors.New("mysql: unable to upsert artistInfo, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(artistInfoAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`artistInfo`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `artistInfo` WHERE %s",
