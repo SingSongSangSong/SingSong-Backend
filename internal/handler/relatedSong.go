@@ -130,7 +130,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		}
 		keepIds := make([]interface{}, len(all))
 		for i, keep := range all {
-			keepIds[i] = keep.KeepId
+			keepIds[i] = keep.KeepListID
 		}
 		keepSongs, err := mysql.KeepSongs(qm.WhereIn("keepId in ?", keepIds...)).All(c, db)
 		if err != nil {
@@ -147,14 +147,14 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		for _, song := range relatedSongs {
 			songNumbers = append(songNumbers, song.SongNumber)
 		}
-		slice, err := mysql.SongTempInfos(qm.WhereIn("songNumber IN ?", songNumbers...)).All(c, db)
+		slice, err := mysql.SongInfos(qm.WhereIn("song_number IN ?", songNumbers...)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 		songTempIdMap := make(map[int]int64)
 		for _, song := range slice {
-			songTempIdMap[song.SongNumber] = song.SongTempId
+			songTempIdMap[song.SongNumber] = song.SongInfoID
 		}
 
 		// response에 isKeep과 songTempId 추가

@@ -15,7 +15,7 @@ type songInfoResponse struct {
 	SongName    string   `json:"songName"`
 	SingerName  string   `json:"singerName"`
 	Tags        []string `json:"tags"`
-	SongTempId  int64    `json:"songId"`
+	SongInfoId  int64    `json:"songId"`
 	Album       string   `json:"album"`
 	Octave      string   `json:"octave"`
 	Description string   `json:"description"`
@@ -53,23 +53,26 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 		}
 
 		//노래 정보 조회
-		one, err := mysql.SongTempInfos(qm.Where("songNumber = ?", songNumber)).One(c, db)
+		one, err := mysql.SongInfos(qm.Where("song_number = ?", songNumber)).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - no song", nil)
 			return
 		}
 
 		//유저의 keep 여부 조회
-		all, err := mysql.KeepLists(qm.Where("memberId = ?", memberId)).All(c, db)
+		all, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		keepIds := make([]interface{}, len(all))
+		keepListIds := make([]interface{}, len(all))
 		for i, keep := range all {
-			keepIds[i] = keep.KeepId
+			keepListIds[i] = keep.KeepListID
 		}
-		isKeep, err := mysql.KeepSongs(qm.WhereIn("keepId in ?", keepIds...)).Exists(c, db) // todo:
+		isKeep, err := mysql.KeepSongs(
+			qm.WhereIn("keep_list_id in ?", keepListIds...),
+			qm.And("song_info_id = ?", one.SongInfoID),
+		).Exists(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -80,7 +83,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			SongName:    one.SongName,
 			SingerName:  one.ArtistName,
 			Tags:        parseTags(one.Tags.String),
-			SongTempId:  one.SongTempId,
+			SongInfoId:  one.SongInfoID,
 			Album:       one.Album.String,
 			Octave:      one.Octave.String,
 			Description: "20대 남성이 가장 많이 부른 노래 Top 1", //todo: 하드 코딩 제거

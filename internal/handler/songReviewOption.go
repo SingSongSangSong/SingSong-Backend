@@ -47,7 +47,7 @@ func AddSongReviewOption(db *sql.DB) gin.HandlerFunc {
 // ListSongReviewOptions godoc
 // @Summary      노래 평가 선택지를 모두 조회합니다.
 // @Description  노래 평가 선택지를 모두 조회합니다.
-// @Tags         song review option CR for admin
+// @Tags         Song review option CR for admin
 // @Accept       json
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]string} "성공"

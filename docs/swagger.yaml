@@ -584,7 +584,7 @@ paths:
               type: object
       summary: 노래 평가 선택지를 모두 조회합니다.
       tags:
-      - song review option CR for admin
+      - Song review option CR for admin
     post:
       consumes:
       - application/json

@@ -569,7 +569,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "song review option CR for admin"
+                    "Song review option CR for admin"
                 ],
                 "summary": "노래 평가 선택지를 모두 조회합니다.",
                 "responses": {

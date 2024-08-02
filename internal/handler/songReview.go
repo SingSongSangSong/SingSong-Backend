@@ -46,13 +46,13 @@ func GetSongReview(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		one, err := mysql.SongTempInfos(qm.Where("songNumber = ?", songNumber)).One(c, db)
+		one, err := mysql.SongInfos(qm.Where("song_number = ?", songNumber)).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - no song", nil)
 			return
 		}
 
-		all, err := mysql.SongReviews(qm.Where("songId = ?", one.SongTempId)).All(c, db)
+		all, err := mysql.SongReviews(qm.Where("song_info_id = ?", one.SongInfoID)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -60,10 +60,10 @@ func GetSongReview(db *sql.DB) gin.HandlerFunc {
 
 		options, err := mysql.SongReviewOptions().All(c, db)
 
-		response := make([]songReviewOptionGetResponse, 0, 2)
+		response := make([]songReviewOptionGetResponse, 0, len(options))
 		for _, option := range options {
 			response = append(response, songReviewOptionGetResponse{
-				SongReviewOptionId: option.SongReviewOptionId,
+				SongReviewOptionId: option.SongReviewOptionID,
 				Title:              option.Title.String,
 				Count:              0,
 				Selected:           false,
@@ -72,9 +72,9 @@ func GetSongReview(db *sql.DB) gin.HandlerFunc {
 		if len(all) != 0 {
 			for _, review := range all {
 				for i, option := range response {
-					if review.SongReviewOptionId == option.SongReviewOptionId {
+					if review.SongReviewOptionID == option.SongReviewOptionId {
 						response[i].Count++
-						if review.MemberId == memberId {
+						if review.MemberID == memberId {
 							response[i].Selected = true
 						}
 						continue
