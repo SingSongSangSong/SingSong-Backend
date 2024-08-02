@@ -678,6 +678,26 @@ paths:
       tags:
       - Songs
   /songs/{songNumber}/reviews:
+    delete:
+      consumes:
+      - application/json
+      description: 노래 평가를 등록/수정합니다.
+      parameters:
+      - description: 노래 번호
+        in: path
+        name: songNumber
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+      security:
+      - BearerAuth: []
+      summary: 노래 평가를 등록/수정합니다.
+      tags:
+      - Songs
     get:
       consumes:
       - application/json
@@ -710,7 +730,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: 노래 평가를 등록합니다.
+      description: 노래 평가를 등록/수정합니다.
       parameters:
       - description: 노래 번호
         in: path
@@ -728,18 +748,9 @@ paths:
       responses:
         "200":
           description: 성공
-          schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/handler.songReviewOptionPutRequest'
-                  type: array
-              type: object
       security:
       - BearerAuth: []
-      summary: 노래 평가를 등록합니다.
+      summary: 노래 평가를 등록/수정합니다.
       tags:
       - Songs
   /tags:

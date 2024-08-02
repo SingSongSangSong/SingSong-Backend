@@ -796,7 +796,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "노래 평가를 등록합니다.",
+                "description": "노래 평가를 등록/수정합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -806,7 +806,7 @@ const docTemplate = `{
                 "tags": [
                     "Songs"
                 ],
-                "summary": "노래 평가를 등록합니다.",
+                "summary": "노래 평가를 등록/수정합니다.",
                 "parameters": [
                     {
                         "type": "string",
@@ -827,25 +827,39 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.songReviewOptionPutRequest"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
+                        "description": "성공"
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 평가를 등록/수정합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "노래 평가를 등록/수정합니다.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "노래 번호",
+                        "name": "songNumber",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
                     }
                 }
             }

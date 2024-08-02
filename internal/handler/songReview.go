@@ -101,7 +101,7 @@ type songReviewOptionPutRequest struct {
 // @Produce      json
 // @Param        songNumber path string true "노래 번호"
 // @Param		 songReview body songReviewOptionPutRequest true "songReviewOptionId"
-// @Success      200 {object} pkg.BaseResponseStruct{data=[]songReviewOptionPutRequest} "성공"
+// @Success      200 "성공"
 // @Router       /songs/{songNumber}/reviews [put]
 // @Security BearerAuth
 func PutSongReview(db *sql.DB) gin.HandlerFunc {
@@ -185,6 +185,51 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 				return
 			}
 		}
+		pkg.BaseResponse(c, http.StatusOK, "ok", nil)
+	}
+}
+
+// DeleteSongReview godoc
+// @Summary      노래 평가를 삭제합니다.
+// @Description  노래 평가를 삭제합니다.
+// @Tags         Songs
+// @Accept       json
+// @Produce      json
+// @Param        songNumber path string true "노래 번호"
+// @Success      200 "성공"
+// @Router       /songs/{songNumber}/reviews [delete]
+// @Security BearerAuth
+func DeleteSongReview(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		songNumber := c.Param("songNumber")
+		if songNumber == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songNumber in path variable", nil)
+			return
+		}
+
+		value, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
+		memberId, ok := value.(int64)
+		if !ok {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
+			return
+		}
+
+		one, err := mysql.SongInfos(qm.Where("song_number = ?", songNumber)).One(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		_, err = mysql.SongReviews(qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", one.SongInfoID)).DeleteAll(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
 		pkg.BaseResponse(c, http.StatusOK, "ok", nil)
 	}
 }
