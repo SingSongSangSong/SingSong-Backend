@@ -781,6 +781,65 @@
                         }
                     }
                 }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 평가를 등록합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "노래 평가를 등록합니다.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "노래 번호",
+                        "name": "songNumber",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "songReviewOptionId",
+                        "name": "songReview",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.songReviewOptionPutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.songReviewOptionPutRequest"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
             }
         },
         "/tags": {
@@ -1246,6 +1305,14 @@
                 },
                 "title": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.songReviewOptionPutRequest": {
+            "type": "object",
+            "properties": {
+                "songReviewOptionId": {
+                    "type": "integer"
                 }
             }
         },

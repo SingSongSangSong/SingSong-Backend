@@ -230,6 +230,11 @@ definitions:
       title:
         type: string
     type: object
+  handler.songReviewOptionPutRequest:
+    properties:
+      songReviewOptionId:
+        type: integer
+    type: object
   handler.versionCheckRequest:
     properties:
       version:
@@ -700,6 +705,41 @@ paths:
       security:
       - BearerAuth: []
       summary: 노래 평가를 조회합니다.
+      tags:
+      - Songs
+    put:
+      consumes:
+      - application/json
+      description: 노래 평가를 등록합니다.
+      parameters:
+      - description: 노래 번호
+        in: path
+        name: songNumber
+        required: true
+        type: string
+      - description: songReviewOptionId
+        in: body
+        name: songReview
+        required: true
+        schema:
+          $ref: '#/definitions/handler.songReviewOptionPutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.songReviewOptionPutRequest'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 노래 평가를 등록합니다.
       tags:
       - Songs
   /tags:

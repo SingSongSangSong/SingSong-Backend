@@ -5,6 +5,8 @@ import (
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 )
@@ -89,39 +91,100 @@ func GetSongReview(db *sql.DB) gin.HandlerFunc {
 
 type songReviewOptionPutRequest struct {
 	SongReviewOptionId int64 `json:"songReviewOptionId"`
-	Selected           bool  `json:"selected"`
 }
 
-//// PutSongReview godoc
-//// @Summary      노래 평가를 등록합니다.
-//// @Description  노래 평가를 등록합니다.
-//// @Tags         Songs
-//// @Accept       json
-//// @Produce      json
-//// @Param        songNumber path string true "노래 번호"
-//// @Success      200 {object} pkg.BaseResponseStruct{data=[]songReviewOptionPutRequest} "성공"
-//// @Router       /songs/{songNumber}/reviews [put]
-//// @Security BearerAuth
-//func PutSongReview(db *sql.DB) gin.HandlerFunc {
-//	return func(c *gin.Context) {
-//		songNumber := c.Param("songNumber")
-//		if songNumber == "" {
-//			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songNumber in path variable", nil)
-//			return
-//		}
-//
-//		value, exists := c.Get("memberId")
-//		if !exists {
-//			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
-//			return
-//		}
-//
-//		memberId, ok := value.(int64)
-//		if !ok {
-//			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
-//			return
-//		}
-//
-//		pkg.BaseResponse(c, http.StatusOK, "ok", response)
-//	}
-//}
+// PutSongReview godoc
+// @Summary      노래 평가를 등록/수정합니다.
+// @Description  노래 평가를 등록/수정합니다.
+// @Tags         Songs
+// @Accept       json
+// @Produce      json
+// @Param        songNumber path string true "노래 번호"
+// @Param		 songReview body songReviewOptionPutRequest true "songReviewOptionId"
+// @Success      200 {object} pkg.BaseResponseStruct{data=[]songReviewOptionPutRequest} "성공"
+// @Router       /songs/{songNumber}/reviews [put]
+// @Security BearerAuth
+func PutSongReview(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		songNumber := c.Param("songNumber")
+		if songNumber == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songNumber in path variable", nil)
+			return
+		}
+
+		value, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
+		memberId, ok := value.(int64)
+		if !ok {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
+			return
+		}
+
+		value2, exists := c.Get("birthyear")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthyear not found", nil)
+			return
+		}
+
+		birthyear, ok := value2.(null.Int)
+		if !ok {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthyear not type null.int", nil)
+			return
+		}
+
+		value3, exists := c.Get("gender")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not found", nil)
+			return
+		}
+
+		gender, ok := value3.(null.String)
+		if !ok {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not type null.String", nil)
+			return
+		}
+
+		var request songReviewOptionPutRequest
+		if err := c.ShouldBindJSON(&request); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
+		one, err := mysql.SongInfos(qm.Where("song_number = ?", songNumber)).One(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// db에 songReview가 있다면 update, 없다면 insert
+		exist, err := mysql.SongReviews(qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", one.SongInfoID)).Exists(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		if exist {
+			_, err := mysql.SongReviews(qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", one.SongInfoID)).UpdateAll(c, db, mysql.M{"song_review_option_id": request.SongReviewOptionId})
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+		} else {
+			review := mysql.SongReview{
+				SongInfoID:         one.SongInfoID,
+				MemberID:           memberId,
+				SongReviewOptionID: request.SongReviewOptionId,
+				Gender:             gender,
+				Birthyear:          birthyear,
+			}
+
+			if err := review.Insert(c, db, boil.Infer()); err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+		}
+		pkg.BaseResponse(c, http.StatusOK, "ok", nil)
+	}
+}
