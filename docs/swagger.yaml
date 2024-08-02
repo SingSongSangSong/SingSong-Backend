@@ -1,5 +1,39 @@
 basePath: /api/v1
 definitions:
+  handler.CommentRequest:
+    properties:
+      content:
+        type: string
+      isRecomment:
+        type: boolean
+      parentCommentId:
+        type: integer
+      songInfoId:
+        type: integer
+    type: object
+  handler.CommentResponse:
+    properties:
+      commentId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      isRecomment:
+        type: boolean
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentCommentId:
+        type: integer
+      recomments:
+        items:
+          $ref: '#/definitions/handler.CommentResponse'
+        type: array
+      songInfoId:
+        type: integer
+    type: object
   handler.LoginRequest:
     properties:
       birthYear:
@@ -53,6 +87,28 @@ definitions:
         type: string
       refreshToken:
         type: string
+    type: object
+  handler.ReportRequest:
+    properties:
+      commentId:
+        type: integer
+      reason:
+        type: string
+      subjectMemberId:
+        type: integer
+    type: object
+  handler.ReportResponse:
+    properties:
+      commentId:
+        type: integer
+      reason:
+        type: string
+      reportId:
+        type: integer
+      reporterId:
+        type: integer
+      subjectMemberId:
+        type: integer
     type: object
   handler.SongDeleteFromPlaylistRequest:
     properties:
@@ -251,6 +307,120 @@ info:
   title: 싱송생송 API
   version: "1.0"
 paths:
+  /comment:
+    post:
+      consumes:
+      - application/json
+      description: SongNumber에 댓글 달기
+      parameters:
+      - description: commentRequest
+        in: body
+        name: CommentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.CommentResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: SongNumber에 댓글 달기
+      tags:
+      - Comment
+  /comment/{songId}:
+    get:
+      consumes:
+      - application/json
+      description: Get comments for a specific song identified by songId
+      parameters:
+      - description: Song ID
+        in: path
+        name: songId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.CommentResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve comments for the specified SongNumber
+      tags:
+      - Comment
+  /comment/like:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글에 좋아요 누르기
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.PlaylistAddResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글에 좋아요 누르기
+      tags:
+      - Comment
+  /comment/report:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글ID를 통해 신고하기
+      parameters:
+      - description: ReportRequest
+        in: body
+        name: ReportRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.ReportResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글ID를 통해 신고하기
+      tags:
+      - Comment
   /keep:
     delete:
       consumes:

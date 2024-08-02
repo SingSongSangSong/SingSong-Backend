@@ -86,6 +86,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		songReviewOptions.POST("", handler.AddSongReviewOption(db))
 	}
 
+	comment := r.Group("/api/v1/comment")
+	{
+		comment.POST("", middleware.AuthMiddleware(db), handler.CommentOnSong(db))
+		comment.GET("/:songId", middleware.AuthMiddleware(db), handler.GetCommentOnSong(db))
+		comment.POST("/report", middleware.AuthMiddleware(db), handler.ReportComment(db))
+	}
+
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
