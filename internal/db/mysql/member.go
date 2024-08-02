@@ -24,62 +24,47 @@ import (
 
 // Member is an object representing the database table.
 type Member struct {
-	ID        int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
+	MemberID  int64       `boil:"member_id" json:"member_id" toml:"member_id" yaml:"member_id"`
 	Nickname  null.String `boil:"nickname" json:"nickname,omitempty" toml:"nickname" yaml:"nickname,omitempty"`
 	Email     string      `boil:"email" json:"email" toml:"email" yaml:"email"`
 	Gender    null.String `boil:"gender" json:"gender,omitempty" toml:"gender" yaml:"gender,omitempty"`
 	Birthyear null.Int    `boil:"birthyear" json:"birthyear,omitempty" toml:"birthyear" yaml:"birthyear,omitempty"`
 	Provider  string      `boil:"provider" json:"provider" toml:"provider" yaml:"provider"`
-	CreatedAt null.Time   `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
-	UpdatedAt null.Time   `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
-	DeletedAt null.Time   `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
 
 	R *memberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L memberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var MemberColumns = struct {
-	ID        string
+	MemberID  string
 	Nickname  string
 	Email     string
 	Gender    string
 	Birthyear string
 	Provider  string
-	CreatedAt string
-	UpdatedAt string
-	DeletedAt string
 }{
-	ID:        "id",
+	MemberID:  "member_id",
 	Nickname:  "nickname",
 	Email:     "email",
 	Gender:    "gender",
 	Birthyear: "birthyear",
 	Provider:  "provider",
-	CreatedAt: "createdAt",
-	UpdatedAt: "updatedAt",
-	DeletedAt: "deletedAt",
 }
 
 var MemberTableColumns = struct {
-	ID        string
+	MemberID  string
 	Nickname  string
 	Email     string
 	Gender    string
 	Birthyear string
 	Provider  string
-	CreatedAt string
-	UpdatedAt string
-	DeletedAt string
 }{
-	ID:        "member.id",
+	MemberID:  "member.member_id",
 	Nickname:  "member.nickname",
 	Email:     "member.email",
 	Gender:    "member.gender",
 	Birthyear: "member.birthyear",
 	Provider:  "member.provider",
-	CreatedAt: "member.createdAt",
-	UpdatedAt: "member.updatedAt",
-	DeletedAt: "member.deletedAt",
 }
 
 // Generated where
@@ -123,25 +108,19 @@ func (w whereHelpernull_Int) IsNull() qm.QueryMod    { return qmhelper.WhereIsNu
 func (w whereHelpernull_Int) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var MemberWhere = struct {
-	ID        whereHelperint64
+	MemberID  whereHelperint64
 	Nickname  whereHelpernull_String
 	Email     whereHelperstring
 	Gender    whereHelpernull_String
 	Birthyear whereHelpernull_Int
 	Provider  whereHelperstring
-	CreatedAt whereHelpernull_Time
-	UpdatedAt whereHelpernull_Time
-	DeletedAt whereHelpernull_Time
 }{
-	ID:        whereHelperint64{field: "`member`.`id`"},
+	MemberID:  whereHelperint64{field: "`member`.`member_id`"},
 	Nickname:  whereHelpernull_String{field: "`member`.`nickname`"},
 	Email:     whereHelperstring{field: "`member`.`email`"},
 	Gender:    whereHelpernull_String{field: "`member`.`gender`"},
 	Birthyear: whereHelpernull_Int{field: "`member`.`birthyear`"},
 	Provider:  whereHelperstring{field: "`member`.`provider`"},
-	CreatedAt: whereHelpernull_Time{field: "`member`.`createdAt`"},
-	UpdatedAt: whereHelpernull_Time{field: "`member`.`updatedAt`"},
-	DeletedAt: whereHelpernull_Time{field: "`member`.`deletedAt`"},
 }
 
 // MemberRels is where relationship names are stored.
@@ -161,10 +140,10 @@ func (*memberR) NewStruct() *memberR {
 type memberL struct{}
 
 var (
-	memberAllColumns            = []string{"id", "nickname", "email", "gender", "birthyear", "provider", "createdAt", "updatedAt", "deletedAt"}
-	memberColumnsWithoutDefault = []string{"nickname", "email", "gender", "birthyear", "provider", "deletedAt"}
-	memberColumnsWithDefault    = []string{"id", "createdAt", "updatedAt"}
-	memberPrimaryKeyColumns     = []string{"id"}
+	memberAllColumns            = []string{"member_id", "nickname", "email", "gender", "birthyear", "provider"}
+	memberColumnsWithoutDefault = []string{"nickname", "email", "gender", "birthyear", "provider"}
+	memberColumnsWithDefault    = []string{"member_id"}
+	memberPrimaryKeyColumns     = []string{"member_id"}
 	memberGeneratedColumns      = []string{}
 )
 
@@ -486,7 +465,7 @@ func Members(mods ...qm.QueryMod) memberQuery {
 
 // FindMember retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindMember(ctx context.Context, exec boil.ContextExecutor, iD int64, selectCols ...string) (*Member, error) {
+func FindMember(ctx context.Context, exec boil.ContextExecutor, memberID int64, selectCols ...string) (*Member, error) {
 	memberObj := &Member{}
 
 	sel := "*"
@@ -494,10 +473,10 @@ func FindMember(ctx context.Context, exec boil.ContextExecutor, iD int64, select
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `member` where `id`=?", sel,
+		"select %s from `member` where `member_id`=?", sel,
 	)
 
-	q := queries.Raw(query, iD)
+	q := queries.Raw(query, memberID)
 
 	err := q.Bind(ctx, exec, memberObj)
 	if err != nil {
@@ -591,13 +570,13 @@ func (o *Member) Insert(ctx context.Context, exec boil.ContextExecutor, columns 
 		return ErrSyncFail
 	}
 
-	o.ID = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == memberMapping["id"] {
+	o.MemberID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == memberMapping["member_id"] {
 		goto CacheNoHooks
 	}
 
 	identifierCols = []interface{}{
-		o.ID,
+		o.MemberID,
 	}
 
 	if boil.IsDebug(ctx) {
@@ -745,7 +724,7 @@ func (o MemberSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, c
 }
 
 var mySQLMemberUniqueColumns = []string{
-	"id",
+	"member_id",
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
@@ -863,8 +842,8 @@ func (o *Member) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 		return ErrSyncFail
 	}
 
-	o.ID = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == memberMapping["id"] {
+	o.MemberID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == memberMapping["member_id"] {
 		goto CacheNoHooks
 	}
 
@@ -906,7 +885,7 @@ func (o *Member) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, 
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), memberPrimaryKeyMapping)
-	sql := "DELETE FROM `member` WHERE `id`=?"
+	sql := "DELETE FROM `member` WHERE `member_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1003,7 +982,7 @@ func (o MemberSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Member) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindMember(ctx, exec, o.ID)
+	ret, err := FindMember(ctx, exec, o.MemberID)
 	if err != nil {
 		return err
 	}
@@ -1042,16 +1021,16 @@ func (o *MemberSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) 
 }
 
 // MemberExists checks if the Member row exists.
-func MemberExists(ctx context.Context, exec boil.ContextExecutor, iD int64) (bool, error) {
+func MemberExists(ctx context.Context, exec boil.ContextExecutor, memberID int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `member` where `id`=? limit 1)"
+	sql := "select exists(select 1 from `member` where `member_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, iD)
+		fmt.Fprintln(writer, memberID)
 	}
-	row := exec.QueryRowContext(ctx, sql, iD)
+	row := exec.QueryRowContext(ctx, sql, memberID)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1063,5 +1042,5 @@ func MemberExists(ctx context.Context, exec boil.ContextExecutor, iD int64) (boo
 
 // Exists checks if the Member row exists.
 func (o *Member) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return MemberExists(ctx, exec, o.ID)
+	return MemberExists(ctx, exec, o.MemberID)
 }

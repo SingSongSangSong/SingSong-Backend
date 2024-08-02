@@ -158,7 +158,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 			}
 		}
 
-		allSongs, err := mysql.SongTempInfos(qm.WhereIn("songNumber IN ?", songNumbers...)).All(c, db)
+		allSongs, err := mysql.SongInfos(qm.WhereIn("song_number IN ?", songNumbers...)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -166,7 +166,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 
 		songsMap := make(map[int]int64, len(allSongs))
 		for _, song := range allSongs {
-			songsMap[song.SongNumber] = song.SongTempId
+			songsMap[song.SongNumber] = song.SongInfoID
 		}
 
 		// homeResponses 업데이트
@@ -176,7 +176,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 				if tempId, ok := songsMap[songNumber]; ok {
 					homeResponse.Songs[i].SongTempId = tempId
 				} else {
-					log.Printf("SongTempId not found for SongNumber: %v", songNumber)
+					log.Printf("SongInfoId not found for SongNumber: %v", songNumber)
 					homeResponse.Songs[i].SongTempId = 0 // 혹은 디폴트 값 설정
 				}
 			}

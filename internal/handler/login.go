@@ -139,7 +139,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 				return
 			}
 
-			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.ID)
+			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 		}
 
 		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload.Email, KAKAO_PROVIDER)

@@ -263,6 +263,17 @@ const docTemplate = `{
                     "Member"
                 ],
                 "summary": "멤버 회원 로그아웃",
+                "parameters": [
+                    {
+                        "description": "refreshToken",
+                        "name": "refreshToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.WithdrawRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "성공",
@@ -337,6 +348,17 @@ const docTemplate = `{
                     "Member"
                 ],
                 "summary": "멤버 회원 탈퇴",
+                "parameters": [
+                    {
+                        "description": "refreshToken",
+                        "name": "refreshToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.WithdrawRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "성공",
@@ -739,6 +761,14 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "handler.WithdrawRequest": {
+            "type": "object",
+            "properties": {
+                "refreshToken": {
+                    "type": "string"
                 }
             }
         },
