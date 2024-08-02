@@ -68,7 +68,7 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		c.Set("memberId", one.ID)
+		c.Set("memberId", one.MemberID)
 		c.Next()
 	}
 }

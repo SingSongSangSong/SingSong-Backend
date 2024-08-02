@@ -24,100 +24,107 @@ import (
 
 // SongInfo is an object representing the database table.
 type SongInfo struct {
-	SongId     int64       `boil:"songId" json:"songId" toml:"songId" yaml:"songId"`
-	SongName   string      `boil:"songName" json:"songName" toml:"songName" yaml:"songName"`
-	ArtistId   int64       `boil:"artistId" json:"artistId" toml:"artistId" yaml:"artistId"`
-	Album      null.String `boil:"album" json:"album,omitempty" toml:"album" yaml:"album,omitempty"`
-	SongNumber int         `boil:"songNumber" json:"songNumber" toml:"songNumber" yaml:"songNumber"`
-	Octave     null.String `boil:"octave" json:"octave,omitempty" toml:"octave" yaml:"octave,omitempty"`
-	TjLink     null.String `boil:"tjLink" json:"tjLink,omitempty" toml:"tjLink" yaml:"tjLink,omitempty"`
-	Tags       null.String `boil:"tags" json:"tags,omitempty" toml:"tags" yaml:"tags,omitempty"`
-	CreatedAt  null.Time   `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
-	UpdatedAt  null.Time   `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
-	DeletedAt  null.Time   `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
+	SongInfoID     int64       `boil:"song_info_id" json:"song_info_id" toml:"song_info_id" yaml:"song_info_id"`
+	SongName       string      `boil:"song_name" json:"song_name" toml:"song_name" yaml:"song_name"`
+	ArtistID       null.Int64  `boil:"artist_id" json:"artist_id,omitempty" toml:"artist_id" yaml:"artist_id,omitempty"`
+	ArtistName     string      `boil:"artist_name" json:"artist_name" toml:"artist_name" yaml:"artist_name"`
+	ArtistType     null.String `boil:"artist_type" json:"artist_type,omitempty" toml:"artist_type" yaml:"artist_type,omitempty"`
+	RelatedArtists null.String `boil:"related_artists" json:"related_artists,omitempty" toml:"related_artists" yaml:"related_artists,omitempty"`
+	Country        null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
+	Album          null.String `boil:"album" json:"album,omitempty" toml:"album" yaml:"album,omitempty"`
+	SongNumber     int         `boil:"song_number" json:"song_number" toml:"song_number" yaml:"song_number"`
+	Octave         null.String `boil:"octave" json:"octave,omitempty" toml:"octave" yaml:"octave,omitempty"`
+	TJLink         null.String `boil:"tj_link" json:"tj_link,omitempty" toml:"tj_link" yaml:"tj_link,omitempty"`
+	Tags           null.String `boil:"tags" json:"tags,omitempty" toml:"tags" yaml:"tags,omitempty"`
 
 	R *songInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L songInfoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var SongInfoColumns = struct {
-	SongId     string
-	SongName   string
-	ArtistId   string
-	Album      string
-	SongNumber string
-	Octave     string
-	TjLink     string
-	Tags       string
-	CreatedAt  string
-	UpdatedAt  string
-	DeletedAt  string
+	SongInfoID     string
+	SongName       string
+	ArtistID       string
+	ArtistName     string
+	ArtistType     string
+	RelatedArtists string
+	Country        string
+	Album          string
+	SongNumber     string
+	Octave         string
+	TJLink         string
+	Tags           string
 }{
-	SongId:     "songId",
-	SongName:   "songName",
-	ArtistId:   "artistId",
-	Album:      "album",
-	SongNumber: "songNumber",
-	Octave:     "octave",
-	TjLink:     "tjLink",
-	Tags:       "tags",
-	CreatedAt:  "createdAt",
-	UpdatedAt:  "updatedAt",
-	DeletedAt:  "deletedAt",
+	SongInfoID:     "song_info_id",
+	SongName:       "song_name",
+	ArtistID:       "artist_id",
+	ArtistName:     "artist_name",
+	ArtistType:     "artist_type",
+	RelatedArtists: "related_artists",
+	Country:        "country",
+	Album:          "album",
+	SongNumber:     "song_number",
+	Octave:         "octave",
+	TJLink:         "tj_link",
+	Tags:           "tags",
 }
 
 var SongInfoTableColumns = struct {
-	SongId     string
-	SongName   string
-	ArtistId   string
-	Album      string
-	SongNumber string
-	Octave     string
-	TjLink     string
-	Tags       string
-	CreatedAt  string
-	UpdatedAt  string
-	DeletedAt  string
+	SongInfoID     string
+	SongName       string
+	ArtistID       string
+	ArtistName     string
+	ArtistType     string
+	RelatedArtists string
+	Country        string
+	Album          string
+	SongNumber     string
+	Octave         string
+	TJLink         string
+	Tags           string
 }{
-	SongId:     "songInfo.songId",
-	SongName:   "songInfo.songName",
-	ArtistId:   "songInfo.artistId",
-	Album:      "songInfo.album",
-	SongNumber: "songInfo.songNumber",
-	Octave:     "songInfo.octave",
-	TjLink:     "songInfo.tjLink",
-	Tags:       "songInfo.tags",
-	CreatedAt:  "songInfo.createdAt",
-	UpdatedAt:  "songInfo.updatedAt",
-	DeletedAt:  "songInfo.deletedAt",
+	SongInfoID:     "song_info.song_info_id",
+	SongName:       "song_info.song_name",
+	ArtistID:       "song_info.artist_id",
+	ArtistName:     "song_info.artist_name",
+	ArtistType:     "song_info.artist_type",
+	RelatedArtists: "song_info.related_artists",
+	Country:        "song_info.country",
+	Album:          "song_info.album",
+	SongNumber:     "song_info.song_number",
+	Octave:         "song_info.octave",
+	TJLink:         "song_info.tj_link",
+	Tags:           "song_info.tags",
 }
 
 // Generated where
 
 var SongInfoWhere = struct {
-	SongId     whereHelperint64
-	SongName   whereHelperstring
-	ArtistId   whereHelperint64
-	Album      whereHelpernull_String
-	SongNumber whereHelperint
-	Octave     whereHelpernull_String
-	TjLink     whereHelpernull_String
-	Tags       whereHelpernull_String
-	CreatedAt  whereHelpernull_Time
-	UpdatedAt  whereHelpernull_Time
-	DeletedAt  whereHelpernull_Time
+	SongInfoID     whereHelperint64
+	SongName       whereHelperstring
+	ArtistID       whereHelpernull_Int64
+	ArtistName     whereHelperstring
+	ArtistType     whereHelpernull_String
+	RelatedArtists whereHelpernull_String
+	Country        whereHelpernull_String
+	Album          whereHelpernull_String
+	SongNumber     whereHelperint
+	Octave         whereHelpernull_String
+	TJLink         whereHelpernull_String
+	Tags           whereHelpernull_String
 }{
-	SongId:     whereHelperint64{field: "`songInfo`.`songId`"},
-	SongName:   whereHelperstring{field: "`songInfo`.`songName`"},
-	ArtistId:   whereHelperint64{field: "`songInfo`.`artistId`"},
-	Album:      whereHelpernull_String{field: "`songInfo`.`album`"},
-	SongNumber: whereHelperint{field: "`songInfo`.`songNumber`"},
-	Octave:     whereHelpernull_String{field: "`songInfo`.`octave`"},
-	TjLink:     whereHelpernull_String{field: "`songInfo`.`tjLink`"},
-	Tags:       whereHelpernull_String{field: "`songInfo`.`tags`"},
-	CreatedAt:  whereHelpernull_Time{field: "`songInfo`.`createdAt`"},
-	UpdatedAt:  whereHelpernull_Time{field: "`songInfo`.`updatedAt`"},
-	DeletedAt:  whereHelpernull_Time{field: "`songInfo`.`deletedAt`"},
+	SongInfoID:     whereHelperint64{field: "`song_info`.`song_info_id`"},
+	SongName:       whereHelperstring{field: "`song_info`.`song_name`"},
+	ArtistID:       whereHelpernull_Int64{field: "`song_info`.`artist_id`"},
+	ArtistName:     whereHelperstring{field: "`song_info`.`artist_name`"},
+	ArtistType:     whereHelpernull_String{field: "`song_info`.`artist_type`"},
+	RelatedArtists: whereHelpernull_String{field: "`song_info`.`related_artists`"},
+	Country:        whereHelpernull_String{field: "`song_info`.`country`"},
+	Album:          whereHelpernull_String{field: "`song_info`.`album`"},
+	SongNumber:     whereHelperint{field: "`song_info`.`song_number`"},
+	Octave:         whereHelpernull_String{field: "`song_info`.`octave`"},
+	TJLink:         whereHelpernull_String{field: "`song_info`.`tj_link`"},
+	Tags:           whereHelpernull_String{field: "`song_info`.`tags`"},
 }
 
 // SongInfoRels is where relationship names are stored.
@@ -137,10 +144,10 @@ func (*songInfoR) NewStruct() *songInfoR {
 type songInfoL struct{}
 
 var (
-	songInfoAllColumns            = []string{"songId", "songName", "artistId", "album", "songNumber", "octave", "tjLink", "tags", "createdAt", "updatedAt", "deletedAt"}
-	songInfoColumnsWithoutDefault = []string{"songName", "artistId", "album", "songNumber", "octave", "tjLink", "tags", "deletedAt"}
-	songInfoColumnsWithDefault    = []string{"songId", "createdAt", "updatedAt"}
-	songInfoPrimaryKeyColumns     = []string{"songId"}
+	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags"}
+	songInfoColumnsWithoutDefault = []string{"song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags"}
+	songInfoColumnsWithDefault    = []string{"song_info_id"}
+	songInfoPrimaryKeyColumns     = []string{"song_info_id"}
 	songInfoGeneratedColumns      = []string{}
 )
 
@@ -388,7 +395,7 @@ func (q songInfoQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Son
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "mysql: failed to execute a one query for songInfo")
+		return nil, errors.Wrap(err, "mysql: failed to execute a one query for song_info")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -427,7 +434,7 @@ func (q songInfoQuery) Count(ctx context.Context, exec boil.ContextExecutor) (in
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to count songInfo rows")
+		return 0, errors.Wrap(err, "mysql: failed to count song_info rows")
 	}
 
 	return count, nil
@@ -443,7 +450,7 @@ func (q songInfoQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "mysql: failed to check if songInfo exists")
+		return false, errors.Wrap(err, "mysql: failed to check if song_info exists")
 	}
 
 	return count > 0, nil
@@ -451,10 +458,10 @@ func (q songInfoQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 
 // SongInfos retrieves all the records using an executor.
 func SongInfos(mods ...qm.QueryMod) songInfoQuery {
-	mods = append(mods, qm.From("`songInfo`"))
+	mods = append(mods, qm.From("`song_info`"))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"`songInfo`.*"})
+		queries.SetSelect(q, []string{"`song_info`.*"})
 	}
 
 	return songInfoQuery{q}
@@ -462,7 +469,7 @@ func SongInfos(mods ...qm.QueryMod) songInfoQuery {
 
 // FindSongInfo retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindSongInfo(ctx context.Context, exec boil.ContextExecutor, songId int64, selectCols ...string) (*SongInfo, error) {
+func FindSongInfo(ctx context.Context, exec boil.ContextExecutor, songInfoID int64, selectCols ...string) (*SongInfo, error) {
 	songInfoObj := &SongInfo{}
 
 	sel := "*"
@@ -470,17 +477,17 @@ func FindSongInfo(ctx context.Context, exec boil.ContextExecutor, songId int64, 
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `songInfo` where `songId`=?", sel,
+		"select %s from `song_info` where `song_info_id`=?", sel,
 	)
 
-	q := queries.Raw(query, songId)
+	q := queries.Raw(query, songInfoID)
 
 	err := q.Bind(ctx, exec, songInfoObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "mysql: unable to select from songInfo")
+		return nil, errors.Wrap(err, "mysql: unable to select from song_info")
 	}
 
 	if err = songInfoObj.doAfterSelectHooks(ctx, exec); err != nil {
@@ -494,7 +501,7 @@ func FindSongInfo(ctx context.Context, exec boil.ContextExecutor, songId int64, 
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *SongInfo) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("mysql: no songInfo provided for insertion")
+		return errors.New("mysql: no song_info provided for insertion")
 	}
 
 	var err error
@@ -527,15 +534,15 @@ func (o *SongInfo) Insert(ctx context.Context, exec boil.ContextExecutor, column
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `songInfo` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `song_info` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `songInfo` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `song_info` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `songInfo` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, songInfoPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `song_info` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, songInfoPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -552,7 +559,7 @@ func (o *SongInfo) Insert(ctx context.Context, exec boil.ContextExecutor, column
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to insert into songInfo")
+		return errors.Wrap(err, "mysql: unable to insert into song_info")
 	}
 
 	var lastID int64
@@ -567,13 +574,13 @@ func (o *SongInfo) Insert(ctx context.Context, exec boil.ContextExecutor, column
 		return ErrSyncFail
 	}
 
-	o.SongId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == songInfoMapping["songId"] {
+	o.SongInfoID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == songInfoMapping["song_info_id"] {
 		goto CacheNoHooks
 	}
 
 	identifierCols = []interface{}{
-		o.SongId,
+		o.SongInfoID,
 	}
 
 	if boil.IsDebug(ctx) {
@@ -583,7 +590,7 @@ func (o *SongInfo) Insert(ctx context.Context, exec boil.ContextExecutor, column
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to populate default values for songInfo")
+		return errors.Wrap(err, "mysql: unable to populate default values for song_info")
 	}
 
 CacheNoHooks:
@@ -615,10 +622,10 @@ func (o *SongInfo) Update(ctx context.Context, exec boil.ContextExecutor, column
 			songInfoPrimaryKeyColumns,
 		)
 		if len(wl) == 0 {
-			return 0, errors.New("mysql: unable to update songInfo, could not build whitelist")
+			return 0, errors.New("mysql: unable to update song_info, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `songInfo` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `song_info` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, songInfoPrimaryKeyColumns),
 		)
@@ -638,12 +645,12 @@ func (o *SongInfo) Update(ctx context.Context, exec boil.ContextExecutor, column
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to update songInfo row")
+		return 0, errors.Wrap(err, "mysql: unable to update song_info row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by update for songInfo")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by update for song_info")
 	}
 
 	if !cached {
@@ -661,12 +668,12 @@ func (q songInfoQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to update all for songInfo")
+		return 0, errors.Wrap(err, "mysql: unable to update all for song_info")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to retrieve rows affected for songInfo")
+		return 0, errors.Wrap(err, "mysql: unable to retrieve rows affected for song_info")
 	}
 
 	return rowsAff, nil
@@ -699,7 +706,7 @@ func (o SongInfoSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `songInfo` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `song_info` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, songInfoPrimaryKeyColumns, len(o)))
 
@@ -721,14 +728,14 @@ func (o SongInfoSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 }
 
 var mySQLSongInfoUniqueColumns = []string{
-	"songId",
+	"song_info_id",
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *SongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("mysql: no songInfo provided for upsert")
+		return errors.New("mysql: no song_info provided for upsert")
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
@@ -784,14 +791,14 @@ func (o *SongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("mysql: unable to upsert songInfo, could not build update column list")
+			return errors.New("mysql: unable to upsert song_info, could not build update column list")
 		}
 
 		ret := strmangle.SetComplement(songInfoAllColumns, strmangle.SetIntersect(insert, update))
 
-		cache.query = buildUpsertQueryMySQL(dialect, "`songInfo`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`song_info`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `songInfo` WHERE %s",
+			"SELECT %s FROM `song_info` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -823,7 +830,7 @@ func (o *SongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to upsert for songInfo")
+		return errors.Wrap(err, "mysql: unable to upsert for song_info")
 	}
 
 	var lastID int64
@@ -839,14 +846,14 @@ func (o *SongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 		return ErrSyncFail
 	}
 
-	o.SongId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == songInfoMapping["songId"] {
+	o.SongInfoID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == songInfoMapping["song_info_id"] {
 		goto CacheNoHooks
 	}
 
 	uniqueMap, err = queries.BindMapping(songInfoType, songInfoMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to retrieve unique values for songInfo")
+		return errors.Wrap(err, "mysql: unable to retrieve unique values for song_info")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -857,7 +864,7 @@ func (o *SongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to populate default values for songInfo")
+		return errors.Wrap(err, "mysql: unable to populate default values for song_info")
 	}
 
 CacheNoHooks:
@@ -882,7 +889,7 @@ func (o *SongInfo) Delete(ctx context.Context, exec boil.ContextExecutor) (int64
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), songInfoPrimaryKeyMapping)
-	sql := "DELETE FROM `songInfo` WHERE `songId`=?"
+	sql := "DELETE FROM `song_info` WHERE `song_info_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -891,12 +898,12 @@ func (o *SongInfo) Delete(ctx context.Context, exec boil.ContextExecutor) (int64
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to delete from songInfo")
+		return 0, errors.Wrap(err, "mysql: unable to delete from song_info")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by delete for songInfo")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by delete for song_info")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -916,12 +923,12 @@ func (q songInfoQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to delete all from songInfo")
+		return 0, errors.Wrap(err, "mysql: unable to delete all from song_info")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for songInfo")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for song_info")
 	}
 
 	return rowsAff, nil
@@ -947,7 +954,7 @@ func (o SongInfoSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `songInfo` WHERE " +
+	sql := "DELETE FROM `song_info` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, songInfoPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -962,7 +969,7 @@ func (o SongInfoSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor)
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for songInfo")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for song_info")
 	}
 
 	if len(songInfoAfterDeleteHooks) != 0 {
@@ -979,7 +986,7 @@ func (o SongInfoSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor)
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *SongInfo) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindSongInfo(ctx, exec, o.SongId)
+	ret, err := FindSongInfo(ctx, exec, o.SongInfoID)
 	if err != nil {
 		return err
 	}
@@ -1002,7 +1009,7 @@ func (o *SongInfoSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `songInfo`.* FROM `songInfo` WHERE " +
+	sql := "SELECT `song_info`.* FROM `song_info` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, songInfoPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1018,20 +1025,20 @@ func (o *SongInfoSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor
 }
 
 // SongInfoExists checks if the SongInfo row exists.
-func SongInfoExists(ctx context.Context, exec boil.ContextExecutor, songId int64) (bool, error) {
+func SongInfoExists(ctx context.Context, exec boil.ContextExecutor, songInfoID int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `songInfo` where `songId`=? limit 1)"
+	sql := "select exists(select 1 from `song_info` where `song_info_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, songId)
+		fmt.Fprintln(writer, songInfoID)
 	}
-	row := exec.QueryRowContext(ctx, sql, songId)
+	row := exec.QueryRowContext(ctx, sql, songInfoID)
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "mysql: unable to check if songInfo exists")
+		return false, errors.Wrap(err, "mysql: unable to check if song_info exists")
 	}
 
 	return exists, nil
@@ -1039,5 +1046,5 @@ func SongInfoExists(ctx context.Context, exec boil.ContextExecutor, songId int64
 
 // Exists checks if the SongInfo row exists.
 func (o *SongInfo) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return SongInfoExists(ctx, exec, o.SongId)
+	return SongInfoExists(ctx, exec, o.SongInfoID)
 }

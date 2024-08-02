@@ -61,6 +61,11 @@ definitions:
           type: integer
         type: array
     type: object
+  handler.WithdrawRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
   handler.homeRequest:
     properties:
       tags:
@@ -312,6 +317,13 @@ paths:
       consumes:
       - application/json
       description: 멤버 회원 로그아웃
+      parameters:
+      - description: refreshToken
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          $ref: '#/definitions/handler.WithdrawRequest'
       produces:
       - application/json
       responses:
@@ -356,6 +368,13 @@ paths:
       consumes:
       - application/json
       description: 멤버 회원 탈퇴
+      parameters:
+      - description: refreshToken
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          $ref: '#/definitions/handler.WithdrawRequest'
       produces:
       - application/json
       responses:

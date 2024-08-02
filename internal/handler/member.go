@@ -37,7 +37,7 @@ func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Get member info
-		member, err := mysql.Members(qm.Where("id = ?", memberId)).One(c, db)
+		member, err := mysql.Members(qm.Where("member_id = ?", memberId)).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -69,6 +69,7 @@ type WithdrawRequest struct {
 // @Tags         Member
 // @Accept       json
 // @Produce      json
+// @Param        refreshToken   body      WithdrawRequest  true  "refreshToken"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
 // @Router       /member/withdraw [post]
 // @Security BearerAuth
@@ -88,7 +89,7 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 		}
 
 		// Delete member
-		_, err := mysql.Members(qm.Where("id = ?", memberId)).UpdateAll(c, db, mysql.M{"deletedAt": time.Now()})
+		_, err := mysql.Members(qm.Where("member_id = ?", memberId)).UpdateAll(c, db, mysql.M{"deleted_at": time.Now()})
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -111,6 +112,7 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 // @Tags         Member
 // @Accept       json
 // @Produce      json
+// @Param        refreshToken   body      WithdrawRequest  true  "refreshToken"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
 // @Router       /member/logout [post]
 // @Security BearerAuth

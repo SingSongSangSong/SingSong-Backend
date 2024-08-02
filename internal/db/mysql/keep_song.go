@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,52 +23,37 @@ import (
 
 // KeepSong is an object representing the database table.
 type KeepSong struct {
-	KeepSongId int64     `boil:"keepSongId" json:"keepSongId" toml:"keepSongId" yaml:"keepSongId"`
-	KeepId     int64     `boil:"keepId" json:"keepId" toml:"keepId" yaml:"keepId"`
-	SongTempId int64     `boil:"songTempId" json:"songTempId" toml:"songTempId" yaml:"songTempId"`
-	SongNumber int       `boil:"songNumber" json:"songNumber" toml:"songNumber" yaml:"songNumber"`
-	CreatedAt  null.Time `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
-	UpdatedAt  null.Time `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
-	DeletedAt  null.Time `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
+	KeepSongID int64 `boil:"keep_song_id" json:"keep_song_id" toml:"keep_song_id" yaml:"keep_song_id"`
+	KeepListID int64 `boil:"keep_list_id" json:"keep_list_id" toml:"keep_list_id" yaml:"keep_list_id"`
+	SongInfoID int64 `boil:"song_info_id" json:"song_info_id" toml:"song_info_id" yaml:"song_info_id"`
+	SongNumber int   `boil:"song_number" json:"song_number" toml:"song_number" yaml:"song_number"`
 
 	R *keepSongR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L keepSongL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var KeepSongColumns = struct {
-	KeepSongId string
-	KeepId     string
-	SongTempId string
+	KeepSongID string
+	KeepListID string
+	SongInfoID string
 	SongNumber string
-	CreatedAt  string
-	UpdatedAt  string
-	DeletedAt  string
 }{
-	KeepSongId: "keepSongId",
-	KeepId:     "keepId",
-	SongTempId: "songTempId",
-	SongNumber: "songNumber",
-	CreatedAt:  "createdAt",
-	UpdatedAt:  "updatedAt",
-	DeletedAt:  "deletedAt",
+	KeepSongID: "keep_song_id",
+	KeepListID: "keep_list_id",
+	SongInfoID: "song_info_id",
+	SongNumber: "song_number",
 }
 
 var KeepSongTableColumns = struct {
-	KeepSongId string
-	KeepId     string
-	SongTempId string
+	KeepSongID string
+	KeepListID string
+	SongInfoID string
 	SongNumber string
-	CreatedAt  string
-	UpdatedAt  string
-	DeletedAt  string
 }{
-	KeepSongId: "keepSong.keepSongId",
-	KeepId:     "keepSong.keepId",
-	SongTempId: "keepSong.songTempId",
-	SongNumber: "keepSong.songNumber",
-	CreatedAt:  "keepSong.createdAt",
-	UpdatedAt:  "keepSong.updatedAt",
-	DeletedAt:  "keepSong.deletedAt",
+	KeepSongID: "keep_song.keep_song_id",
+	KeepListID: "keep_song.keep_list_id",
+	SongInfoID: "keep_song.song_info_id",
+	SongNumber: "keep_song.song_number",
 }
 
 // Generated where
@@ -98,21 +82,15 @@ func (w whereHelperint) NIN(slice []int) qm.QueryMod {
 }
 
 var KeepSongWhere = struct {
-	KeepSongId whereHelperint64
-	KeepId     whereHelperint64
-	SongTempId whereHelperint64
+	KeepSongID whereHelperint64
+	KeepListID whereHelperint64
+	SongInfoID whereHelperint64
 	SongNumber whereHelperint
-	CreatedAt  whereHelpernull_Time
-	UpdatedAt  whereHelpernull_Time
-	DeletedAt  whereHelpernull_Time
 }{
-	KeepSongId: whereHelperint64{field: "`keepSong`.`keepSongId`"},
-	KeepId:     whereHelperint64{field: "`keepSong`.`keepId`"},
-	SongTempId: whereHelperint64{field: "`keepSong`.`songTempId`"},
-	SongNumber: whereHelperint{field: "`keepSong`.`songNumber`"},
-	CreatedAt:  whereHelpernull_Time{field: "`keepSong`.`createdAt`"},
-	UpdatedAt:  whereHelpernull_Time{field: "`keepSong`.`updatedAt`"},
-	DeletedAt:  whereHelpernull_Time{field: "`keepSong`.`deletedAt`"},
+	KeepSongID: whereHelperint64{field: "`keep_song`.`keep_song_id`"},
+	KeepListID: whereHelperint64{field: "`keep_song`.`keep_list_id`"},
+	SongInfoID: whereHelperint64{field: "`keep_song`.`song_info_id`"},
+	SongNumber: whereHelperint{field: "`keep_song`.`song_number`"},
 }
 
 // KeepSongRels is where relationship names are stored.
@@ -132,10 +110,10 @@ func (*keepSongR) NewStruct() *keepSongR {
 type keepSongL struct{}
 
 var (
-	keepSongAllColumns            = []string{"keepSongId", "keepId", "songTempId", "songNumber", "createdAt", "updatedAt", "deletedAt"}
-	keepSongColumnsWithoutDefault = []string{"keepId", "songTempId", "songNumber", "deletedAt"}
-	keepSongColumnsWithDefault    = []string{"keepSongId", "createdAt", "updatedAt"}
-	keepSongPrimaryKeyColumns     = []string{"keepSongId"}
+	keepSongAllColumns            = []string{"keep_song_id", "keep_list_id", "song_info_id", "song_number"}
+	keepSongColumnsWithoutDefault = []string{"keep_list_id", "song_info_id", "song_number"}
+	keepSongColumnsWithDefault    = []string{"keep_song_id"}
+	keepSongPrimaryKeyColumns     = []string{"keep_song_id"}
 	keepSongGeneratedColumns      = []string{}
 )
 
@@ -383,7 +361,7 @@ func (q keepSongQuery) One(ctx context.Context, exec boil.ContextExecutor) (*Kee
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "mysql: failed to execute a one query for keepSong")
+		return nil, errors.Wrap(err, "mysql: failed to execute a one query for keep_song")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -422,7 +400,7 @@ func (q keepSongQuery) Count(ctx context.Context, exec boil.ContextExecutor) (in
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to count keepSong rows")
+		return 0, errors.Wrap(err, "mysql: failed to count keep_song rows")
 	}
 
 	return count, nil
@@ -438,7 +416,7 @@ func (q keepSongQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "mysql: failed to check if keepSong exists")
+		return false, errors.Wrap(err, "mysql: failed to check if keep_song exists")
 	}
 
 	return count > 0, nil
@@ -446,10 +424,10 @@ func (q keepSongQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (b
 
 // KeepSongs retrieves all the records using an executor.
 func KeepSongs(mods ...qm.QueryMod) keepSongQuery {
-	mods = append(mods, qm.From("`keepSong`"))
+	mods = append(mods, qm.From("`keep_song`"))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"`keepSong`.*"})
+		queries.SetSelect(q, []string{"`keep_song`.*"})
 	}
 
 	return keepSongQuery{q}
@@ -457,7 +435,7 @@ func KeepSongs(mods ...qm.QueryMod) keepSongQuery {
 
 // FindKeepSong retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindKeepSong(ctx context.Context, exec boil.ContextExecutor, keepSongId int64, selectCols ...string) (*KeepSong, error) {
+func FindKeepSong(ctx context.Context, exec boil.ContextExecutor, keepSongID int64, selectCols ...string) (*KeepSong, error) {
 	keepSongObj := &KeepSong{}
 
 	sel := "*"
@@ -465,17 +443,17 @@ func FindKeepSong(ctx context.Context, exec boil.ContextExecutor, keepSongId int
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `keepSong` where `keepSongId`=?", sel,
+		"select %s from `keep_song` where `keep_song_id`=?", sel,
 	)
 
-	q := queries.Raw(query, keepSongId)
+	q := queries.Raw(query, keepSongID)
 
 	err := q.Bind(ctx, exec, keepSongObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "mysql: unable to select from keepSong")
+		return nil, errors.Wrap(err, "mysql: unable to select from keep_song")
 	}
 
 	if err = keepSongObj.doAfterSelectHooks(ctx, exec); err != nil {
@@ -489,7 +467,7 @@ func FindKeepSong(ctx context.Context, exec boil.ContextExecutor, keepSongId int
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *KeepSong) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("mysql: no keepSong provided for insertion")
+		return errors.New("mysql: no keep_song provided for insertion")
 	}
 
 	var err error
@@ -522,15 +500,15 @@ func (o *KeepSong) Insert(ctx context.Context, exec boil.ContextExecutor, column
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `keepSong` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `keep_song` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `keepSong` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `keep_song` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `keepSong` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, keepSongPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `keep_song` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, keepSongPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -547,7 +525,7 @@ func (o *KeepSong) Insert(ctx context.Context, exec boil.ContextExecutor, column
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to insert into keepSong")
+		return errors.Wrap(err, "mysql: unable to insert into keep_song")
 	}
 
 	var lastID int64
@@ -562,13 +540,13 @@ func (o *KeepSong) Insert(ctx context.Context, exec boil.ContextExecutor, column
 		return ErrSyncFail
 	}
 
-	o.KeepSongId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == keepSongMapping["keepSongId"] {
+	o.KeepSongID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == keepSongMapping["keep_song_id"] {
 		goto CacheNoHooks
 	}
 
 	identifierCols = []interface{}{
-		o.KeepSongId,
+		o.KeepSongID,
 	}
 
 	if boil.IsDebug(ctx) {
@@ -578,7 +556,7 @@ func (o *KeepSong) Insert(ctx context.Context, exec boil.ContextExecutor, column
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to populate default values for keepSong")
+		return errors.Wrap(err, "mysql: unable to populate default values for keep_song")
 	}
 
 CacheNoHooks:
@@ -610,10 +588,10 @@ func (o *KeepSong) Update(ctx context.Context, exec boil.ContextExecutor, column
 			keepSongPrimaryKeyColumns,
 		)
 		if len(wl) == 0 {
-			return 0, errors.New("mysql: unable to update keepSong, could not build whitelist")
+			return 0, errors.New("mysql: unable to update keep_song, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `keepSong` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `keep_song` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, keepSongPrimaryKeyColumns),
 		)
@@ -633,12 +611,12 @@ func (o *KeepSong) Update(ctx context.Context, exec boil.ContextExecutor, column
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to update keepSong row")
+		return 0, errors.Wrap(err, "mysql: unable to update keep_song row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by update for keepSong")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by update for keep_song")
 	}
 
 	if !cached {
@@ -656,12 +634,12 @@ func (q keepSongQuery) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to update all for keepSong")
+		return 0, errors.Wrap(err, "mysql: unable to update all for keep_song")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to retrieve rows affected for keepSong")
+		return 0, errors.Wrap(err, "mysql: unable to retrieve rows affected for keep_song")
 	}
 
 	return rowsAff, nil
@@ -694,7 +672,7 @@ func (o KeepSongSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `keepSong` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `keep_song` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, keepSongPrimaryKeyColumns, len(o)))
 
@@ -716,14 +694,14 @@ func (o KeepSongSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor,
 }
 
 var mySQLKeepSongUniqueColumns = []string{
-	"keepSongId",
+	"keep_song_id",
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *KeepSong) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("mysql: no keepSong provided for upsert")
+		return errors.New("mysql: no keep_song provided for upsert")
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
@@ -779,14 +757,14 @@ func (o *KeepSong) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("mysql: unable to upsert keepSong, could not build update column list")
+			return errors.New("mysql: unable to upsert keep_song, could not build update column list")
 		}
 
 		ret := strmangle.SetComplement(keepSongAllColumns, strmangle.SetIntersect(insert, update))
 
-		cache.query = buildUpsertQueryMySQL(dialect, "`keepSong`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`keep_song`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `keepSong` WHERE %s",
+			"SELECT %s FROM `keep_song` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -818,7 +796,7 @@ func (o *KeepSong) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to upsert for keepSong")
+		return errors.Wrap(err, "mysql: unable to upsert for keep_song")
 	}
 
 	var lastID int64
@@ -834,14 +812,14 @@ func (o *KeepSong) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 		return ErrSyncFail
 	}
 
-	o.KeepSongId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == keepSongMapping["keepSongId"] {
+	o.KeepSongID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == keepSongMapping["keep_song_id"] {
 		goto CacheNoHooks
 	}
 
 	uniqueMap, err = queries.BindMapping(keepSongType, keepSongMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to retrieve unique values for keepSong")
+		return errors.Wrap(err, "mysql: unable to retrieve unique values for keep_song")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -852,7 +830,7 @@ func (o *KeepSong) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to populate default values for keepSong")
+		return errors.Wrap(err, "mysql: unable to populate default values for keep_song")
 	}
 
 CacheNoHooks:
@@ -877,7 +855,7 @@ func (o *KeepSong) Delete(ctx context.Context, exec boil.ContextExecutor) (int64
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), keepSongPrimaryKeyMapping)
-	sql := "DELETE FROM `keepSong` WHERE `keepSongId`=?"
+	sql := "DELETE FROM `keep_song` WHERE `keep_song_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -886,12 +864,12 @@ func (o *KeepSong) Delete(ctx context.Context, exec boil.ContextExecutor) (int64
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to delete from keepSong")
+		return 0, errors.Wrap(err, "mysql: unable to delete from keep_song")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by delete for keepSong")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by delete for keep_song")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -911,12 +889,12 @@ func (q keepSongQuery) DeleteAll(ctx context.Context, exec boil.ContextExecutor)
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to delete all from keepSong")
+		return 0, errors.Wrap(err, "mysql: unable to delete all from keep_song")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for keepSong")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for keep_song")
 	}
 
 	return rowsAff, nil
@@ -942,7 +920,7 @@ func (o KeepSongSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor)
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `keepSong` WHERE " +
+	sql := "DELETE FROM `keep_song` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, keepSongPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -957,7 +935,7 @@ func (o KeepSongSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor)
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for keepSong")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for keep_song")
 	}
 
 	if len(keepSongAfterDeleteHooks) != 0 {
@@ -974,7 +952,7 @@ func (o KeepSongSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor)
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *KeepSong) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindKeepSong(ctx, exec, o.KeepSongId)
+	ret, err := FindKeepSong(ctx, exec, o.KeepSongID)
 	if err != nil {
 		return err
 	}
@@ -997,7 +975,7 @@ func (o *KeepSongSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `keepSong`.* FROM `keepSong` WHERE " +
+	sql := "SELECT `keep_song`.* FROM `keep_song` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, keepSongPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1013,20 +991,20 @@ func (o *KeepSongSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor
 }
 
 // KeepSongExists checks if the KeepSong row exists.
-func KeepSongExists(ctx context.Context, exec boil.ContextExecutor, keepSongId int64) (bool, error) {
+func KeepSongExists(ctx context.Context, exec boil.ContextExecutor, keepSongID int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `keepSong` where `keepSongId`=? limit 1)"
+	sql := "select exists(select 1 from `keep_song` where `keep_song_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, keepSongId)
+		fmt.Fprintln(writer, keepSongID)
 	}
-	row := exec.QueryRowContext(ctx, sql, keepSongId)
+	row := exec.QueryRowContext(ctx, sql, keepSongID)
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "mysql: unable to check if keepSong exists")
+		return false, errors.Wrap(err, "mysql: unable to check if keep_song exists")
 	}
 
 	return exists, nil
@@ -1034,5 +1012,5 @@ func KeepSongExists(ctx context.Context, exec boil.ContextExecutor, keepSongId i
 
 // Exists checks if the KeepSong row exists.
 func (o *KeepSong) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return KeepSongExists(ctx, exec, o.KeepSongId)
+	return KeepSongExists(ctx, exec, o.KeepSongID)
 }

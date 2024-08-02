@@ -27,7 +27,7 @@ type refreshResponse struct {
 	SingerName string   `json:"singerName"`
 	Tags       []string `json:"tags"`
 	IsKeep     bool     `json:"isKeep"`
-	SongTempId int64    `json:"songId"`
+	SongInfoId int64    `json:"songId"`
 }
 
 var (
@@ -91,14 +91,14 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		}
 
 		//list
-		one, err := mysql.KeepLists(qm.Where("memberId = ?", memberId)).One(c, db)
+		one, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		// 모든 KeepSongs 가져오기
-		keepSongs, err := mysql.KeepSongs(qm.Where("keepId = ?", one.KeepId)).All(c, db)
+		keepSongs, err := mysql.KeepSongs(qm.Where("keep_list_id = ?", one.KeepListID)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -115,13 +115,13 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			refreshedSongs[i].IsKeep = isKeepMap[song.SongNumber]
 		}
 
-		// SongTempId 가져오기
+		// SongInfoId 가져오기
 		songNumbers := make([]interface{}, 0, len(refreshedSongs))
 		for _, song := range refreshedSongs {
 			songNumbers = append(songNumbers, song.SongNumber)
 		}
 
-		all, err := mysql.SongTempInfos(qm.WhereIn("songNumber IN ?", songNumbers...)).All(c, db)
+		all, err := mysql.SongInfos(qm.WhereIn("song_number IN ?", songNumbers...)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -129,12 +129,12 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 
 		songTempIdMap := make(map[int]int64)
 		for _, song := range all {
-			songTempIdMap[song.SongNumber] = song.SongTempId
+			songTempIdMap[song.SongNumber] = song.SongInfoID
 		}
 
 		// refreshSongs에 songTempId 추가
 		for i, song := range refreshedSongs {
-			refreshedSongs[i].SongTempId = songTempIdMap[song.SongNumber]
+			refreshedSongs[i].SongInfoId = songTempIdMap[song.SongNumber]
 		}
 
 		// history 갱신

@@ -24,7 +24,7 @@ import (
 
 // SongReviewOption is an object representing the database table.
 type SongReviewOption struct {
-	SongReviewOptionId int64       `boil:"songReviewOptionId" json:"songReviewOptionId" toml:"songReviewOptionId" yaml:"songReviewOptionId"`
+	SongReviewOptionID int64       `boil:"song_review_option_id" json:"song_review_option_id" toml:"song_review_option_id" yaml:"song_review_option_id"`
 	Title              null.String `boil:"title" json:"title,omitempty" toml:"title" yaml:"title,omitempty"`
 
 	R *songReviewOptionR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -32,29 +32,29 @@ type SongReviewOption struct {
 }
 
 var SongReviewOptionColumns = struct {
-	SongReviewOptionId string
+	SongReviewOptionID string
 	Title              string
 }{
-	SongReviewOptionId: "songReviewOptionId",
+	SongReviewOptionID: "song_review_option_id",
 	Title:              "title",
 }
 
 var SongReviewOptionTableColumns = struct {
-	SongReviewOptionId string
+	SongReviewOptionID string
 	Title              string
 }{
-	SongReviewOptionId: "songReviewOption.songReviewOptionId",
-	Title:              "songReviewOption.title",
+	SongReviewOptionID: "song_review_option.song_review_option_id",
+	Title:              "song_review_option.title",
 }
 
 // Generated where
 
 var SongReviewOptionWhere = struct {
-	SongReviewOptionId whereHelperint64
+	SongReviewOptionID whereHelperint64
 	Title              whereHelpernull_String
 }{
-	SongReviewOptionId: whereHelperint64{field: "`songReviewOption`.`songReviewOptionId`"},
-	Title:              whereHelpernull_String{field: "`songReviewOption`.`title`"},
+	SongReviewOptionID: whereHelperint64{field: "`song_review_option`.`song_review_option_id`"},
+	Title:              whereHelpernull_String{field: "`song_review_option`.`title`"},
 }
 
 // SongReviewOptionRels is where relationship names are stored.
@@ -74,10 +74,10 @@ func (*songReviewOptionR) NewStruct() *songReviewOptionR {
 type songReviewOptionL struct{}
 
 var (
-	songReviewOptionAllColumns            = []string{"songReviewOptionId", "title"}
+	songReviewOptionAllColumns            = []string{"song_review_option_id", "title"}
 	songReviewOptionColumnsWithoutDefault = []string{"title"}
-	songReviewOptionColumnsWithDefault    = []string{"songReviewOptionId"}
-	songReviewOptionPrimaryKeyColumns     = []string{"songReviewOptionId"}
+	songReviewOptionColumnsWithDefault    = []string{"song_review_option_id"}
+	songReviewOptionPrimaryKeyColumns     = []string{"song_review_option_id"}
 	songReviewOptionGeneratedColumns      = []string{}
 )
 
@@ -325,7 +325,7 @@ func (q songReviewOptionQuery) One(ctx context.Context, exec boil.ContextExecuto
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "mysql: failed to execute a one query for songReviewOption")
+		return nil, errors.Wrap(err, "mysql: failed to execute a one query for song_review_option")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -364,7 +364,7 @@ func (q songReviewOptionQuery) Count(ctx context.Context, exec boil.ContextExecu
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to count songReviewOption rows")
+		return 0, errors.Wrap(err, "mysql: failed to count song_review_option rows")
 	}
 
 	return count, nil
@@ -380,7 +380,7 @@ func (q songReviewOptionQuery) Exists(ctx context.Context, exec boil.ContextExec
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "mysql: failed to check if songReviewOption exists")
+		return false, errors.Wrap(err, "mysql: failed to check if song_review_option exists")
 	}
 
 	return count > 0, nil
@@ -388,10 +388,10 @@ func (q songReviewOptionQuery) Exists(ctx context.Context, exec boil.ContextExec
 
 // SongReviewOptions retrieves all the records using an executor.
 func SongReviewOptions(mods ...qm.QueryMod) songReviewOptionQuery {
-	mods = append(mods, qm.From("`songReviewOption`"))
+	mods = append(mods, qm.From("`song_review_option`"))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"`songReviewOption`.*"})
+		queries.SetSelect(q, []string{"`song_review_option`.*"})
 	}
 
 	return songReviewOptionQuery{q}
@@ -399,7 +399,7 @@ func SongReviewOptions(mods ...qm.QueryMod) songReviewOptionQuery {
 
 // FindSongReviewOption retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindSongReviewOption(ctx context.Context, exec boil.ContextExecutor, songReviewOptionId int64, selectCols ...string) (*SongReviewOption, error) {
+func FindSongReviewOption(ctx context.Context, exec boil.ContextExecutor, songReviewOptionID int64, selectCols ...string) (*SongReviewOption, error) {
 	songReviewOptionObj := &SongReviewOption{}
 
 	sel := "*"
@@ -407,17 +407,17 @@ func FindSongReviewOption(ctx context.Context, exec boil.ContextExecutor, songRe
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `songReviewOption` where `songReviewOptionId`=?", sel,
+		"select %s from `song_review_option` where `song_review_option_id`=?", sel,
 	)
 
-	q := queries.Raw(query, songReviewOptionId)
+	q := queries.Raw(query, songReviewOptionID)
 
 	err := q.Bind(ctx, exec, songReviewOptionObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "mysql: unable to select from songReviewOption")
+		return nil, errors.Wrap(err, "mysql: unable to select from song_review_option")
 	}
 
 	if err = songReviewOptionObj.doAfterSelectHooks(ctx, exec); err != nil {
@@ -431,7 +431,7 @@ func FindSongReviewOption(ctx context.Context, exec boil.ContextExecutor, songRe
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *SongReviewOption) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("mysql: no songReviewOption provided for insertion")
+		return errors.New("mysql: no song_review_option provided for insertion")
 	}
 
 	var err error
@@ -464,15 +464,15 @@ func (o *SongReviewOption) Insert(ctx context.Context, exec boil.ContextExecutor
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `songReviewOption` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `song_review_option` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `songReviewOption` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `song_review_option` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `songReviewOption` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, songReviewOptionPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `song_review_option` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, songReviewOptionPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -489,7 +489,7 @@ func (o *SongReviewOption) Insert(ctx context.Context, exec boil.ContextExecutor
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to insert into songReviewOption")
+		return errors.Wrap(err, "mysql: unable to insert into song_review_option")
 	}
 
 	var lastID int64
@@ -504,13 +504,13 @@ func (o *SongReviewOption) Insert(ctx context.Context, exec boil.ContextExecutor
 		return ErrSyncFail
 	}
 
-	o.SongReviewOptionId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == songReviewOptionMapping["songReviewOptionId"] {
+	o.SongReviewOptionID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == songReviewOptionMapping["song_review_option_id"] {
 		goto CacheNoHooks
 	}
 
 	identifierCols = []interface{}{
-		o.SongReviewOptionId,
+		o.SongReviewOptionID,
 	}
 
 	if boil.IsDebug(ctx) {
@@ -520,7 +520,7 @@ func (o *SongReviewOption) Insert(ctx context.Context, exec boil.ContextExecutor
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to populate default values for songReviewOption")
+		return errors.Wrap(err, "mysql: unable to populate default values for song_review_option")
 	}
 
 CacheNoHooks:
@@ -552,10 +552,10 @@ func (o *SongReviewOption) Update(ctx context.Context, exec boil.ContextExecutor
 			songReviewOptionPrimaryKeyColumns,
 		)
 		if len(wl) == 0 {
-			return 0, errors.New("mysql: unable to update songReviewOption, could not build whitelist")
+			return 0, errors.New("mysql: unable to update song_review_option, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `songReviewOption` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `song_review_option` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, songReviewOptionPrimaryKeyColumns),
 		)
@@ -575,12 +575,12 @@ func (o *SongReviewOption) Update(ctx context.Context, exec boil.ContextExecutor
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to update songReviewOption row")
+		return 0, errors.Wrap(err, "mysql: unable to update song_review_option row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by update for songReviewOption")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by update for song_review_option")
 	}
 
 	if !cached {
@@ -598,12 +598,12 @@ func (q songReviewOptionQuery) UpdateAll(ctx context.Context, exec boil.ContextE
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to update all for songReviewOption")
+		return 0, errors.Wrap(err, "mysql: unable to update all for song_review_option")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to retrieve rows affected for songReviewOption")
+		return 0, errors.Wrap(err, "mysql: unable to retrieve rows affected for song_review_option")
 	}
 
 	return rowsAff, nil
@@ -636,7 +636,7 @@ func (o SongReviewOptionSlice) UpdateAll(ctx context.Context, exec boil.ContextE
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `songReviewOption` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `song_review_option` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, songReviewOptionPrimaryKeyColumns, len(o)))
 
@@ -658,14 +658,14 @@ func (o SongReviewOptionSlice) UpdateAll(ctx context.Context, exec boil.ContextE
 }
 
 var mySQLSongReviewOptionUniqueColumns = []string{
-	"songReviewOptionId",
+	"song_review_option_id",
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *SongReviewOption) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("mysql: no songReviewOption provided for upsert")
+		return errors.New("mysql: no song_review_option provided for upsert")
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
@@ -721,14 +721,14 @@ func (o *SongReviewOption) Upsert(ctx context.Context, exec boil.ContextExecutor
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("mysql: unable to upsert songReviewOption, could not build update column list")
+			return errors.New("mysql: unable to upsert song_review_option, could not build update column list")
 		}
 
 		ret := strmangle.SetComplement(songReviewOptionAllColumns, strmangle.SetIntersect(insert, update))
 
-		cache.query = buildUpsertQueryMySQL(dialect, "`songReviewOption`", update, insert)
+		cache.query = buildUpsertQueryMySQL(dialect, "`song_review_option`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `songReviewOption` WHERE %s",
+			"SELECT %s FROM `song_review_option` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -760,7 +760,7 @@ func (o *SongReviewOption) Upsert(ctx context.Context, exec boil.ContextExecutor
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to upsert for songReviewOption")
+		return errors.Wrap(err, "mysql: unable to upsert for song_review_option")
 	}
 
 	var lastID int64
@@ -776,14 +776,14 @@ func (o *SongReviewOption) Upsert(ctx context.Context, exec boil.ContextExecutor
 		return ErrSyncFail
 	}
 
-	o.SongReviewOptionId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == songReviewOptionMapping["songReviewOptionId"] {
+	o.SongReviewOptionID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == songReviewOptionMapping["song_review_option_id"] {
 		goto CacheNoHooks
 	}
 
 	uniqueMap, err = queries.BindMapping(songReviewOptionType, songReviewOptionMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to retrieve unique values for songReviewOption")
+		return errors.Wrap(err, "mysql: unable to retrieve unique values for song_review_option")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -794,7 +794,7 @@ func (o *SongReviewOption) Upsert(ctx context.Context, exec boil.ContextExecutor
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to populate default values for songReviewOption")
+		return errors.Wrap(err, "mysql: unable to populate default values for song_review_option")
 	}
 
 CacheNoHooks:
@@ -819,7 +819,7 @@ func (o *SongReviewOption) Delete(ctx context.Context, exec boil.ContextExecutor
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), songReviewOptionPrimaryKeyMapping)
-	sql := "DELETE FROM `songReviewOption` WHERE `songReviewOptionId`=?"
+	sql := "DELETE FROM `song_review_option` WHERE `song_review_option_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -828,12 +828,12 @@ func (o *SongReviewOption) Delete(ctx context.Context, exec boil.ContextExecutor
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to delete from songReviewOption")
+		return 0, errors.Wrap(err, "mysql: unable to delete from song_review_option")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by delete for songReviewOption")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by delete for song_review_option")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -853,12 +853,12 @@ func (q songReviewOptionQuery) DeleteAll(ctx context.Context, exec boil.ContextE
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to delete all from songReviewOption")
+		return 0, errors.Wrap(err, "mysql: unable to delete all from song_review_option")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for songReviewOption")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for song_review_option")
 	}
 
 	return rowsAff, nil
@@ -884,7 +884,7 @@ func (o SongReviewOptionSlice) DeleteAll(ctx context.Context, exec boil.ContextE
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `songReviewOption` WHERE " +
+	sql := "DELETE FROM `song_review_option` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, songReviewOptionPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -899,7 +899,7 @@ func (o SongReviewOptionSlice) DeleteAll(ctx context.Context, exec boil.ContextE
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for songReviewOption")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for song_review_option")
 	}
 
 	if len(songReviewOptionAfterDeleteHooks) != 0 {
@@ -916,7 +916,7 @@ func (o SongReviewOptionSlice) DeleteAll(ctx context.Context, exec boil.ContextE
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *SongReviewOption) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindSongReviewOption(ctx, exec, o.SongReviewOptionId)
+	ret, err := FindSongReviewOption(ctx, exec, o.SongReviewOptionID)
 	if err != nil {
 		return err
 	}
@@ -939,7 +939,7 @@ func (o *SongReviewOptionSlice) ReloadAll(ctx context.Context, exec boil.Context
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `songReviewOption`.* FROM `songReviewOption` WHERE " +
+	sql := "SELECT `song_review_option`.* FROM `song_review_option` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, songReviewOptionPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -955,20 +955,20 @@ func (o *SongReviewOptionSlice) ReloadAll(ctx context.Context, exec boil.Context
 }
 
 // SongReviewOptionExists checks if the SongReviewOption row exists.
-func SongReviewOptionExists(ctx context.Context, exec boil.ContextExecutor, songReviewOptionId int64) (bool, error) {
+func SongReviewOptionExists(ctx context.Context, exec boil.ContextExecutor, songReviewOptionID int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `songReviewOption` where `songReviewOptionId`=? limit 1)"
+	sql := "select exists(select 1 from `song_review_option` where `song_review_option_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, songReviewOptionId)
+		fmt.Fprintln(writer, songReviewOptionID)
 	}
-	row := exec.QueryRowContext(ctx, sql, songReviewOptionId)
+	row := exec.QueryRowContext(ctx, sql, songReviewOptionID)
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "mysql: unable to check if songReviewOption exists")
+		return false, errors.Wrap(err, "mysql: unable to check if song_review_option exists")
 	}
 
 	return exists, nil
@@ -976,5 +976,5 @@ func SongReviewOptionExists(ctx context.Context, exec boil.ContextExecutor, song
 
 // Exists checks if the SongReviewOption row exists.
 func (o *SongReviewOption) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return SongReviewOptionExists(ctx, exec, o.SongReviewOptionId)
+	return SongReviewOptionExists(ctx, exec, o.SongReviewOptionID)
 }
