@@ -54,7 +54,7 @@ func VersionCheck(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		latestVersion, err := mysql.AppVersions(qm.Where("platform = ?", platform), qm.OrderBy("releaseDate DESC")).One(c, db)
+		latestVersion, err := mysql.AppVersions(qm.Where("platform = ?", platform), qm.OrderBy("created_at DESC")).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
