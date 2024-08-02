@@ -13,7 +13,7 @@ import (
 	"strconv"
 )
 
-type relatedSongResponse struct {
+type relatedSong struct {
 	SongNumber int      `json:"songNumber"`
 	SongName   string   `json:"songName"`
 	SingerName string   `json:"singerName"`
@@ -22,19 +22,26 @@ type relatedSongResponse struct {
 	SongTempId int64    `json:"songId"`
 }
 
+type relatedSongResponse struct {
+	Songs    []relatedSong `json:"songs"`
+	NextPage int           `json:"nextPage"`
+}
+
 var (
 	defaultSize = "20"
+	defaultPage = "1"
 )
 
 // GetRelatedSong godoc
 // @Summary      연관된 노래들을 조회합니다
-// @Description  연관된 노래들을 조회합니다
+// @Description  연관된 노래들과 다음 페이지 번호를 함께 조회합니다. 노래 상세 화면에 첫 진입했을 경우 page 번호는 1입니다. 무한스크롤을 진행한다면 응답에 포함되어 오는 nextPage를 다음번에 포함하여 보내면 됩니다. nextPage는 1씩 증가합니다. 더이상 노래가 없을 경우, 응답에는 빈 배열과 함께 nextPage는 1로 반환됩니다.
 // @Tags         Songs
 // @Accept       json
 // @Produce      json
 // @Param        songNumber path string true "노래 번호"
-// @Param        size query int false "한번에 조회할 노래 개수"
-// @Success      200 {object} pkg.BaseResponseStruct(data=[]relatedSongResponse) "성공"
+// @Param        page query int false "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
+// @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
+// @Success      200 {object} pkg.BaseResponseStruct(data=relatedSongResponse) "성공"
 // @Router       /songs/{songNumber}/related [get]
 // @Security BearerAuth
 func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
@@ -64,6 +71,13 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			return
 		}
 
+		pageStr := c.DefaultQuery("page", defaultPage)
+		pageInt, err := strconv.Atoi(pageStr)
+		if err != nil || pageInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+			return
+		}
+
 		//songNumber로 벡터 디비에서 조회
 		songNumberInt, err := strconv.Atoi(songNumber)
 		if err != nil {
@@ -83,16 +97,24 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 
 		res, err := idxConnection.QueryByVectorId(c, &pinecone.QueryByVectorIdRequest{
 			VectorId:        songNumber,
-			TopK:            uint32(sizeInt),
+			TopK:            uint32(sizeInt * pageInt),
 			Filter:          filterStruct,
 			IncludeValues:   true,
 			IncludeMetadata: true,
 		})
+		log.Printf(strconv.Itoa(len(res.Matches)))
 
-		response := make([]relatedSongResponse, 0, sizeInt)
+		res.Matches = res.Matches[sizeInt*(pageInt-1):]
+
+		relatedSongs := make([]relatedSong, 0, sizeInt)
+		if len(res.Matches) <= 0 {
+			pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{relatedSongs, 1})
+			return
+		}
+
 		for _, each := range res.Matches {
 			v := each.Vector
-			response = append(response, relatedSongResponse{
+			relatedSongs = append(relatedSongs, relatedSong{
 				SongNumber: int(v.Metadata.Fields["song_number"].GetNumberValue()),
 				SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
 				SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
@@ -122,7 +144,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 
 		//songTempId
 		var songNumbers []interface{}
-		for _, song := range response {
+		for _, song := range relatedSongs {
 			songNumbers = append(songNumbers, song.SongNumber)
 		}
 		slice, err := mysql.SongTempInfos(qm.WhereIn("songNumber IN ?", songNumbers...)).All(c, db)
@@ -136,12 +158,12 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		}
 
 		// response에 isKeep과 songTempId 추가
-		for i, song := range response {
-			response[i].IsKeep = isKeepMap[song.SongNumber]
-			response[i].SongTempId = songTempIdMap[song.SongNumber]
+		for i, song := range relatedSongs {
+			relatedSongs[i].IsKeep = isKeepMap[song.SongNumber]
+			relatedSongs[i].SongTempId = songTempIdMap[song.SongNumber]
 		}
 
-		pkg.BaseResponse(c, http.StatusOK, "ok", response)
+		pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{relatedSongs, pageInt + 1})
 	}
 }
 
