@@ -110,8 +110,57 @@ definitions:
           type: string
         type: array
     type: object
+  handler.relatedSong:
+    properties:
+      isKeep:
+        type: boolean
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  handler.relatedSongResponse:
+    properties:
+      nextPage:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/handler.relatedSong'
+        type: array
+    type: object
   handler.songHomeResponse:
     properties:
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+      tags:
+        items:
+          type: string
+        type: array
+    type: object
+  handler.songInfoResponse:
+    properties:
+      album:
+        type: string
+      description:
+        type: string
+      isKeep:
+        type: boolean
+      octave:
+        type: string
       singerName:
         type: string
       songId:
@@ -426,9 +475,16 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 성공
           schema:
-            $ref: '#/definitions/pkg.BaseResponseStruct'
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.songInfoResponse'
+                  type: array
+              type: object
       security:
       - BearerAuth: []
       summary: 노래 상세 정보를 조회합니다
@@ -459,9 +515,14 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: 성공
           schema:
-            $ref: '#/definitions/pkg.BaseResponseStruct'
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.relatedSongResponse'
+              type: object
       security:
       - BearerAuth: []
       summary: 연관된 노래들을 조회합니다

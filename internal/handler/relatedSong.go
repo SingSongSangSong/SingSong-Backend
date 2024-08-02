@@ -41,7 +41,7 @@ var (
 // @Param        songNumber path string true "노래 번호"
 // @Param        page query int false "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
 // @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
-// @Success      200 {object} pkg.BaseResponseStruct(data=relatedSongResponse) "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=relatedSongResponse} "성공"
 // @Router       /songs/{songNumber}/related [get]
 // @Security BearerAuth
 func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {

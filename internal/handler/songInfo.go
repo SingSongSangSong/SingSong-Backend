@@ -29,7 +29,7 @@ type songInfoResponse struct {
 // @Accept       json
 // @Produce      json
 // @Param        songNumber path string true "노래 번호"
-// @Success      200 {object} pkg.BaseResponseStruct(data=[]songInfoResponse) "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=[]songInfoResponse} "성공"
 // @Router       /songs/{songNumber} [get]
 // @Security BearerAuth
 func GetSongInfo(db *sql.DB) gin.HandlerFunc {

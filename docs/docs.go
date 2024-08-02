@@ -445,9 +445,24 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "성공",
                         "schema": {
-                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.songInfoResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -494,9 +509,21 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "성공",
                         "schema": {
-                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.relatedSongResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -927,9 +954,84 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.relatedSong": {
+            "type": "object",
+            "properties": {
+                "isKeep": {
+                    "type": "boolean"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "handler.relatedSongResponse": {
+            "type": "object",
+            "properties": {
+                "nextPage": {
+                    "type": "integer"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.relatedSong"
+                    }
+                }
+            }
+        },
         "handler.songHomeResponse": {
             "type": "object",
             "properties": {
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "handler.songInfoResponse": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "isKeep": {
+                    "type": "boolean"
+                },
+                "octave": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
