@@ -69,6 +69,23 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		keep.DELETE("", middleware.AuthMiddleware(db), handler.DeleteSongsFromPlaylist(db))
 	}
 
+	// 노래 상세
+	songs := r.Group("/api/v1/songs")
+	{
+		songs.GET("/:songNumber", middleware.AuthMiddleware(db), handler.GetSongInfo(db))
+		songs.GET("/:songNumber/reviews", middleware.AuthMiddleware(db), handler.GetSongReview(db))
+		songs.PUT("/:songNumber/reviews", middleware.AuthMiddleware(db), handler.PutSongReview(db))
+		songs.DELETE("/:songNumber/reviews", middleware.AuthMiddleware(db), handler.DeleteSongReview(db))
+		songs.GET("/:songNumber/related", middleware.AuthMiddleware(db), handler.RelatedSong(db, idxConnection))
+	}
+
+	// 노래 리뷰 선택지 추가/조회
+	songReviewOptions := r.Group("/api/v1/song-review-options")
+	{
+		songReviewOptions.GET("", handler.ListSongReviewOptions(db))
+		songReviewOptions.POST("", handler.AddSongReviewOption(db))
+	}
+
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
