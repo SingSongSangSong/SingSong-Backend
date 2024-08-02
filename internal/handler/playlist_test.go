@@ -5,21 +5,20 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 func TestCreatePlaylist(t *testing.T) {
-	t.Parallel()
+	//t.Parallel()
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	oldDB := boil.GetDB()
+	//oldDB := boil.GetDB()
 	defer func() {
 		db.Close()
-		boil.SetDB(oldDB)
+		//boil.SetDB(oldDB)
 	}()
-	boil.SetDB(db)
+	//boil.SetDB(db)
 
 	// expected arguments
 	keepName := "테스트플레이리스트"

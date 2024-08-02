@@ -21,13 +21,13 @@ type PlaylistAddResponse struct {
 	SongNumber int    `json:"songNumber"`
 	SongName   string `json:"songName"`
 	SingerName string `json:"singerName"`
-	SongTempId int64  `json:"songId"`
+	SongInfoId int64  `json:"songId"`
 }
 
 // GoRoutine으로 회원가입시에 플레이리스트를 생성한다 (context따로 가져와야함)
 func CreatePlaylist(db *sql.DB, keepName string, memberId int64) {
 	// 플레이리스트 생성
-	m := mysql.KeepList{MemberId: memberId, KeepName: null.StringFrom(keepName)}
+	m := mysql.KeepList{MemberID: memberId, KeepName: null.StringFrom(keepName)}
 	err := m.Insert(context.Background(), db, boil.Infer())
 	if err != nil {
 		log.Printf("Error inserting Playlist: %v", err)
@@ -59,7 +59,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Playlist 정보 가져오기
-		m := mysql.KeepLists(qm.Where("memberId = ?", memberId))
+		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
 		playlistRow, errors := m.One(c, db)
 		if errors != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
@@ -68,7 +68,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 
 		// 노래 정보들 가져오기
 		for _, song := range playlistRequest.Songs {
-			m := mysql.SongTempInfos(qm.Where("songNumber = ?", song))
+			m := mysql.SongInfos(qm.Where("song_number = ?", song))
 			row, errors := m.One(c, db)
 			if errors != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
@@ -76,14 +76,14 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 			}
 
 			// 기존에 같은 keepId와 songTempId가 있는지 확인
-			existsQuery := mysql.KeepSongs(qm.Where("keepId = ? AND songTempId = ?", playlistRow.KeepId, row.SongTempId))
+			existsQuery := mysql.KeepSongs(qm.Where("keep_list_id = ? AND song_info_id = ?", playlistRow.KeepListID, row.SongInfoID))
 			existingRow, err := existsQuery.One(c, db)
 			if err == nil && existingRow != nil {
 				// 이미 존재하면 추가하지 않고 계속 진행
 				continue
 			}
 
-			keepSong := mysql.KeepSong{KeepId: playlistRow.KeepId, SongTempId: row.SongTempId, SongNumber: row.SongNumber}
+			keepSong := mysql.KeepSong{KeepListID: playlistRow.KeepListID, SongInfoID: row.SongInfoID, SongNumber: row.SongNumber}
 			err = keepSong.Insert(c, db, boil.Infer())
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
@@ -91,7 +91,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 			}
 		}
 
-		result := mysql.KeepSongs(qm.Where("keepId = ?", playlistRow.KeepId))
+		result := mysql.KeepSongs(qm.Where("keep_list_id = ?", playlistRow.KeepListID))
 		all, err2 := result.All(c, db)
 		if err2 != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
@@ -101,13 +101,13 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 		PlaylistAddResponseList := make([]PlaylistAddResponse, 0)
 
 		for _, v := range all {
-			tempSong := mysql.SongTempInfos(qm.Where("songTempId = ?", v.SongTempId))
+			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
 			row, errors := tempSong.One(c, db)
 			if errors != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongTempId: row.SongTempId}
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
 
@@ -145,7 +145,7 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Playlist정보 가져오기
-		m := mysql.KeepLists(qm.Where("memberId = ?", memberId))
+		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
 		playlistInfo, errors := m.One(c, db)
 		if errors != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
@@ -154,14 +154,14 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 
 		// 노래 정보들 가져오기
 		for _, song := range songDeleteFromPlaylistRequest.Songs {
-			_, err := mysql.KeepSongs(qm.Where("keepId = ? AND songNumber = ?", playlistInfo.KeepId, song)).DeleteAll(c, db)
+			_, err := mysql.KeepSongs(qm.Where("keep_list_id = ? AND song_number = ?", playlistInfo.KeepListID, song)).DeleteAll(c, db)
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			}
 		}
 
 		// 응답에 keep 목록 넣기
-		all, errors := mysql.KeepSongs(qm.Where("keepId = ?", playlistInfo.KeepId)).All(c, db)
+		all, errors := mysql.KeepSongs(qm.Where("keep_list_id = ?", playlistInfo.KeepListID)).All(c, db)
 		if errors != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
@@ -170,13 +170,13 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 		keepSongs := make([]PlaylistAddResponse, 0)
 
 		for _, v := range all {
-			tempSong := mysql.SongTempInfos(qm.Where("songTempId = ?", v.SongTempId))
+			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
 			row, errors := tempSong.One(c, db)
 			if errors != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongTempId: row.SongTempId}
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID}
 			keepSongs = append(keepSongs, response)
 		}
 		pkg.BaseResponse(c, http.StatusOK, "success", keepSongs)
@@ -202,14 +202,14 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Playlist정보 가져오기
-		m := mysql.KeepLists(qm.Where("memberId = ?", memberId))
+		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
 		playlistInfo, errors := m.One(c, db)
 		if errors != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 			return
 		}
 
-		result := mysql.KeepSongs(qm.Where("keepId = ?", playlistInfo.KeepId))
+		result := mysql.KeepSongs(qm.Where("keep_list_id = ?", playlistInfo.KeepListID))
 		all, err2 := result.All(c, db)
 		if err2 != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
@@ -219,13 +219,13 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 		PlaylistAddResponseList := make([]PlaylistAddResponse, 0)
 
 		for _, v := range all {
-			tempSong := mysql.SongTempInfos(qm.Where("songTempId = ?", v.SongTempId))
+			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
 			row, errors := tempSong.One(c, db)
 			if errors != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongTempId: row.SongTempId}
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
 

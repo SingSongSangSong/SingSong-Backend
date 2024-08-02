@@ -2,9 +2,13 @@ basePath: /api/v1
 definitions:
   handler.LoginRequest:
     properties:
-      IdToken:
+      birthYear:
         type: string
-      Provider:
+      gender:
+        type: string
+      idToken:
+        type: string
+      provider:
         type: string
     type: object
   handler.LoginResponse:
@@ -12,6 +16,17 @@ definitions:
       accessToken:
         type: string
       refreshToken:
+        type: string
+    type: object
+  handler.MemberResponse:
+    properties:
+      birthYear:
+        type: integer
+      email:
+        type: string
+      gender:
+        type: string
+      nickname:
         type: string
     type: object
   handler.PlaylistAddRequest:
@@ -45,6 +60,11 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  handler.WithdrawRequest:
+    properties:
+      refreshToken:
+        type: string
     type: object
   handler.homeRequest:
     properties:
@@ -308,6 +328,130 @@ paths:
       summary: 플레이리스트에 노래를 추가한다
       tags:
       - Playlist
+  /member:
+    get:
+      consumes:
+      - application/json
+      description: 사용자 정보 조회
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.MemberResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Member의 정보를 가져온다
+      tags:
+      - Member
+  /member/login:
+    post:
+      consumes:
+      - application/json
+      description: IdToken을 이용한 회원가입 및 로그인
+      parameters:
+      - description: idToken 및 Provider
+        in: body
+        name: songs
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.LoginResponse'
+              type: object
+      summary: 회원가입 및 로그인
+      tags:
+      - Signup and Login
+  /member/logout:
+    post:
+      consumes:
+      - application/json
+      description: 멤버 회원 로그아웃
+      parameters:
+      - description: refreshToken
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          $ref: '#/definitions/handler.WithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 멤버 회원 로그아웃
+      tags:
+      - Member
+  /member/reissue:
+    post:
+      consumes:
+      - application/json
+      description: AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)
+      parameters:
+      - description: accessToken 및 refreshToken
+        in: body
+        name: songs
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReissueRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.LoginResponse'
+              type: object
+      summary: AccessToken RefreshToken 재발급
+      tags:
+      - Reissue
+  /member/withdraw:
+    post:
+      consumes:
+      - application/json
+      description: 멤버 회원 탈퇴
+      parameters:
+      - description: refreshToken
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          $ref: '#/definitions/handler.WithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 멤버 회원 탈퇴
+      tags:
+      - Member
   /recommend/home:
     post:
       consumes:
@@ -573,60 +717,6 @@ paths:
       summary: ssss 태그 목록 가져오기
       tags:
       - Tags
-  /user/login:
-    post:
-      consumes:
-      - application/json
-      description: IdToken을 이용한 회원가입 및 로그인
-      parameters:
-      - description: idToken 및 Provider
-        in: body
-        name: songs
-        required: true
-        schema:
-          $ref: '#/definitions/handler.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-          schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.LoginResponse'
-              type: object
-      summary: 회원가입 및 로그인
-      tags:
-      - Signup and Login
-  /user/reissue:
-    post:
-      consumes:
-      - application/json
-      description: AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)
-      parameters:
-      - description: accessToken 및 refreshToken
-        in: body
-        name: songs
-        required: true
-        schema:
-          $ref: '#/definitions/handler.ReissueRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-          schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.LoginResponse'
-              type: object
-      summary: AccessToken RefreshToken 재발급
-      tags:
-      - Reissue
   /version:
     get:
       consumes:

@@ -159,6 +159,216 @@ const docTemplate = `{
                 }
             }
         },
+        "/member": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "사용자 정보 조회",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "Member의 정보를 가져온다",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.MemberResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/member/login": {
+            "post": {
+                "description": "IdToken을 이용한 회원가입 및 로그인",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Signup and Login"
+                ],
+                "summary": "회원가입 및 로그인",
+                "parameters": [
+                    {
+                        "description": "idToken 및 Provider",
+                        "name": "songs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/member/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "멤버 회원 로그아웃",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "멤버 회원 로그아웃",
+                "parameters": [
+                    {
+                        "description": "refreshToken",
+                        "name": "refreshToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.WithdrawRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/member/reissue": {
+            "post": {
+                "description": "AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reissue"
+                ],
+                "summary": "AccessToken RefreshToken 재발급",
+                "parameters": [
+                    {
+                        "description": "accessToken 및 refreshToken",
+                        "name": "songs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ReissueRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/member/withdraw": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "멤버 회원 탈퇴",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "멤버 회원 탈퇴",
+                "parameters": [
+                    {
+                        "description": "refreshToken",
+                        "name": "refreshToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.WithdrawRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
         "/recommend/home": {
             "post": {
                 "description": "태그에 해당하는 노래를 추천합니다.",
@@ -604,98 +814,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/login": {
-            "post": {
-                "description": "IdToken을 이용한 회원가입 및 로그인",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Signup and Login"
-                ],
-                "summary": "회원가입 및 로그인",
-                "parameters": [
-                    {
-                        "description": "idToken 및 Provider",
-                        "name": "songs",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.LoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.LoginResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/user/reissue": {
-            "post": {
-                "description": "AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Reissue"
-                ],
-                "summary": "AccessToken RefreshToken 재발급",
-                "parameters": [
-                    {
-                        "description": "accessToken 및 refreshToken",
-                        "name": "songs",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.ReissueRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.LoginResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/version": {
             "get": {
                 "description": "등록되어 있는 모든 버전 확인 가능",
@@ -786,10 +904,16 @@ const docTemplate = `{
         "handler.LoginRequest": {
             "type": "object",
             "properties": {
-                "IdToken": {
+                "birthYear": {
                     "type": "string"
                 },
-                "Provider": {
+                "gender": {
+                    "type": "string"
+                },
+                "idToken": {
+                    "type": "string"
+                },
+                "provider": {
                     "type": "string"
                 }
             }
@@ -801,6 +925,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.MemberResponse": {
+            "type": "object",
+            "properties": {
+                "birthYear": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "nickname": {
                     "type": "string"
                 }
             }
@@ -852,6 +993,14 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "handler.WithdrawRequest": {
+            "type": "object",
+            "properties": {
+                "refreshToken": {
+                    "type": "string"
                 }
             }
         },

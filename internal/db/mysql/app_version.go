@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/friendsofgo/errors"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -24,52 +23,37 @@ import (
 
 // AppVersion is an object representing the database table.
 type AppVersion struct {
-	AppVersionId int64     `boil:"appVersionId" json:"appVersionId" toml:"appVersionId" yaml:"appVersionId"`
-	Platform     string    `boil:"platform" json:"platform" toml:"platform" yaml:"platform"`
-	Version      string    `boil:"version" json:"version" toml:"version" yaml:"version"`
-	ForceUpdate  bool      `boil:"forceUpdate" json:"forceUpdate" toml:"forceUpdate" yaml:"forceUpdate"`
-	CreatedAt    null.Time `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
-	UpdatedAt    null.Time `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
-	DeletedAt    null.Time `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
+	AppVersionID int64  `boil:"app_version_id" json:"app_version_id" toml:"app_version_id" yaml:"app_version_id"`
+	Platform     string `boil:"platform" json:"platform" toml:"platform" yaml:"platform"`
+	Version      string `boil:"version" json:"version" toml:"version" yaml:"version"`
+	ForceUpdate  bool   `boil:"force_update" json:"force_update" toml:"force_update" yaml:"force_update"`
 
 	R *appVersionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L appVersionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AppVersionColumns = struct {
-	AppVersionId string
+	AppVersionID string
 	Platform     string
 	Version      string
 	ForceUpdate  string
-	CreatedAt    string
-	UpdatedAt    string
-	DeletedAt    string
 }{
-	AppVersionId: "appVersionId",
+	AppVersionID: "app_version_id",
 	Platform:     "platform",
 	Version:      "version",
-	ForceUpdate:  "forceUpdate",
-	CreatedAt:    "createdAt",
-	UpdatedAt:    "updatedAt",
-	DeletedAt:    "deletedAt",
+	ForceUpdate:  "force_update",
 }
 
 var AppVersionTableColumns = struct {
-	AppVersionId string
+	AppVersionID string
 	Platform     string
 	Version      string
 	ForceUpdate  string
-	CreatedAt    string
-	UpdatedAt    string
-	DeletedAt    string
 }{
-	AppVersionId: "appVersion.appVersionId",
-	Platform:     "appVersion.platform",
-	Version:      "appVersion.version",
-	ForceUpdate:  "appVersion.forceUpdate",
-	CreatedAt:    "appVersion.createdAt",
-	UpdatedAt:    "appVersion.updatedAt",
-	DeletedAt:    "appVersion.deletedAt",
+	AppVersionID: "app_version.app_version_id",
+	Platform:     "app_version.platform",
+	Version:      "app_version.version",
+	ForceUpdate:  "app_version.force_update",
 }
 
 // Generated where
@@ -131,46 +115,16 @@ func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field
 func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
 func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
 
-type whereHelpernull_Time struct{ field string }
-
-func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpernull_Time) NEQ(x null.Time) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpernull_Time) LT(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpernull_Time) LTE(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpernull_Time) GT(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpernull_Time) GTE(x null.Time) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
-func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
-
 var AppVersionWhere = struct {
-	AppVersionId whereHelperint64
+	AppVersionID whereHelperint64
 	Platform     whereHelperstring
 	Version      whereHelperstring
 	ForceUpdate  whereHelperbool
-	CreatedAt    whereHelpernull_Time
-	UpdatedAt    whereHelpernull_Time
-	DeletedAt    whereHelpernull_Time
 }{
-	AppVersionId: whereHelperint64{field: "`appVersion`.`appVersionId`"},
-	Platform:     whereHelperstring{field: "`appVersion`.`platform`"},
-	Version:      whereHelperstring{field: "`appVersion`.`version`"},
-	ForceUpdate:  whereHelperbool{field: "`appVersion`.`forceUpdate`"},
-	CreatedAt:    whereHelpernull_Time{field: "`appVersion`.`createdAt`"},
-	UpdatedAt:    whereHelpernull_Time{field: "`appVersion`.`updatedAt`"},
-	DeletedAt:    whereHelpernull_Time{field: "`appVersion`.`deletedAt`"},
+	AppVersionID: whereHelperint64{field: "`app_version`.`app_version_id`"},
+	Platform:     whereHelperstring{field: "`app_version`.`platform`"},
+	Version:      whereHelperstring{field: "`app_version`.`version`"},
+	ForceUpdate:  whereHelperbool{field: "`app_version`.`force_update`"},
 }
 
 // AppVersionRels is where relationship names are stored.
@@ -190,10 +144,10 @@ func (*appVersionR) NewStruct() *appVersionR {
 type appVersionL struct{}
 
 var (
-	appVersionAllColumns            = []string{"appVersionId", "platform", "version", "forceUpdate", "createdAt", "updatedAt", "deletedAt"}
-	appVersionColumnsWithoutDefault = []string{"platform", "version", "deletedAt"}
-	appVersionColumnsWithDefault    = []string{"appVersionId", "forceUpdate", "createdAt", "updatedAt"}
-	appVersionPrimaryKeyColumns     = []string{"appVersionId"}
+	appVersionAllColumns            = []string{"app_version_id", "platform", "version", "force_update"}
+	appVersionColumnsWithoutDefault = []string{"platform", "version"}
+	appVersionColumnsWithDefault    = []string{"app_version_id", "force_update"}
+	appVersionPrimaryKeyColumns     = []string{"app_version_id"}
 	appVersionGeneratedColumns      = []string{}
 )
 
@@ -441,7 +395,7 @@ func (q appVersionQuery) One(ctx context.Context, exec boil.ContextExecutor) (*A
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "mysql: failed to execute a one query for appVersion")
+		return nil, errors.Wrap(err, "mysql: failed to execute a one query for app_version")
 	}
 
 	if err := o.doAfterSelectHooks(ctx, exec); err != nil {
@@ -480,7 +434,7 @@ func (q appVersionQuery) Count(ctx context.Context, exec boil.ContextExecutor) (
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to count appVersion rows")
+		return 0, errors.Wrap(err, "mysql: failed to count app_version rows")
 	}
 
 	return count, nil
@@ -496,7 +450,7 @@ func (q appVersionQuery) Exists(ctx context.Context, exec boil.ContextExecutor) 
 
 	err := q.Query.QueryRowContext(ctx, exec).Scan(&count)
 	if err != nil {
-		return false, errors.Wrap(err, "mysql: failed to check if appVersion exists")
+		return false, errors.Wrap(err, "mysql: failed to check if app_version exists")
 	}
 
 	return count > 0, nil
@@ -504,10 +458,10 @@ func (q appVersionQuery) Exists(ctx context.Context, exec boil.ContextExecutor) 
 
 // AppVersions retrieves all the records using an executor.
 func AppVersions(mods ...qm.QueryMod) appVersionQuery {
-	mods = append(mods, qm.From("`appVersion`"))
+	mods = append(mods, qm.From("`app_version`"))
 	q := NewQuery(mods...)
 	if len(queries.GetSelect(q)) == 0 {
-		queries.SetSelect(q, []string{"`appVersion`.*"})
+		queries.SetSelect(q, []string{"`app_version`.*"})
 	}
 
 	return appVersionQuery{q}
@@ -515,7 +469,7 @@ func AppVersions(mods ...qm.QueryMod) appVersionQuery {
 
 // FindAppVersion retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindAppVersion(ctx context.Context, exec boil.ContextExecutor, appVersionId int64, selectCols ...string) (*AppVersion, error) {
+func FindAppVersion(ctx context.Context, exec boil.ContextExecutor, appVersionID int64, selectCols ...string) (*AppVersion, error) {
 	appVersionObj := &AppVersion{}
 
 	sel := "*"
@@ -523,17 +477,17 @@ func FindAppVersion(ctx context.Context, exec boil.ContextExecutor, appVersionId
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `appVersion` where `appVersionId`=?", sel,
+		"select %s from `app_version` where `app_version_id`=?", sel,
 	)
 
-	q := queries.Raw(query, appVersionId)
+	q := queries.Raw(query, appVersionID)
 
 	err := q.Bind(ctx, exec, appVersionObj)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, sql.ErrNoRows
 		}
-		return nil, errors.Wrap(err, "mysql: unable to select from appVersion")
+		return nil, errors.Wrap(err, "mysql: unable to select from app_version")
 	}
 
 	if err = appVersionObj.doAfterSelectHooks(ctx, exec); err != nil {
@@ -547,7 +501,7 @@ func FindAppVersion(ctx context.Context, exec boil.ContextExecutor, appVersionId
 // See boil.Columns.InsertColumnSet documentation to understand column list inference for inserts.
 func (o *AppVersion) Insert(ctx context.Context, exec boil.ContextExecutor, columns boil.Columns) error {
 	if o == nil {
-		return errors.New("mysql: no appVersion provided for insertion")
+		return errors.New("mysql: no app_version provided for insertion")
 	}
 
 	var err error
@@ -580,15 +534,15 @@ func (o *AppVersion) Insert(ctx context.Context, exec boil.ContextExecutor, colu
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO `appVersion` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO `app_version` (`%s`) %%sVALUES (%s)%%s", strings.Join(wl, "`,`"), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO `appVersion` () VALUES ()%s%s"
+			cache.query = "INSERT INTO `app_version` () VALUES ()%s%s"
 		}
 
 		var queryOutput, queryReturning string
 
 		if len(cache.retMapping) != 0 {
-			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `appVersion` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, appVersionPrimaryKeyColumns))
+			cache.retQuery = fmt.Sprintf("SELECT `%s` FROM `app_version` WHERE %s", strings.Join(returnColumns, "`,`"), strmangle.WhereClause("`", "`", 0, appVersionPrimaryKeyColumns))
 		}
 
 		cache.query = fmt.Sprintf(cache.query, queryOutput, queryReturning)
@@ -605,7 +559,7 @@ func (o *AppVersion) Insert(ctx context.Context, exec boil.ContextExecutor, colu
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to insert into appVersion")
+		return errors.Wrap(err, "mysql: unable to insert into app_version")
 	}
 
 	var lastID int64
@@ -620,13 +574,13 @@ func (o *AppVersion) Insert(ctx context.Context, exec boil.ContextExecutor, colu
 		return ErrSyncFail
 	}
 
-	o.AppVersionId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == appVersionMapping["appVersionId"] {
+	o.AppVersionID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == appVersionMapping["app_version_id"] {
 		goto CacheNoHooks
 	}
 
 	identifierCols = []interface{}{
-		o.AppVersionId,
+		o.AppVersionID,
 	}
 
 	if boil.IsDebug(ctx) {
@@ -636,7 +590,7 @@ func (o *AppVersion) Insert(ctx context.Context, exec boil.ContextExecutor, colu
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, identifierCols...).Scan(queries.PtrsFromMapping(value, cache.retMapping)...)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to populate default values for appVersion")
+		return errors.Wrap(err, "mysql: unable to populate default values for app_version")
 	}
 
 CacheNoHooks:
@@ -668,10 +622,10 @@ func (o *AppVersion) Update(ctx context.Context, exec boil.ContextExecutor, colu
 			appVersionPrimaryKeyColumns,
 		)
 		if len(wl) == 0 {
-			return 0, errors.New("mysql: unable to update appVersion, could not build whitelist")
+			return 0, errors.New("mysql: unable to update app_version, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE `appVersion` SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE `app_version` SET %s WHERE %s",
 			strmangle.SetParamNames("`", "`", 0, wl),
 			strmangle.WhereClause("`", "`", 0, appVersionPrimaryKeyColumns),
 		)
@@ -691,12 +645,12 @@ func (o *AppVersion) Update(ctx context.Context, exec boil.ContextExecutor, colu
 	var result sql.Result
 	result, err = exec.ExecContext(ctx, cache.query, values...)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to update appVersion row")
+		return 0, errors.Wrap(err, "mysql: unable to update app_version row")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by update for appVersion")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by update for app_version")
 	}
 
 	if !cached {
@@ -714,12 +668,12 @@ func (q appVersionQuery) UpdateAll(ctx context.Context, exec boil.ContextExecuto
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to update all for appVersion")
+		return 0, errors.Wrap(err, "mysql: unable to update all for app_version")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to retrieve rows affected for appVersion")
+		return 0, errors.Wrap(err, "mysql: unable to retrieve rows affected for app_version")
 	}
 
 	return rowsAff, nil
@@ -752,7 +706,7 @@ func (o AppVersionSlice) UpdateAll(ctx context.Context, exec boil.ContextExecuto
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE `appVersion` SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE `app_version` SET %s WHERE %s",
 		strmangle.SetParamNames("`", "`", 0, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, appVersionPrimaryKeyColumns, len(o)))
 
@@ -774,14 +728,14 @@ func (o AppVersionSlice) UpdateAll(ctx context.Context, exec boil.ContextExecuto
 }
 
 var mySQLAppVersionUniqueColumns = []string{
-	"appVersionId",
+	"app_version_id",
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
 // See boil.Columns documentation for how to properly use updateColumns and insertColumns.
 func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, updateColumns, insertColumns boil.Columns) error {
 	if o == nil {
-		return errors.New("mysql: no appVersion provided for upsert")
+		return errors.New("mysql: no app_version provided for upsert")
 	}
 
 	if err := o.doBeforeUpsertHooks(ctx, exec); err != nil {
@@ -824,7 +778,7 @@ func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			appVersionAllColumns,
 			appVersionColumnsWithDefault,
 			appVersionColumnsWithoutDefault,
@@ -837,13 +791,14 @@ func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 		)
 
 		if !updateColumns.IsNone() && len(update) == 0 {
-			return errors.New("mysql: unable to upsert appVersion, could not build update column list")
+			return errors.New("mysql: unable to upsert app_version, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
-		cache.query = buildUpsertQueryMySQL(dialect, "`appVersion`", update, insert)
+		ret := strmangle.SetComplement(appVersionAllColumns, strmangle.SetIntersect(insert, update))
+
+		cache.query = buildUpsertQueryMySQL(dialect, "`app_version`", update, insert)
 		cache.retQuery = fmt.Sprintf(
-			"SELECT %s FROM `appVersion` WHERE %s",
+			"SELECT %s FROM `app_version` WHERE %s",
 			strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, ret), ","),
 			strmangle.WhereClause("`", "`", 0, nzUniques),
 		)
@@ -875,7 +830,7 @@ func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 	result, err := exec.ExecContext(ctx, cache.query, vals...)
 
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to upsert for appVersion")
+		return errors.Wrap(err, "mysql: unable to upsert for app_version")
 	}
 
 	var lastID int64
@@ -891,14 +846,14 @@ func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 		return ErrSyncFail
 	}
 
-	o.AppVersionId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == appVersionMapping["appVersionId"] {
+	o.AppVersionID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == appVersionMapping["app_version_id"] {
 		goto CacheNoHooks
 	}
 
 	uniqueMap, err = queries.BindMapping(appVersionType, appVersionMapping, nzUniques)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to retrieve unique values for appVersion")
+		return errors.Wrap(err, "mysql: unable to retrieve unique values for app_version")
 	}
 	nzUniqueCols = queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), uniqueMap)
 
@@ -909,7 +864,7 @@ func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 	}
 	err = exec.QueryRowContext(ctx, cache.retQuery, nzUniqueCols...).Scan(returns...)
 	if err != nil {
-		return errors.Wrap(err, "mysql: unable to populate default values for appVersion")
+		return errors.Wrap(err, "mysql: unable to populate default values for app_version")
 	}
 
 CacheNoHooks:
@@ -934,7 +889,7 @@ func (o *AppVersion) Delete(ctx context.Context, exec boil.ContextExecutor) (int
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), appVersionPrimaryKeyMapping)
-	sql := "DELETE FROM `appVersion` WHERE `appVersionId`=?"
+	sql := "DELETE FROM `app_version` WHERE `app_version_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -943,12 +898,12 @@ func (o *AppVersion) Delete(ctx context.Context, exec boil.ContextExecutor) (int
 	}
 	result, err := exec.ExecContext(ctx, sql, args...)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to delete from appVersion")
+		return 0, errors.Wrap(err, "mysql: unable to delete from app_version")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by delete for appVersion")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by delete for app_version")
 	}
 
 	if err := o.doAfterDeleteHooks(ctx, exec); err != nil {
@@ -968,12 +923,12 @@ func (q appVersionQuery) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 
 	result, err := q.Query.ExecContext(ctx, exec)
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: unable to delete all from appVersion")
+		return 0, errors.Wrap(err, "mysql: unable to delete all from app_version")
 	}
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for appVersion")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for app_version")
 	}
 
 	return rowsAff, nil
@@ -999,7 +954,7 @@ func (o AppVersionSlice) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM `appVersion` WHERE " +
+	sql := "DELETE FROM `app_version` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, appVersionPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -1014,7 +969,7 @@ func (o AppVersionSlice) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 
 	rowsAff, err := result.RowsAffected()
 	if err != nil {
-		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for appVersion")
+		return 0, errors.Wrap(err, "mysql: failed to get rows affected by deleteall for app_version")
 	}
 
 	if len(appVersionAfterDeleteHooks) != 0 {
@@ -1031,7 +986,7 @@ func (o AppVersionSlice) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *AppVersion) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindAppVersion(ctx, exec, o.AppVersionId)
+	ret, err := FindAppVersion(ctx, exec, o.AppVersionID)
 	if err != nil {
 		return err
 	}
@@ -1054,7 +1009,7 @@ func (o *AppVersionSlice) ReloadAll(ctx context.Context, exec boil.ContextExecut
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT `appVersion`.* FROM `appVersion` WHERE " +
+	sql := "SELECT `app_version`.* FROM `app_version` WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 0, appVersionPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1070,20 +1025,20 @@ func (o *AppVersionSlice) ReloadAll(ctx context.Context, exec boil.ContextExecut
 }
 
 // AppVersionExists checks if the AppVersion row exists.
-func AppVersionExists(ctx context.Context, exec boil.ContextExecutor, appVersionId int64) (bool, error) {
+func AppVersionExists(ctx context.Context, exec boil.ContextExecutor, appVersionID int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `appVersion` where `appVersionId`=? limit 1)"
+	sql := "select exists(select 1 from `app_version` where `app_version_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, appVersionId)
+		fmt.Fprintln(writer, appVersionID)
 	}
-	row := exec.QueryRowContext(ctx, sql, appVersionId)
+	row := exec.QueryRowContext(ctx, sql, appVersionID)
 
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.Wrap(err, "mysql: unable to check if appVersion exists")
+		return false, errors.Wrap(err, "mysql: unable to check if app_version exists")
 	}
 
 	return exists, nil
@@ -1091,5 +1046,5 @@ func AppVersionExists(ctx context.Context, exec boil.ContextExecutor, appVersion
 
 // Exists checks if the AppVersion row exists.
 func (o *AppVersion) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return AppVersionExists(ctx, exec, o.AppVersionId)
+	return AppVersionExists(ctx, exec, o.AppVersionID)
 }

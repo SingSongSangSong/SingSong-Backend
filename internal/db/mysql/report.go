@@ -24,79 +24,58 @@ import (
 
 // Report is an object representing the database table.
 type Report struct {
-	ReportId     int64       `boil:"reportId" json:"reportId" toml:"reportId" yaml:"reportId"`
-	CommentId    int64       `boil:"commentId" json:"commentId" toml:"commentId" yaml:"commentId"`
-	ReporterId   int64       `boil:"reporterId" json:"reporterId" toml:"reporterId" yaml:"reporterId"`
-	SubjectId    int64       `boil:"subjectId" json:"subjectId" toml:"subjectId" yaml:"subjectId"`
-	ReportReason null.String `boil:"reportReason" json:"reportReason,omitempty" toml:"reportReason" yaml:"reportReason,omitempty"`
-	CreatedAt    null.Time   `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
-	UpdatedAt    null.Time   `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
-	DeletedAt    null.Time   `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
+	ReportID         int64       `boil:"report_id" json:"report_id" toml:"report_id" yaml:"report_id"`
+	CommentID        int64       `boil:"comment_id" json:"comment_id" toml:"comment_id" yaml:"comment_id"`
+	ReporterMemberID int64       `boil:"reporter_member_id" json:"reporter_member_id" toml:"reporter_member_id" yaml:"reporter_member_id"`
+	SubjectMemberID  int64       `boil:"subject_member_id" json:"subject_member_id" toml:"subject_member_id" yaml:"subject_member_id"`
+	ReportReason     null.String `boil:"report_reason" json:"report_reason,omitempty" toml:"report_reason" yaml:"report_reason,omitempty"`
 
 	R *reportR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L reportL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var ReportColumns = struct {
-	ReportId     string
-	CommentId    string
-	ReporterId   string
-	SubjectId    string
-	ReportReason string
-	CreatedAt    string
-	UpdatedAt    string
-	DeletedAt    string
+	ReportID         string
+	CommentID        string
+	ReporterMemberID string
+	SubjectMemberID  string
+	ReportReason     string
 }{
-	ReportId:     "reportId",
-	CommentId:    "commentId",
-	ReporterId:   "reporterId",
-	SubjectId:    "subjectId",
-	ReportReason: "reportReason",
-	CreatedAt:    "createdAt",
-	UpdatedAt:    "updatedAt",
-	DeletedAt:    "deletedAt",
+	ReportID:         "report_id",
+	CommentID:        "comment_id",
+	ReporterMemberID: "reporter_member_id",
+	SubjectMemberID:  "subject_member_id",
+	ReportReason:     "report_reason",
 }
 
 var ReportTableColumns = struct {
-	ReportId     string
-	CommentId    string
-	ReporterId   string
-	SubjectId    string
-	ReportReason string
-	CreatedAt    string
-	UpdatedAt    string
-	DeletedAt    string
+	ReportID         string
+	CommentID        string
+	ReporterMemberID string
+	SubjectMemberID  string
+	ReportReason     string
 }{
-	ReportId:     "report.reportId",
-	CommentId:    "report.commentId",
-	ReporterId:   "report.reporterId",
-	SubjectId:    "report.subjectId",
-	ReportReason: "report.reportReason",
-	CreatedAt:    "report.createdAt",
-	UpdatedAt:    "report.updatedAt",
-	DeletedAt:    "report.deletedAt",
+	ReportID:         "report.report_id",
+	CommentID:        "report.comment_id",
+	ReporterMemberID: "report.reporter_member_id",
+	SubjectMemberID:  "report.subject_member_id",
+	ReportReason:     "report.report_reason",
 }
 
 // Generated where
 
 var ReportWhere = struct {
-	ReportId     whereHelperint64
-	CommentId    whereHelperint64
-	ReporterId   whereHelperint64
-	SubjectId    whereHelperint64
-	ReportReason whereHelpernull_String
-	CreatedAt    whereHelpernull_Time
-	UpdatedAt    whereHelpernull_Time
-	DeletedAt    whereHelpernull_Time
+	ReportID         whereHelperint64
+	CommentID        whereHelperint64
+	ReporterMemberID whereHelperint64
+	SubjectMemberID  whereHelperint64
+	ReportReason     whereHelpernull_String
 }{
-	ReportId:     whereHelperint64{field: "`report`.`reportId`"},
-	CommentId:    whereHelperint64{field: "`report`.`commentId`"},
-	ReporterId:   whereHelperint64{field: "`report`.`reporterId`"},
-	SubjectId:    whereHelperint64{field: "`report`.`subjectId`"},
-	ReportReason: whereHelpernull_String{field: "`report`.`reportReason`"},
-	CreatedAt:    whereHelpernull_Time{field: "`report`.`createdAt`"},
-	UpdatedAt:    whereHelpernull_Time{field: "`report`.`updatedAt`"},
-	DeletedAt:    whereHelpernull_Time{field: "`report`.`deletedAt`"},
+	ReportID:         whereHelperint64{field: "`report`.`report_id`"},
+	CommentID:        whereHelperint64{field: "`report`.`comment_id`"},
+	ReporterMemberID: whereHelperint64{field: "`report`.`reporter_member_id`"},
+	SubjectMemberID:  whereHelperint64{field: "`report`.`subject_member_id`"},
+	ReportReason:     whereHelpernull_String{field: "`report`.`report_reason`"},
 }
 
 // ReportRels is where relationship names are stored.
@@ -116,10 +95,10 @@ func (*reportR) NewStruct() *reportR {
 type reportL struct{}
 
 var (
-	reportAllColumns            = []string{"reportId", "commentId", "reporterId", "subjectId", "reportReason", "createdAt", "updatedAt", "deletedAt"}
-	reportColumnsWithoutDefault = []string{"commentId", "reporterId", "subjectId", "reportReason", "deletedAt"}
-	reportColumnsWithDefault    = []string{"reportId", "createdAt", "updatedAt"}
-	reportPrimaryKeyColumns     = []string{"reportId"}
+	reportAllColumns            = []string{"report_id", "comment_id", "reporter_member_id", "subject_member_id", "report_reason"}
+	reportColumnsWithoutDefault = []string{"comment_id", "reporter_member_id", "subject_member_id", "report_reason"}
+	reportColumnsWithDefault    = []string{"report_id"}
+	reportPrimaryKeyColumns     = []string{"report_id"}
 	reportGeneratedColumns      = []string{}
 )
 
@@ -441,7 +420,7 @@ func Reports(mods ...qm.QueryMod) reportQuery {
 
 // FindReport retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindReport(ctx context.Context, exec boil.ContextExecutor, reportId int64, selectCols ...string) (*Report, error) {
+func FindReport(ctx context.Context, exec boil.ContextExecutor, reportID int64, selectCols ...string) (*Report, error) {
 	reportObj := &Report{}
 
 	sel := "*"
@@ -449,10 +428,10 @@ func FindReport(ctx context.Context, exec boil.ContextExecutor, reportId int64, 
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `report` where `reportId`=?", sel,
+		"select %s from `report` where `report_id`=?", sel,
 	)
 
-	q := queries.Raw(query, reportId)
+	q := queries.Raw(query, reportID)
 
 	err := q.Bind(ctx, exec, reportObj)
 	if err != nil {
@@ -546,13 +525,13 @@ func (o *Report) Insert(ctx context.Context, exec boil.ContextExecutor, columns 
 		return ErrSyncFail
 	}
 
-	o.ReportId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == reportMapping["reportId"] {
+	o.ReportID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == reportMapping["report_id"] {
 		goto CacheNoHooks
 	}
 
 	identifierCols = []interface{}{
-		o.ReportId,
+		o.ReportID,
 	}
 
 	if boil.IsDebug(ctx) {
@@ -700,7 +679,7 @@ func (o ReportSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, c
 }
 
 var mySQLReportUniqueColumns = []string{
-	"reportId",
+	"report_id",
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
@@ -750,7 +729,7 @@ func (o *Report) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			reportAllColumns,
 			reportColumnsWithDefault,
 			reportColumnsWithoutDefault,
@@ -766,7 +745,8 @@ func (o *Report) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 			return errors.New("mysql: unable to upsert report, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(reportAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`report`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `report` WHERE %s",
@@ -817,8 +797,8 @@ func (o *Report) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 		return ErrSyncFail
 	}
 
-	o.ReportId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == reportMapping["reportId"] {
+	o.ReportID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == reportMapping["report_id"] {
 		goto CacheNoHooks
 	}
 
@@ -860,7 +840,7 @@ func (o *Report) Delete(ctx context.Context, exec boil.ContextExecutor) (int64, 
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), reportPrimaryKeyMapping)
-	sql := "DELETE FROM `report` WHERE `reportId`=?"
+	sql := "DELETE FROM `report` WHERE `report_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -957,7 +937,7 @@ func (o ReportSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) (
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Report) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindReport(ctx, exec, o.ReportId)
+	ret, err := FindReport(ctx, exec, o.ReportID)
 	if err != nil {
 		return err
 	}
@@ -996,16 +976,16 @@ func (o *ReportSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor) 
 }
 
 // ReportExists checks if the Report row exists.
-func ReportExists(ctx context.Context, exec boil.ContextExecutor, reportId int64) (bool, error) {
+func ReportExists(ctx context.Context, exec boil.ContextExecutor, reportID int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `report` where `reportId`=? limit 1)"
+	sql := "select exists(select 1 from `report` where `report_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, reportId)
+		fmt.Fprintln(writer, reportID)
 	}
-	row := exec.QueryRowContext(ctx, sql, reportId)
+	row := exec.QueryRowContext(ctx, sql, reportID)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1017,5 +997,5 @@ func ReportExists(ctx context.Context, exec boil.ContextExecutor, reportId int64
 
 // Exists checks if the Report row exists.
 func (o *Report) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return ReportExists(ctx, exec, o.ReportId)
+	return ReportExists(ctx, exec, o.ReportID)
 }

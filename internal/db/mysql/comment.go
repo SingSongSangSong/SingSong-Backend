@@ -24,62 +24,47 @@ import (
 
 // Comment is an object representing the database table.
 type Comment struct {
-	CommentId   int64       `boil:"commentId" json:"commentId" toml:"commentId" yaml:"commentId"`
-	SongInfoId  int64       `boil:"songInfoId" json:"songInfoId" toml:"songInfoId" yaml:"songInfoId"`
-	WriterId    int64       `boil:"writerId" json:"writerId" toml:"writerId" yaml:"writerId"`
-	ParentId    null.Int64  `boil:"parentId" json:"parentId,omitempty" toml:"parentId" yaml:"parentId,omitempty"`
-	Content     null.String `boil:"content" json:"content,omitempty" toml:"content" yaml:"content,omitempty"`
-	IsRecomment null.Bool   `boil:"isRecomment" json:"isRecomment,omitempty" toml:"isRecomment" yaml:"isRecomment,omitempty"`
-	CreatedAt   null.Time   `boil:"createdAt" json:"createdAt,omitempty" toml:"createdAt" yaml:"createdAt,omitempty"`
-	UpdatedAt   null.Time   `boil:"updatedAt" json:"updatedAt,omitempty" toml:"updatedAt" yaml:"updatedAt,omitempty"`
-	DeletedAt   null.Time   `boil:"deletedAt" json:"deletedAt,omitempty" toml:"deletedAt" yaml:"deletedAt,omitempty"`
+	CommentID       int64       `boil:"comment_id" json:"comment_id" toml:"comment_id" yaml:"comment_id"`
+	ParentCommentID null.Int64  `boil:"parent_comment_id" json:"parent_comment_id,omitempty" toml:"parent_comment_id" yaml:"parent_comment_id,omitempty"`
+	SongInfoID      int64       `boil:"song_info_id" json:"song_info_id" toml:"song_info_id" yaml:"song_info_id"`
+	MemberID        int64       `boil:"member_id" json:"member_id" toml:"member_id" yaml:"member_id"`
+	Content         null.String `boil:"content" json:"content,omitempty" toml:"content" yaml:"content,omitempty"`
+	IsRecomment     null.Bool   `boil:"is_recomment" json:"is_recomment,omitempty" toml:"is_recomment" yaml:"is_recomment,omitempty"`
 
 	R *commentR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L commentL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var CommentColumns = struct {
-	CommentId   string
-	SongInfoId  string
-	WriterId    string
-	ParentId    string
-	Content     string
-	IsRecomment string
-	CreatedAt   string
-	UpdatedAt   string
-	DeletedAt   string
+	CommentID       string
+	ParentCommentID string
+	SongInfoID      string
+	MemberID        string
+	Content         string
+	IsRecomment     string
 }{
-	CommentId:   "commentId",
-	SongInfoId:  "songInfoId",
-	WriterId:    "writerId",
-	ParentId:    "parentId",
-	Content:     "content",
-	IsRecomment: "isRecomment",
-	CreatedAt:   "createdAt",
-	UpdatedAt:   "updatedAt",
-	DeletedAt:   "deletedAt",
+	CommentID:       "comment_id",
+	ParentCommentID: "parent_comment_id",
+	SongInfoID:      "song_info_id",
+	MemberID:        "member_id",
+	Content:         "content",
+	IsRecomment:     "is_recomment",
 }
 
 var CommentTableColumns = struct {
-	CommentId   string
-	SongInfoId  string
-	WriterId    string
-	ParentId    string
-	Content     string
-	IsRecomment string
-	CreatedAt   string
-	UpdatedAt   string
-	DeletedAt   string
+	CommentID       string
+	ParentCommentID string
+	SongInfoID      string
+	MemberID        string
+	Content         string
+	IsRecomment     string
 }{
-	CommentId:   "comment.commentId",
-	SongInfoId:  "comment.songInfoId",
-	WriterId:    "comment.writerId",
-	ParentId:    "comment.parentId",
-	Content:     "comment.content",
-	IsRecomment: "comment.isRecomment",
-	CreatedAt:   "comment.createdAt",
-	UpdatedAt:   "comment.updatedAt",
-	DeletedAt:   "comment.deletedAt",
+	CommentID:       "comment.comment_id",
+	ParentCommentID: "comment.parent_comment_id",
+	SongInfoID:      "comment.song_info_id",
+	MemberID:        "comment.member_id",
+	Content:         "comment.content",
+	IsRecomment:     "comment.is_recomment",
 }
 
 // Generated where
@@ -147,25 +132,19 @@ func (w whereHelpernull_Bool) IsNull() qm.QueryMod    { return qmhelper.WhereIsN
 func (w whereHelpernull_Bool) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var CommentWhere = struct {
-	CommentId   whereHelperint64
-	SongInfoId  whereHelperint64
-	WriterId    whereHelperint64
-	ParentId    whereHelpernull_Int64
-	Content     whereHelpernull_String
-	IsRecomment whereHelpernull_Bool
-	CreatedAt   whereHelpernull_Time
-	UpdatedAt   whereHelpernull_Time
-	DeletedAt   whereHelpernull_Time
+	CommentID       whereHelperint64
+	ParentCommentID whereHelpernull_Int64
+	SongInfoID      whereHelperint64
+	MemberID        whereHelperint64
+	Content         whereHelpernull_String
+	IsRecomment     whereHelpernull_Bool
 }{
-	CommentId:   whereHelperint64{field: "`comment`.`commentId`"},
-	SongInfoId:  whereHelperint64{field: "`comment`.`songInfoId`"},
-	WriterId:    whereHelperint64{field: "`comment`.`writerId`"},
-	ParentId:    whereHelpernull_Int64{field: "`comment`.`parentId`"},
-	Content:     whereHelpernull_String{field: "`comment`.`content`"},
-	IsRecomment: whereHelpernull_Bool{field: "`comment`.`isRecomment`"},
-	CreatedAt:   whereHelpernull_Time{field: "`comment`.`createdAt`"},
-	UpdatedAt:   whereHelpernull_Time{field: "`comment`.`updatedAt`"},
-	DeletedAt:   whereHelpernull_Time{field: "`comment`.`deletedAt`"},
+	CommentID:       whereHelperint64{field: "`comment`.`comment_id`"},
+	ParentCommentID: whereHelpernull_Int64{field: "`comment`.`parent_comment_id`"},
+	SongInfoID:      whereHelperint64{field: "`comment`.`song_info_id`"},
+	MemberID:        whereHelperint64{field: "`comment`.`member_id`"},
+	Content:         whereHelpernull_String{field: "`comment`.`content`"},
+	IsRecomment:     whereHelpernull_Bool{field: "`comment`.`is_recomment`"},
 }
 
 // CommentRels is where relationship names are stored.
@@ -185,10 +164,10 @@ func (*commentR) NewStruct() *commentR {
 type commentL struct{}
 
 var (
-	commentAllColumns            = []string{"commentId", "songInfoId", "writerId", "parentId", "content", "isRecomment", "createdAt", "updatedAt", "deletedAt"}
-	commentColumnsWithoutDefault = []string{"songInfoId", "writerId", "parentId", "content", "deletedAt"}
-	commentColumnsWithDefault    = []string{"commentId", "isRecomment", "createdAt", "updatedAt"}
-	commentPrimaryKeyColumns     = []string{"commentId"}
+	commentAllColumns            = []string{"comment_id", "parent_comment_id", "song_info_id", "member_id", "content", "is_recomment"}
+	commentColumnsWithoutDefault = []string{"parent_comment_id", "song_info_id", "member_id", "content"}
+	commentColumnsWithDefault    = []string{"comment_id", "is_recomment"}
+	commentPrimaryKeyColumns     = []string{"comment_id"}
 	commentGeneratedColumns      = []string{}
 )
 
@@ -510,7 +489,7 @@ func Comments(mods ...qm.QueryMod) commentQuery {
 
 // FindComment retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindComment(ctx context.Context, exec boil.ContextExecutor, commentId int64, selectCols ...string) (*Comment, error) {
+func FindComment(ctx context.Context, exec boil.ContextExecutor, commentID int64, selectCols ...string) (*Comment, error) {
 	commentObj := &Comment{}
 
 	sel := "*"
@@ -518,10 +497,10 @@ func FindComment(ctx context.Context, exec boil.ContextExecutor, commentId int64
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from `comment` where `commentId`=?", sel,
+		"select %s from `comment` where `comment_id`=?", sel,
 	)
 
-	q := queries.Raw(query, commentId)
+	q := queries.Raw(query, commentID)
 
 	err := q.Bind(ctx, exec, commentObj)
 	if err != nil {
@@ -615,13 +594,13 @@ func (o *Comment) Insert(ctx context.Context, exec boil.ContextExecutor, columns
 		return ErrSyncFail
 	}
 
-	o.CommentId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == commentMapping["commentId"] {
+	o.CommentID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == commentMapping["comment_id"] {
 		goto CacheNoHooks
 	}
 
 	identifierCols = []interface{}{
-		o.CommentId,
+		o.CommentID,
 	}
 
 	if boil.IsDebug(ctx) {
@@ -769,7 +748,7 @@ func (o CommentSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor, 
 }
 
 var mySQLCommentUniqueColumns = []string{
-	"commentId",
+	"comment_id",
 }
 
 // Upsert attempts an insert using an executor, and does an update or ignore on conflict.
@@ -819,7 +798,7 @@ func (o *Comment) Upsert(ctx context.Context, exec boil.ContextExecutor, updateC
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			commentAllColumns,
 			commentColumnsWithDefault,
 			commentColumnsWithoutDefault,
@@ -835,7 +814,8 @@ func (o *Comment) Upsert(ctx context.Context, exec boil.ContextExecutor, updateC
 			return errors.New("mysql: unable to upsert comment, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(commentAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`comment`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `comment` WHERE %s",
@@ -886,8 +866,8 @@ func (o *Comment) Upsert(ctx context.Context, exec boil.ContextExecutor, updateC
 		return ErrSyncFail
 	}
 
-	o.CommentId = int64(lastID)
-	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == commentMapping["commentId"] {
+	o.CommentID = int64(lastID)
+	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == commentMapping["comment_id"] {
 		goto CacheNoHooks
 	}
 
@@ -929,7 +909,7 @@ func (o *Comment) Delete(ctx context.Context, exec boil.ContextExecutor) (int64,
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), commentPrimaryKeyMapping)
-	sql := "DELETE FROM `comment` WHERE `commentId`=?"
+	sql := "DELETE FROM `comment` WHERE `comment_id`=?"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1026,7 +1006,7 @@ func (o CommentSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor) 
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *Comment) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindComment(ctx, exec, o.CommentId)
+	ret, err := FindComment(ctx, exec, o.CommentID)
 	if err != nil {
 		return err
 	}
@@ -1065,16 +1045,16 @@ func (o *CommentSlice) ReloadAll(ctx context.Context, exec boil.ContextExecutor)
 }
 
 // CommentExists checks if the Comment row exists.
-func CommentExists(ctx context.Context, exec boil.ContextExecutor, commentId int64) (bool, error) {
+func CommentExists(ctx context.Context, exec boil.ContextExecutor, commentID int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from `comment` where `commentId`=? limit 1)"
+	sql := "select exists(select 1 from `comment` where `comment_id`=? limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, commentId)
+		fmt.Fprintln(writer, commentID)
 	}
-	row := exec.QueryRowContext(ctx, sql, commentId)
+	row := exec.QueryRowContext(ctx, sql, commentID)
 
 	err := row.Scan(&exists)
 	if err != nil {
@@ -1086,5 +1066,5 @@ func CommentExists(ctx context.Context, exec boil.ContextExecutor, commentId int
 
 // Exists checks if the Comment row exists.
 func (o *Comment) Exists(ctx context.Context, exec boil.ContextExecutor) (bool, error) {
-	return CommentExists(ctx, exec, o.CommentId)
+	return CommentExists(ctx, exec, o.CommentID)
 }

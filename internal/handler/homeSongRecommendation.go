@@ -15,12 +15,12 @@ type homeSongResponse struct {
 	SongName   string   `json:"songName"`
 	SingerName string   `json:"singerName"`
 	Tags       []string `json:"tags"`
-	SongTempId int64    `json:"songId"`
+	SongInfoId int64    `json:"songId"`
 	Album      string   `json:"album"`
 }
 
 var (
-	songTempIds = []int64{4166, 8525, 46872, 57127, 46375}
+	songInfoIds = []int64{4166, 8525, 46872, 57127, 46375}
 )
 
 // HomeSongRecommendation godoc
@@ -33,12 +33,12 @@ var (
 // @Router       /recommend/home/songs [get]
 func HomeSongRecommendation(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		songTempIdsInterface := make([]interface{}, len(songTempIds))
-		for i, id := range songTempIds {
-			songTempIdsInterface[i] = id
+		songInfoIdsInterface := make([]interface{}, len(songInfoIds))
+		for i, id := range songInfoIds {
+			songInfoIdsInterface[i] = id
 		}
 
-		all, err := mysql.SongTempInfos(qm.WhereIn("songTempId in ?", songTempIdsInterface...)).All(c, db)
+		all, err := mysql.SongInfos(qm.WhereIn("song_info_id in ?", songInfoIdsInterface...)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -60,7 +60,7 @@ func HomeSongRecommendation(db *sql.DB) gin.HandlerFunc {
 				SongName:   s.SongName,
 				SingerName: s.ArtistName,
 				Tags:       korean,
-				SongTempId: s.SongTempId,
+				SongInfoId: s.SongInfoID,
 				Album:      s.Album.String,
 			})
 		}

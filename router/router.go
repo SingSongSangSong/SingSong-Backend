@@ -10,20 +10,18 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
-	ddgin "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"net/http"
 )
 
 func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection) *gin.Engine {
 	// Initialize Datadog tracer
-	tracer.Start()
-	defer tracer.Stop()
+	//tracer.Start()
+	//defer tracer.Stop()
 
 	r := gin.Default()
 
 	// Wrap the router with Datadog middleware
-	r.Use(ddgin.Middleware("singsong-service"))
+	//r.Use(ddgin.Middleware("singsong-service"))
 
 	// CORS 설정 추가
 	r.Use(middleware.PlatformMiddleware())
@@ -54,10 +52,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		tags.GET("", handler.ListTags())
 	}
 
-	user := r.Group("/api/v1/user")
+	member := r.Group("/api/v1/member")
 	{
-		user.POST("/login", handler.OAuth(rdb, db))
-		user.POST("/reissue", handler.Reissue(rdb))
+		member.POST("/login", handler.Login(rdb, db))
+		member.POST("/reissue", handler.Reissue(rdb))
+		member.GET("", middleware.AuthMiddleware(db), handler.GetMemberInfo(db))
+		member.POST("/withdraw", middleware.AuthMiddleware(db), handler.Withdraw(db, rdb))
+		member.POST("/logout", middleware.AuthMiddleware(db), handler.Logout(rdb))
 	}
 
 	// 태그 엔드포인트 설정
