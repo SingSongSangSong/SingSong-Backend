@@ -123,7 +123,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		}
 
 		//isKeep
-		all, err := mysql.KeepLists(qm.Where("memberId = ?", memberId)).All(c, db)
+		all, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -132,7 +132,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		for i, keep := range all {
 			keepIds[i] = keep.KeepListID
 		}
-		keepSongs, err := mysql.KeepSongs(qm.WhereIn("keepId in ?", keepIds...)).All(c, db)
+		keepSongs, err := mysql.KeepSongs(qm.WhereIn("keep_list_id in ?", keepIds...)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
