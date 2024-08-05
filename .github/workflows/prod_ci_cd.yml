@@ -23,13 +23,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Configure AWS credentials For Devzone
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          # Github Repository Secrets에 값 등록 필요!
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: ${{secrets.AWS_REGION}}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Log in to Amazon ECR
         env:
@@ -46,22 +45,6 @@ jobs:
           push: true
           tags: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}
-            PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}
-            DB_HOST=${{ secrets.DB_HOST }}
-            DB_PORT=${{ secrets.DB_PORT }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            REDIS_ADDR=${{ secrets.REDIS_ADDR }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            SECRET_KEY=${{ secrets.SECRET_KEY }}
-            KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}
-            KAKAO_ISSUER=${{ secrets.KAKAO_ISSUER }}
-            JWT_ISSUER=${{ secrets.JWT_ISSUER }}
-            JWT_ACCESS_VALIDITY_SECONDS=${{ secrets.JWT_ACCESS_VALIDITY_SECONDS }}
-            JWT_REFRESH_VALIDITY_SECONDS=${{ secrets.JWT_REFRESH_VALIDITY_SECONDS }}
 
       - name: Download Task Definition Template
         run: |
@@ -78,10 +61,30 @@ jobs:
           container-name: ${{ env.ECS_CONTAINER_NAME }}
           image: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
+      - name: Add environment variables to the task definition
+        run: |
+          jq '.containerDefinitions[0].environment += [
+            {"name":"PINECONE_API_KEY","value":"${{ secrets.PINECONE_API_KEY }}"},
+            {"name":"PINECONE_INDEX","value":"${{ secrets.PINECONE_INDEX }}"},
+            {"name":"DB_HOST","value":"${{ secrets.DB_HOST }}"},
+            {"name":"DB_PORT","value":"${{ secrets.DB_PORT }}"},
+            {"name":"DB_NAME","value":"${{ secrets.DB_NAME }}"},
+            {"name":"DB_USER","value":"${{ secrets.DB_USER }}"},
+            {"name":"DB_PASSWORD","value":"${{ secrets.DB_PASSWORD }}"},
+            {"name":"REDIS_ADDR","value":"${{ secrets.REDIS_ADDR }}"},
+            {"name":"REDIS_PASSWORD","value":"${{ secrets.REDIS_PASSWORD }}"},
+            {"name":"SECRET_KEY","value":"${{ secrets.SECRET_KEY }}"},
+            {"name":"KAKAO_REST_API_KEY","value":"${{ secrets.KAKAO_REST_API_KEY }}"},
+            {"name":"KAKAO_ISSUER","value":"${{ secrets.KAKAO_ISSUER }}"},
+            {"name":"JWT_ISSUER","value":"${{ secrets.JWT_ISSUER }}"},
+            {"name":"JWT_ACCESS_VALIDITY_SECONDS","value":"${{ secrets.JWT_ACCESS_VALIDITY_SECONDS }}"},
+            {"name":"JWT_REFRESH_VALIDITY_SECONDS","value":"${{ secrets.JWT_REFRESH_VALIDITY_SECONDS }}"}
+          ]' task-definition.json > new-task-definition.json
+
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          task-definition: new-task-definition.json
           service: ${{ env.ECS_SERVICE_NAME }}
           cluster: ${{ env.ECS_CLUSTER_NAME }}
           wait-for-service-stability: true

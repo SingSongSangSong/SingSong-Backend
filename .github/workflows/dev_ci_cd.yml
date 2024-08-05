@@ -29,22 +29,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}
-            PINECONE_INDEX=${{ secrets.PINECONE_INDEX }}
-            DB_HOST=${{ secrets.DB_HOST }}
-            DB_PORT=${{ secrets.DB_PORT }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            REDIS_ADDR=${{ secrets.REDIS_ADDR }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            SECRET_KEY=${{ secrets.SECRET_KEY }}
-            KAKAO_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }}
-            KAKAO_ISSUER=${{ secrets.KAKAO_ISSUER }}
-            JWT_ISSUER=${{ secrets.JWT_ISSUER }}
-            JWT_ACCESS_VALIDITY_SECONDS=${{ secrets.JWT_ACCESS_VALIDITY_SECONDS }}
-            JWT_REFRESH_VALIDITY_SECONDS=${{ secrets.JWT_REFRESH_VALIDITY_SECONDS }}
 
   deploy:
     runs-on: ubuntu-latest
@@ -62,9 +46,39 @@ jobs:
           PI_USER: ${{ secrets.PI_USER }}
           PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
           DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
+          PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
+          PINECONE_INDEX: ${{ secrets.PINECONE_INDEX }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          REDIS_ADDR: ${{ secrets.REDIS_ADDR }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_ISSUER: ${{ secrets.KAKAO_ISSUER }}
+          JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
+          JWT_ACCESS_VALIDITY_SECONDS: ${{ secrets.JWT_ACCESS_VALIDITY_SECONDS }}
+          JWT_REFRESH_VALIDITY_SECONDS: ${{ secrets.JWT_REFRESH_VALIDITY_SECONDS }}
         run: |
           sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST << EOF
           echo "Connected to Raspberry Pi"
+          export PINECONE_API_KEY=$PINECONE_API_KEY
+          export PINECONE_INDEX=$PINECONE_INDEX
+          export DB_HOST=$DB_HOST
+          export DB_PORT=$DB_PORT
+          export DB_NAME=$DB_NAME
+          export DB_USER=$DB_USER
+          export DB_PASSWORD=$DB_PASSWORD
+          export REDIS_ADDR=$REDIS_ADDR
+          export REDIS_PASSWORD=$REDIS_PASSWORD
+          export SECRET_KEY=$SECRET_KEY
+          export KAKAO_REST_API_KEY=$KAKAO_REST_API_KEY
+          export KAKAO_ISSUER=$KAKAO_ISSUER
+          export JWT_ISSUER=$JWT_ISSUER
+          export JWT_ACCESS_VALIDITY_SECONDS=$JWT_ACCESS_VALIDITY_SECONDS
+          export JWT_REFRESH_VALIDITY_SECONDS=$JWT_REFRESH_VALIDITY_SECONDS
           nohup /home/sunwupark/Downloads/update_docker.sh $DOCKER_IMAGE > docker_update.log 2>&1 &
           echo "Docker update script started in the background."
           EOF
