@@ -1037,7 +1037,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "노래 평가를 등록/수정합니다.",
+                "description": "노래 평가를 삭제합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1047,7 +1047,7 @@ const docTemplate = `{
                 "tags": [
                     "Songs"
                 ],
-                "summary": "노래 평가를 등록/수정합니다.",
+                "summary": "노래 평가를 삭제합니다.",
                 "parameters": [
                     {
                         "type": "string",

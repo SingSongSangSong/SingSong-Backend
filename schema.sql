@@ -55,6 +55,8 @@ CREATE TABLE IF NOT EXISTS song_info (
     artist_id BIGINT,
     artist_name VARCHAR(255) NOT NULL,
     artist_type VARCHAR(100),
+    is_mr BOOLEAN DEFAULT FALSE,
+    is_chosen_22000 BOOLEAN DEFAULT FALSE,
     related_artists TEXT,
     country VARCHAR(255),
     album VARCHAR(255),

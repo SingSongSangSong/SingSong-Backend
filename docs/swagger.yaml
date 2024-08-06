@@ -851,7 +851,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: 노래 평가를 등록/수정합니다.
+      description: 노래 평가를 삭제합니다.
       parameters:
       - description: 노래 번호
         in: path
@@ -865,7 +865,7 @@ paths:
           description: 성공
       security:
       - BearerAuth: []
-      summary: 노래 평가를 등록/수정합니다.
+      summary: 노래 평가를 삭제합니다.
       tags:
       - Songs
     get:
