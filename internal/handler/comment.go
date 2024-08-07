@@ -35,13 +35,13 @@ type CommentResponse struct {
 }
 
 // CommentOnSong godoc
-// @Summary      SongNumber에 댓글 달기
-// @Description  SongNumber에 댓글 달기
+// @Summary      SongId에 댓글 달기
+// @Description  SongId에 댓글 달기
 // @Tags         Comment
 // @Accept       json
 // @Produce      json
 // @Param        CommentRequest   body      CommentRequest  true  "commentRequest"
-// @Success      200 {object} pkg.BaseResponseStruct{data=[]CommentResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=CommentResponse} "성공"
 // @Router       /comment [post]
 // @Security BearerAuth
 func CommentOnSong(db *sql.DB) gin.HandlerFunc {
@@ -86,6 +86,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 			MemberId:        m.MemberID,
 			Nickname:        member.Nickname.String,
 			CreatedAt:       m.CreatedAt.Time,
+			Recomments:      []CommentResponse{},
 		}
 
 		// 댓글 달기 성공시 댓글 정보 반환
@@ -94,7 +95,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 }
 
 // GetCommentOnSong godoc
-// @Summary      Retrieve comments for the specified SongNumber
+// @Summary      Retrieve comments for the specified SongId
 // @Description  Get comments for a specific song identified by songId
 // @Tags         Comment
 // @Accept       json

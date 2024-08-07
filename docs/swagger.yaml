@@ -8,7 +8,7 @@ definitions:
         type: boolean
       parentCommentId:
         type: integer
-      songInfoId:
+      songId:
         type: integer
     type: object
   handler.CommentResponse:
@@ -31,7 +31,7 @@ definitions:
         items:
           $ref: '#/definitions/handler.CommentResponse'
         type: array
-      songInfoId:
+      songId:
         type: integer
     type: object
   handler.LoginRequest:
@@ -65,7 +65,7 @@ definitions:
     type: object
   handler.PlaylistAddRequest:
     properties:
-      songNumbers:
+      songId:
         items:
           type: integer
         type: array
@@ -112,7 +112,7 @@ definitions:
     type: object
   handler.SongDeleteFromPlaylistRequest:
     properties:
-      songNumbers:
+      songIds:
         items:
           type: integer
         type: array
@@ -311,7 +311,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: SongNumber에 댓글 달기
+      description: SongId에 댓글 달기
       parameters:
       - description: commentRequest
         in: body
@@ -329,13 +329,11 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  items:
-                    $ref: '#/definitions/handler.CommentResponse'
-                  type: array
+                  $ref: '#/definitions/handler.CommentResponse'
               type: object
       security:
       - BearerAuth: []
-      summary: SongNumber에 댓글 달기
+      summary: SongId에 댓글 달기
       tags:
       - Comment
   /comment/{songId}:
@@ -365,7 +363,7 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Retrieve comments for the specified SongNumber
+      summary: Retrieve comments for the specified SongId
       tags:
       - Comment
   /comment/like:
@@ -653,7 +651,7 @@ paths:
                     $ref: '#/definitions/handler.homeResponse'
                   type: array
               type: object
-      summary: 노래 추천 by 태그
+      summary: '[미사용] 노래 추천 by 태그'
       tags:
       - Recommendation
   /recommend/home/songs:
@@ -675,7 +673,7 @@ paths:
                     $ref: '#/definitions/handler.homeSongResponse'
                   type: array
               type: object
-      summary: 노래 추천 5곡
+      summary: '[미사용] 노래 추천 5곡'
       tags:
       - Recommendation
   /recommend/refresh:
@@ -735,7 +733,7 @@ paths:
                     $ref: '#/definitions/handler.songRecommendResponse'
                   type: array
               type: object
-      summary: 노래 추천 by 노래 번호 목록
+      summary: '[미사용] 노래 추천 by 노래 번호 목록'
       tags:
       - Recommendation
   /song-review-options:
@@ -779,15 +777,15 @@ paths:
       summary: 노래 평가 선택지를 추가합니다.
       tags:
       - Song review option CR for admin
-  /songs/{songNumber}:
+  /songs/{songId}:
     get:
       consumes:
       - application/json
       description: 노래 상세 정보를 조회합니다
       parameters:
-      - description: 노래 번호
+      - description: songId
         in: path
-        name: songNumber
+        name: songId
         required: true
         type: string
       produces:
@@ -809,7 +807,7 @@ paths:
       summary: 노래 상세 정보를 조회합니다
       tags:
       - Songs
-  /songs/{songNumber}/related:
+  /songs/{songId}/related:
     get:
       consumes:
       - application/json
@@ -817,9 +815,9 @@ paths:
         무한스크롤을 진행한다면 응답에 포함되어 오는 nextPage를 다음번에 포함하여 보내면 됩니다. nextPage는 1씩 증가합니다.
         더이상 노래가 없을 경우, 응답에는 빈 배열과 함께 nextPage는 1로 반환됩니다.
       parameters:
-      - description: 노래 번호
+      - description: songId
         in: path
-        name: songNumber
+        name: songId
         required: true
         type: string
       - description: 현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회
@@ -847,15 +845,15 @@ paths:
       summary: 연관된 노래들을 조회합니다
       tags:
       - Songs
-  /songs/{songNumber}/reviews:
+  /songs/{songId}/reviews:
     delete:
       consumes:
       - application/json
       description: 노래 평가를 삭제합니다.
       parameters:
-      - description: 노래 번호
+      - description: songId
         in: path
-        name: songNumber
+        name: songId
         required: true
         type: string
       produces:
@@ -873,9 +871,9 @@ paths:
       - application/json
       description: 노래 평가를 조회합니다.
       parameters:
-      - description: 노래 번호
+      - description: songId
         in: path
-        name: songNumber
+        name: songId
         required: true
         type: string
       produces:
@@ -902,9 +900,9 @@ paths:
       - application/json
       description: 노래 평가를 등록/수정합니다.
       parameters:
-      - description: 노래 번호
+      - description: songId
         in: path
-        name: songNumber
+        name: songId
         required: true
         type: string
       - description: songReviewOptionId

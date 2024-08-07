@@ -24,7 +24,7 @@ var (
 )
 
 // HomeSongRecommendation godoc
-// @Summary      노래 추천 5곡
+// @Summary      [미사용] 노래 추천 5곡
 // @Description  앨범 이미지와 함께 노래를 추천
 // @Tags         Recommendation
 // @Accept       json

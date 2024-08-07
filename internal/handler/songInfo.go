@@ -28,15 +28,15 @@ type songInfoResponse struct {
 // @Tags         Songs
 // @Accept       json
 // @Produce      json
-// @Param        songNumber path string true "노래 번호"
+// @Param        songId path string true "songId"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]songInfoResponse} "성공"
-// @Router       /songs/{songNumber} [get]
+// @Router       /songs/{songId} [get]
 // @Security BearerAuth
 func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		songNumber := c.Param("songNumber")
-		if songNumber == "" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songNumber in path variable", nil)
+		songInfoId := c.Param("songId")
+		if songInfoId == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songId in path variable", nil)
 			return
 		}
 
@@ -53,7 +53,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 		}
 
 		//노래 정보 조회
-		one, err := mysql.SongInfos(qm.Where("song_number = ?", songNumber)).One(c, db)
+		one, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - no song", nil)
 			return

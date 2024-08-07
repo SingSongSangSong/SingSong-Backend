@@ -38,17 +38,17 @@ var (
 // @Tags         Songs
 // @Accept       json
 // @Produce      json
-// @Param        songNumber path string true "노래 번호"
+// @Param        songId path string true "songId"
 // @Param        page query int false "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
 // @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=relatedSongResponse} "성공"
-// @Router       /songs/{songNumber}/related [get]
+// @Router       /songs/{songId}/related [get]
 // @Security BearerAuth
 func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		songNumber := c.Param("songNumber")
-		if songNumber == "" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songNumber in path variable", nil)
+		songInfoId := c.Param("songId")
+		if songInfoId == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songId in path variable", nil)
 			return
 		}
 
@@ -78,8 +78,15 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			return
 		}
 
+		//songInfoId로 songNumber 조회
+		song, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - no song", nil)
+			return
+		}
+
 		//songNumber로 벡터 디비에서 조회
-		songNumberInt, err := strconv.Atoi(songNumber)
+		songNumberInt := song.SongNumber
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid songNumber", nil)
 			return
@@ -96,7 +103,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		}
 
 		res, err := idxConnection.QueryByVectorId(c, &pinecone.QueryByVectorIdRequest{
-			VectorId:        songNumber,
+			VectorId:        strconv.Itoa(song.SongNumber),
 			TopK:            uint32(sizeInt * pageInt),
 			Filter:          filterStruct,
 			IncludeValues:   true,
