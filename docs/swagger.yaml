@@ -65,7 +65,7 @@ definitions:
     type: object
   handler.PlaylistAddRequest:
     properties:
-      songNumbers:
+      songId:
         items:
           type: integer
         type: array
@@ -112,7 +112,7 @@ definitions:
     type: object
   handler.SongDeleteFromPlaylistRequest:
     properties:
-      songNumbers:
+      songIds:
         items:
           type: integer
         type: array

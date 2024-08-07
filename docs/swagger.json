@@ -1263,7 +1263,7 @@
         "handler.PlaylistAddRequest": {
             "type": "object",
             "properties": {
-                "songNumbers": {
+                "songId": {
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -1336,7 +1336,7 @@
         "handler.SongDeleteFromPlaylistRequest": {
             "type": "object",
             "properties": {
-                "songNumbers": {
+                "songIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"

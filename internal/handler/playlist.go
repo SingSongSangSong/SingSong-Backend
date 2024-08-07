@@ -14,7 +14,7 @@ import (
 )
 
 type PlaylistAddRequest struct {
-	Songs []int `json:"songNumbers"`
+	SongInfoIds []int `json:"songId"`
 }
 
 type PlaylistAddResponse struct {
@@ -67,8 +67,8 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 노래 정보들 가져오기
-		for _, song := range playlistRequest.Songs {
-			m := mysql.SongInfos(qm.Where("song_number = ?", song))
+		for _, songInfoId := range playlistRequest.SongInfoIds {
+			m := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId))
 			row, errors := m.One(c, db)
 			if errors != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
@@ -116,7 +116,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 }
 
 type SongDeleteFromPlaylistRequest struct {
-	Songs []int `json:"songNumbers"`
+	SongInfoIds []int `json:"songIds"`
 }
 
 // 플레이리스트에 노래리스트 삭제
@@ -153,8 +153,8 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 노래 정보들 가져오기
-		for _, song := range songDeleteFromPlaylistRequest.Songs {
-			_, err := mysql.KeepSongs(qm.Where("keep_list_id = ? AND song_number = ?", playlistInfo.KeepListID, song)).DeleteAll(c, db)
+		for _, songInfoId := range songDeleteFromPlaylistRequest.SongInfoIds {
+			_, err := mysql.KeepSongs(qm.Where("keep_list_id = ? AND song_info_id = ?", playlistInfo.KeepListID, songInfoId)).DeleteAll(c, db)
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			}

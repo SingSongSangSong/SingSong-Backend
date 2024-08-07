@@ -86,6 +86,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 			MemberId:        m.MemberID,
 			Nickname:        member.Nickname.String,
 			CreatedAt:       m.CreatedAt.Time,
+			Recomments:      []CommentResponse{},
 		}
 
 		// 댓글 달기 성공시 댓글 정보 반환

@@ -1271,7 +1271,7 @@ const docTemplate = `{
         "handler.PlaylistAddRequest": {
             "type": "object",
             "properties": {
-                "songNumbers": {
+                "songId": {
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -1344,7 +1344,7 @@ const docTemplate = `{
         "handler.SongDeleteFromPlaylistRequest": {
             "type": "object",
             "properties": {
-                "songNumbers": {
+                "songIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"
