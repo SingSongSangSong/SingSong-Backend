@@ -48,10 +48,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.CommentResponse"
-                                            }
+                                            "$ref": "#/definitions/handler.CommentResponse"
                                         }
                                     }
                                 }
@@ -818,7 +815,7 @@
                 }
             }
         },
-        "/songs/{songNumber}": {
+        "/songs/{songId}": {
             "get": {
                 "security": [
                     {
@@ -839,8 +836,8 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     }
@@ -870,7 +867,7 @@
                 }
             }
         },
-        "/songs/{songNumber}/related": {
+        "/songs/{songId}/related": {
             "get": {
                 "security": [
                     {
@@ -891,8 +888,8 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     },
@@ -931,7 +928,7 @@
                 }
             }
         },
-        "/songs/{songNumber}/reviews": {
+        "/songs/{songId}/reviews": {
             "get": {
                 "security": [
                     {
@@ -952,8 +949,8 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     }
@@ -1002,8 +999,8 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     },
@@ -1043,8 +1040,8 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     }

@@ -24,15 +24,15 @@ type songReviewOptionGetResponse struct {
 // @Tags         Songs
 // @Accept       json
 // @Produce      json
-// @Param        songNumber path string true "노래 번호"
+// @Param        songId path string true "songId"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]songReviewOptionGetResponse} "성공"
-// @Router       /songs/{songNumber}/reviews [get]
+// @Router       /songs/{songId}/reviews [get]
 // @Security BearerAuth
 func GetSongReview(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		songNumber := c.Param("songNumber")
-		if songNumber == "" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songNumber in path variable", nil)
+		songInfoId := c.Param("songId")
+		if songInfoId == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songId in path variable", nil)
 			return
 		}
 
@@ -48,13 +48,7 @@ func GetSongReview(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		one, err := mysql.SongInfos(qm.Where("song_number = ?", songNumber)).One(c, db)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - no song", nil)
-			return
-		}
-
-		all, err := mysql.SongReviews(qm.Where("song_info_id = ?", one.SongInfoID)).All(c, db)
+		all, err := mysql.SongReviews(qm.Where("song_info_id = ?", songInfoId)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -99,16 +93,16 @@ type songReviewOptionPutRequest struct {
 // @Tags         Songs
 // @Accept       json
 // @Produce      json
-// @Param        songNumber path string true "노래 번호"
+// @Param        songId path string true "songId"
 // @Param		 songReview body songReviewOptionPutRequest true "songReviewOptionId"
 // @Success      200 "성공"
-// @Router       /songs/{songNumber}/reviews [put]
+// @Router       /songs/{songId}/reviews [put]
 // @Security BearerAuth
 func PutSongReview(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		songNumber := c.Param("songNumber")
-		if songNumber == "" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songNumber in path variable", nil)
+		songInfoId := c.Param("songId")
+		if songInfoId == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songId in path variable", nil)
 			return
 		}
 
@@ -153,7 +147,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
 		}
-		one, err := mysql.SongInfos(qm.Where("song_number = ?", songNumber)).One(c, db)
+		one, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -195,15 +189,15 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 // @Tags         Songs
 // @Accept       json
 // @Produce      json
-// @Param        songNumber path string true "노래 번호"
+// @Param        songId path string true "songId"
 // @Success      200 "성공"
-// @Router       /songs/{songNumber}/reviews [delete]
+// @Router       /songs/{songId}/reviews [delete]
 // @Security BearerAuth
 func DeleteSongReview(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		songNumber := c.Param("songNumber")
-		if songNumber == "" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songNumber in path variable", nil)
+		songInfoId := c.Param("songId")
+		if songInfoId == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songId in path variable", nil)
 			return
 		}
 
@@ -219,12 +213,7 @@ func DeleteSongReview(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		one, err := mysql.SongInfos(qm.Where("song_number = ?", songNumber)).One(c, db)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-			return
-		}
-		_, err = mysql.SongReviews(qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", one.SongInfoID)).DeleteAll(c, db)
+		_, err := mysql.SongReviews(qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", songInfoId)).DeleteAll(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

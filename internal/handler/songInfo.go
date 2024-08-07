@@ -28,7 +28,7 @@ type songInfoResponse struct {
 // @Tags         Songs
 // @Accept       json
 // @Produce      json
-// @Param        songNumber path string true "노래 번호"
+// @Param        songId path string true "songId"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]songInfoResponse} "성공"
 // @Router       /songs/{songId} [get]
 // @Security BearerAuth

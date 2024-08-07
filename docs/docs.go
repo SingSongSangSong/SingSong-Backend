@@ -56,10 +56,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.CommentResponse"
-                                            }
+                                            "$ref": "#/definitions/handler.CommentResponse"
                                         }
                                     }
                                 }
@@ -826,7 +823,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/songs/{songNumber}": {
+        "/songs/{songId}": {
             "get": {
                 "security": [
                     {
@@ -847,8 +844,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     }
@@ -878,7 +875,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/songs/{songNumber}/related": {
+        "/songs/{songId}/related": {
             "get": {
                 "security": [
                     {
@@ -899,8 +896,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     },
@@ -939,7 +936,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/songs/{songNumber}/reviews": {
+        "/songs/{songId}/reviews": {
             "get": {
                 "security": [
                     {
@@ -960,8 +957,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     }
@@ -1010,8 +1007,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     },
@@ -1051,8 +1048,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "노래 번호",
-                        "name": "songNumber",
+                        "description": "songId",
+                        "name": "songId",
                         "in": "path",
                         "required": true
                     }

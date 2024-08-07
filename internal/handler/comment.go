@@ -41,7 +41,7 @@ type CommentResponse struct {
 // @Accept       json
 // @Produce      json
 // @Param        CommentRequest   body      CommentRequest  true  "commentRequest"
-// @Success      200 {object} pkg.BaseResponseStruct{data=[]CommentResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=CommentResponse} "성공"
 // @Router       /comment [post]
 // @Security BearerAuth
 func CommentOnSong(db *sql.DB) gin.HandlerFunc {
