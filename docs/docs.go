@@ -22,7 +22,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "SongNumber에 댓글 달기",
+                "description": "SongId에 댓글 달기",
                 "consumes": [
                     "application/json"
                 ],
@@ -32,7 +32,7 @@ const docTemplate = `{
                 "tags": [
                     "Comment"
                 ],
-                "summary": "SongNumber에 댓글 달기",
+                "summary": "SongId에 댓글 달기",
                 "parameters": [
                     {
                         "description": "commentRequest",
@@ -180,7 +180,7 @@ const docTemplate = `{
                 "tags": [
                     "Comment"
                 ],
-                "summary": "Retrieve comments for the specified SongNumber",
+                "summary": "Retrieve comments for the specified SongId",
                 "parameters": [
                     {
                         "type": "integer",
@@ -581,7 +581,7 @@ const docTemplate = `{
                 "tags": [
                     "Recommendation"
                 ],
-                "summary": "노래 추천 by 태그",
+                "summary": "[미사용] 노래 추천 by 태그",
                 "parameters": [
                     {
                         "description": "태그 목록",
@@ -630,7 +630,7 @@ const docTemplate = `{
                 "tags": [
                     "Recommendation"
                 ],
-                "summary": "노래 추천 5곡",
+                "summary": "[미사용] 노래 추천 5곡",
                 "responses": {
                     "200": {
                         "description": "성공",
@@ -722,7 +722,7 @@ const docTemplate = `{
                 "tags": [
                     "Recommendation"
                 ],
-                "summary": "노래 추천 by 노래 번호 목록",
+                "summary": "[미사용] 노래 추천 by 노래 번호 목록",
                 "parameters": [
                     {
                         "description": "노래 번호 목록",
@@ -1186,7 +1186,7 @@ const docTemplate = `{
                 "parentCommentId": {
                     "type": "integer"
                 },
-                "songInfoId": {
+                "songId": {
                     "type": "integer"
                 }
             }
@@ -1221,7 +1221,7 @@ const docTemplate = `{
                         "$ref": "#/definitions/handler.CommentResponse"
                     }
                 },
-                "songInfoId": {
+                "songId": {
                     "type": "integer"
                 }
             }

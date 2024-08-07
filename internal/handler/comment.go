@@ -35,8 +35,8 @@ type CommentResponse struct {
 }
 
 // CommentOnSong godoc
-// @Summary      SongNumber에 댓글 달기
-// @Description  SongNumber에 댓글 달기
+// @Summary      SongId에 댓글 달기
+// @Description  SongId에 댓글 달기
 // @Tags         Comment
 // @Accept       json
 // @Produce      json
@@ -94,7 +94,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 }
 
 // GetCommentOnSong godoc
-// @Summary      Retrieve comments for the specified SongNumber
+// @Summary      Retrieve comments for the specified SongId
 // @Description  Get comments for a specific song identified by songId
 // @Tags         Comment
 // @Accept       json

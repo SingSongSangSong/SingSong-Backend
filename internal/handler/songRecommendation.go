@@ -24,7 +24,7 @@ type songRecommendResponse struct {
 }
 
 // RecommendBySongs godoc
-// @Summary      노래 추천 by 노래 번호 목록
+// @Summary      [미사용] 노래 추천 by 노래 번호 목록
 // @Description  노래 번호 목록을 보내면 유사한 노래들을 추천합니다.
 // @Tags         Recommendation
 // @Accept       json

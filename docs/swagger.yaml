@@ -8,7 +8,7 @@ definitions:
         type: boolean
       parentCommentId:
         type: integer
-      songInfoId:
+      songId:
         type: integer
     type: object
   handler.CommentResponse:
@@ -31,7 +31,7 @@ definitions:
         items:
           $ref: '#/definitions/handler.CommentResponse'
         type: array
-      songInfoId:
+      songId:
         type: integer
     type: object
   handler.LoginRequest:
@@ -311,7 +311,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: SongNumber에 댓글 달기
+      description: SongId에 댓글 달기
       parameters:
       - description: commentRequest
         in: body
@@ -335,7 +335,7 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: SongNumber에 댓글 달기
+      summary: SongId에 댓글 달기
       tags:
       - Comment
   /comment/{songId}:
@@ -365,7 +365,7 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Retrieve comments for the specified SongNumber
+      summary: Retrieve comments for the specified SongId
       tags:
       - Comment
   /comment/like:
@@ -653,7 +653,7 @@ paths:
                     $ref: '#/definitions/handler.homeResponse'
                   type: array
               type: object
-      summary: 노래 추천 by 태그
+      summary: '[미사용] 노래 추천 by 태그'
       tags:
       - Recommendation
   /recommend/home/songs:
@@ -675,7 +675,7 @@ paths:
                     $ref: '#/definitions/handler.homeSongResponse'
                   type: array
               type: object
-      summary: 노래 추천 5곡
+      summary: '[미사용] 노래 추천 5곡'
       tags:
       - Recommendation
   /recommend/refresh:
@@ -735,7 +735,7 @@ paths:
                     $ref: '#/definitions/handler.songRecommendResponse'
                   type: array
               type: object
-      summary: 노래 추천 by 노래 번호 목록
+      summary: '[미사용] 노래 추천 by 노래 번호 목록'
       tags:
       - Recommendation
   /song-review-options:

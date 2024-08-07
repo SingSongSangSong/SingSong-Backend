@@ -72,7 +72,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	// 노래 상세
 	songs := r.Group("/api/v1/songs")
 	{
-		songs.GET("/:songNumber", middleware.AuthMiddleware(db), handler.GetSongInfo(db))
+		songs.GET("/:songId", middleware.AuthMiddleware(db), handler.GetSongInfo(db))
 		songs.GET("/:songNumber/reviews", middleware.AuthMiddleware(db), handler.GetSongReview(db))
 		songs.PUT("/:songNumber/reviews", middleware.AuthMiddleware(db), handler.PutSongReview(db))
 		songs.DELETE("/:songNumber/reviews", middleware.AuthMiddleware(db), handler.DeleteSongReview(db))
