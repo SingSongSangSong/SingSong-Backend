@@ -16,7 +16,7 @@ import (
 
 type CommentRequest struct {
 	ParentCommentId int64  `json:"parentCommentId"`
-	SongInfoId      int64  `json:"songInfoId"`
+	SongInfoId      int64  `json:"songId"`
 	Content         string `json:"content"`
 	IsRecomment     bool   `json:"isRecomment"`
 }
@@ -27,11 +27,11 @@ type CommentResponse struct {
 	Content         string            `json:"content"`
 	IsRecomment     bool              `json:"isRecomment"`
 	ParentCommentId int64             `json:"parentCommentId"`
-	SongInfoId      int64             `json:"songInfoId"`
+	SongInfoId      int64             `json:"songId"`
 	MemberId        int64             `json:"memberId"`
 	Nickname        string            `json:"nickname"`
 	CreatedAt       time.Time         `json:"createdAt"`
-	Recomments      []CommentResponse `json:"recomments,omitempty"`
+	Recomments      []CommentResponse `json:"recomments"`
 }
 
 // CommentOnSong godoc
@@ -59,12 +59,19 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
 			return
 		}
+
+		member, err := mysql.Members(qm.Where("member_id = ?", memberId.(int64))).One(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
 		// 댓글 달기
 		nulIsRecomment := null.BoolFrom(commentRequest.IsRecomment)
 		nullParentCommentId := null.Int64From(commentRequest.ParentCommentId)
 		nullContent := null.StringFrom(commentRequest.Content)
 		m := mysql.Comment{MemberID: memberId.(int64), ParentCommentID: nullParentCommentId, SongInfoID: commentRequest.SongInfoId, IsRecomment: nulIsRecomment, Content: nullContent}
-		err := m.Insert(c, db, boil.Infer())
+		err = m.Insert(c, db, boil.Infer())
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -77,7 +84,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 			Content:         m.Content.String,
 			IsRecomment:     m.IsRecomment.Bool,
 			MemberId:        m.MemberID,
-			Nickname:        m.R.Member.Nickname.String,
+			Nickname:        member.Nickname.String,
 			CreatedAt:       m.CreatedAt.Time,
 		}
 
