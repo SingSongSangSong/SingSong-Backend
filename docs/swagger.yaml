@@ -1,5 +1,12 @@
 basePath: /api/v1
 definitions:
+  handler.CommentLikeRequest:
+    properties:
+      commentId:
+        type: integer
+      isLiked:
+        type: boolean
+    type: object
   handler.CommentRequest:
     properties:
       content:
@@ -21,6 +28,8 @@ definitions:
         type: string
       isRecomment:
         type: boolean
+      likes:
+        type: integer
       memberId:
         type: integer
       nickname:
@@ -371,20 +380,20 @@ paths:
       consumes:
       - application/json
       description: 해당하는 댓글에 좋아요 누르기
+      parameters:
+      - description: CommentLikeRequest
+        in: body
+        name: CommentLikeRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CommentLikeRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 성공
           schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/handler.PlaylistAddResponse'
-                  type: array
-              type: object
+            $ref: '#/definitions/pkg.BaseResponseStruct'
       security:
       - BearerAuth: []
       summary: 해당하는 댓글에 좋아요 누르기
@@ -394,7 +403,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get recomments for a specific comment identified by commentId
+      description: Get reComments for a specific comment identified by commentId
       parameters:
       - description: Comment ID
         in: path
@@ -417,7 +426,7 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Retrieve recomments for the specified CommentId
+      summary: Retrieve reComments for the specified CommentId
       tags:
       - Comment
   /comment/report:

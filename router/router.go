@@ -91,7 +91,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		comment.POST("", middleware.AuthMiddleware(db), handler.CommentOnSong(db))
 		comment.GET("/:songId", handler.GetCommentOnSong(db))
 		comment.POST("/report", middleware.AuthMiddleware(db), handler.ReportComment(db))
-		comment.GET("/recomment/:commentId", handler.GetRecommentOnSong(db))
+		comment.GET("/recomment/:commentId", handler.GetReCommentOnSong(db))
+		comment.POST("/like", middleware.AuthMiddleware(db), handler.LikeComment(db))
 	}
 
 	// 스웨거 설정

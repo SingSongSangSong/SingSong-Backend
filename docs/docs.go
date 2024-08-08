@@ -84,26 +84,22 @@ const docTemplate = `{
                     "Comment"
                 ],
                 "summary": "해당하는 댓글에 좋아요 누르기",
+                "parameters": [
+                    {
+                        "description": "CommentLikeRequest",
+                        "name": "CommentLikeRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CommentLikeRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "성공",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.PlaylistAddResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
                         }
                     }
                 }
@@ -116,7 +112,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get recomments for a specific comment identified by commentId",
+                "description": "Get reComments for a specific comment identified by commentId",
                 "consumes": [
                     "application/json"
                 ],
@@ -126,7 +122,7 @@ const docTemplate = `{
                 "tags": [
                     "Comment"
                 ],
-                "summary": "Retrieve recomments for the specified CommentId",
+                "summary": "Retrieve reComments for the specified CommentId",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1223,6 +1219,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.CommentLikeRequest": {
+            "type": "object",
+            "properties": {
+                "commentId": {
+                    "type": "integer"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                }
+            }
+        },
         "handler.CommentRequest": {
             "type": "object",
             "properties": {
@@ -1254,6 +1261,9 @@ const docTemplate = `{
                 },
                 "isRecomment": {
                     "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
                 },
                 "memberId": {
                     "type": "integer"

@@ -32,6 +32,7 @@ type CommentResponse struct {
 	MemberId        int64             `json:"memberId"`
 	Nickname        string            `json:"nickname"`
 	CreatedAt       time.Time         `json:"createdAt"`
+	Likes           int               `json:"likes"`
 	Recomments      []CommentResponse `json:"recomments"`
 }
 
@@ -71,7 +72,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 		nulIsRecomment := null.BoolFrom(commentRequest.IsRecomment)
 		nullParentCommentId := null.Int64From(commentRequest.ParentCommentId)
 		nullContent := null.StringFrom(commentRequest.Content)
-		m := mysql.Comment{MemberID: memberId.(int64), ParentCommentID: nullParentCommentId, SongInfoID: commentRequest.SongInfoId, IsRecomment: nulIsRecomment, Content: nullContent}
+		m := mysql.Comment{MemberID: memberId.(int64), ParentCommentID: nullParentCommentId, SongInfoID: commentRequest.SongInfoId, IsRecomment: nulIsRecomment, Content: nullContent, Likes: null.IntFrom(0)}
 		err = m.Insert(c, db, boil.Infer())
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
@@ -87,6 +88,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 			MemberId:        m.MemberID,
 			Nickname:        member.Nickname.String,
 			CreatedAt:       m.CreatedAt.Time,
+			Likes:           m.Likes.Int,
 			Recomments:      []CommentResponse{},
 		}
 
@@ -107,13 +109,6 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 // @Security BearerAuth
 func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Retrieve memberId from context (for potential blocking features)
-		//memberId, exists := c.Get("memberId")
-		//if !exists {
-		//	pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
-		//	return
-		//}
-
 		// Retrieve songId from path parameter
 		songIdParam := c.Param("songId")
 		songId, err := strconv.Atoi(songIdParam)
@@ -123,7 +118,6 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Retrieve comments for the specified songId
-		//comments, err := mysql.Comments(qm.Where("song_info_id = ?", songId), qm.OrderBy("created_at ASC")).All(c, db)
 		comments, err := mysql.Comments(
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
@@ -151,18 +145,19 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 					MemberId:        comment.MemberID,
 					Nickname:        comment.R.Member.Nickname.String,
 					CreatedAt:       comment.CreatedAt.Time,
+					Likes:           comment.Likes.Int,
 					Recomments:      []CommentResponse{},
 				})
 			}
 		}
 
-		// Add recomments to their respective parent comments in the slice
+		// Add reComments to their respective parent comments in the slice
 		for _, comment := range comments {
 			if comment.IsRecomment.Bool {
 				// Find the parent comment in the topLevelComments slice and append the recomment
 				for i := range topLevelComments {
 					if topLevelComments[i].CommentId == comment.ParentCommentID.Int64 {
-						recomment := CommentResponse{
+						reComment := CommentResponse{
 							CommentId:       comment.CommentID,
 							Content:         comment.Content.String,
 							IsRecomment:     comment.IsRecomment.Bool,
@@ -171,15 +166,16 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 							Nickname:        comment.R.Member.Nickname.String,
 							CreatedAt:       comment.CreatedAt.Time,
 							SongInfoId:      comment.SongInfoID,
+							Likes:           comment.Likes.Int,
 						}
-						topLevelComments[i].Recomments = append(topLevelComments[i].Recomments, recomment)
+						topLevelComments[i].Recomments = append(topLevelComments[i].Recomments, reComment)
 						break
 					}
 				}
 			}
 		}
 
-		// Sort recomments by CreatedAt within each top-level comment
+		// Sort reComments by CreatedAt within each top-level comment
 		for i := range topLevelComments {
 			sort.Slice(topLevelComments[i].Recomments, func(j, k int) bool {
 				return topLevelComments[i].Recomments[j].CreatedAt.Before(topLevelComments[i].Recomments[k].CreatedAt)
@@ -191,9 +187,9 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// GetRecommentOnSong 댓글에 대한 대댓글 정보 보기
-// @Summary      Retrieve recomments for the specified CommentId
-// @Description  Get recomments for a specific comment identified by commentId
+// GetReCommentOnSong 댓글에 대한 대댓글 정보 보기
+// @Summary      Retrieve reComments for the specified CommentId
+// @Description  Get reComments for a specific comment identified by commentId
 // @Tags         Comment
 // @Accept       json
 // @Produce      json
@@ -201,7 +197,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]CommentResponse} "Success"
 // @Router       /comment/recomment/{commentId} [get]
 // @Security BearerAuth
-func GetRecommentOnSong(db *sql.DB) gin.HandlerFunc {
+func GetReCommentOnSong(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Retrieve commentId from path parameter
 		commentIdParam := c.Param("commentId")
@@ -212,8 +208,8 @@ func GetRecommentOnSong(db *sql.DB) gin.HandlerFunc {
 		}
 		log.Printf("commentId: %d", commentId)
 
-		// Retrieve recomments for the specified commentId
-		recomments, err := mysql.Comments(
+		// Retrieve reComments for the specified commentId
+		reComments, err := mysql.Comments(
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
 			qm.Where("comment.parent_comment_id = ?", commentId),
@@ -223,11 +219,11 @@ func GetRecommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		log.Printf("recomments: %d", len(recomments))
+		log.Printf("recomments: %d", len(reComments))
 
 		// Prepare the final data list directly in the order retrieved
-		data := make([]CommentResponse, 0, len(recomments))
-		for _, recomment := range recomments {
+		data := make([]CommentResponse, 0, len(reComments))
+		for _, recomment := range reComments {
 			data = append(data, CommentResponse{
 				CommentId:       recomment.CommentID,
 				Content:         recomment.Content.String,
@@ -236,6 +232,7 @@ func GetRecommentOnSong(db *sql.DB) gin.HandlerFunc {
 				SongInfoId:      recomment.SongInfoID,
 				MemberId:        recomment.MemberID,
 				Nickname:        recomment.R.Member.Nickname.String,
+				Likes:           recomment.Likes.Int,
 				CreatedAt:       recomment.CreatedAt.Time,
 			})
 		}
@@ -306,19 +303,111 @@ func ReportComment(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+type CommentLikeRequest struct {
+	CommentId int64 `json:"commentId"`
+	IsLiked   bool  `json:"isLiked"`
+}
+
 // LikeComment godoc
 // @Summary      해당하는 댓글에 좋아요 누르기
 // @Description  해당하는 댓글에 좋아요 누르기
 // @Tags         Comment
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} pkg.BaseResponseStruct{data=[]PlaylistAddResponse} "성공"
+// @Param        CommentLikeRequest   body      CommentLikeRequest  true  "CommentLikeRequest"
+// @Success      200 {object} pkg.BaseResponseStruct{} "성공"
 // @Router       /comment/like [post]
 // @Security BearerAuth
 func LikeComment(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// CommentLikeRequest 받기
+		commentLikeRequest := &CommentLikeRequest{}
+		if err := c.ShouldBindJSON(commentLikeRequest); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
 		// memberId가져오기
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
+
+		// 이미 좋아요를 눌렀는지 확인후 이미 눌렀다면 취소 요청 보내기
+		if commentLikeRequest.IsLiked {
+			// 이미 좋아요를 누른 상태
+			commentLikes, err := mysql.CommentLikes(
+				qm.Where("member_id = ? AND comment_id = ?", memberId.(int64), commentLikeRequest.CommentId),
+			).One(c, db)
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			// 이미 좋아요를 누른 상태에서 좋아요 취소 요청
+			commentLikes.DeletedAt = null.TimeFrom(time.Now())
+			_, err = commentLikes.Update(c, db, boil.Infer())
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			// CommentTable에서 해당 CommentId의 LikeCount를 1 감소시킨다
+			comment, err := mysql.Comments(
+				qm.Where("comment_id = ?", commentLikeRequest.CommentId),
+			).One(c, db)
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			if comment.Likes.Valid {
+				comment.Likes.Int -= 1
+			} else {
+				comment.Likes = null.IntFrom(0)
+			}
+
+			_, err = comment.Update(c, db, boil.Infer())
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			// CommentLikeResponse 반환
+			pkg.BaseResponse(c, http.StatusOK, "success", comment.Likes.Int)
+			return
+		}
 
 		// 댓글 좋아요 누르기
+		like := mysql.CommentLike{MemberID: memberId.(int64), CommentID: commentLikeRequest.CommentId}
+		err := like.Insert(c, db, boil.Infer())
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// CommentTable에서 해당 CommentId의 LikeCount를 1 증가시킨다
+		comment, err := mysql.Comments(
+			qm.Where("comment_id = ?", commentLikeRequest.CommentId),
+		).One(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		if comment.Likes.Valid {
+			comment.Likes.Int += 1
+		} else {
+			comment.Likes = null.IntFrom(1)
+		}
+
+		_, err = comment.Update(c, db, boil.Infer())
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// CommentLikeResponse 반환
+		pkg.BaseResponse(c, http.StatusOK, "success", comment.Likes.Int)
 	}
 }
