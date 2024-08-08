@@ -29,8 +29,9 @@ type relatedSongResponse struct {
 }
 
 var (
-	defaultSize = "20"
-	defaultPage = "1"
+	defaultSize     = "20"
+	defaultPage     = "1"
+	maximumSongSize = 100
 )
 
 // GetRelatedSong godoc
@@ -79,6 +80,16 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			return
 		}
 
+		vectorSize := sizeInt * pageInt
+		isLastPage := false
+		if vectorSize > maximumSongSize && vectorSize-sizeInt < maximumSongSize {
+			vectorSize = maximumSongSize
+			isLastPage = true
+		} else if vectorSize > maximumSongSize && vectorSize-sizeInt >= maximumSongSize {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - related song data limit is 100", nil)
+			return
+		}
+
 		//songInfoId로 songNumber 조회
 		song, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c, db)
 		if err != nil {
@@ -105,7 +116,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 
 		res, err := idxConnection.QueryByVectorId(c, &pinecone.QueryByVectorIdRequest{
 			VectorId:        strconv.Itoa(song.SongNumber),
-			TopK:            uint32(sizeInt * pageInt),
+			TopK:            uint32(vectorSize),
 			Filter:          filterStruct,
 			IncludeValues:   false,
 			IncludeMetadata: false,
@@ -178,24 +189,23 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			relatedSongs[i].IsKeep = isKeepMap[song.SongNumber]
 			relatedSongs[i].SongTempId = songTempIdMap[song.SongNumber].SongInfoID
 		}
-		pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{relatedSongs, pageInt + 1})
+
+		nextPage := pageInt + 1
+		if isLastPage {
+			nextPage = 1
+		}
+		pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{relatedSongs, nextPage})
 	}
 }
 
 func splitTags(tags string) []string {
-	// 문자열이 빈 경우 빈 슬라이스를 반환
 	if tags == "" {
 		return []string{}
 	}
-
-	// `,`로 구분하여 문자열을 슬라이스로 변환
 	tagSlice := strings.Split(tags, ",")
-
-	// 빈 문자열 요소 제거
 	for i, tag := range tagSlice {
 		tagSlice[i] = strings.TrimSpace(tag)
 	}
-
 	return tagSlice
 }
 
