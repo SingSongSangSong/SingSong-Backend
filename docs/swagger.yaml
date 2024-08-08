@@ -390,6 +390,36 @@ paths:
       summary: 해당하는 댓글에 좋아요 누르기
       tags:
       - Comment
+  /comment/recomment/{commentId}:
+    get:
+      consumes:
+      - application/json
+      description: Get recomments for a specific comment identified by commentId
+      parameters:
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.CommentResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve recomments for the specified CommentId
+      tags:
+      - Comment
   /comment/report:
     post:
       consumes:

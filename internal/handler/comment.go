@@ -8,6 +8,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -127,21 +128,21 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
 			qm.Where("comment.song_info_id = ?", songId),
-			qm.OrderBy("comment.created_at ASC"),
+			qm.OrderBy("comment.created_at DESC"),
 		).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		// Create a map to organize comments and their recomments
-		commentMap := make(map[int64]*CommentResponse)
+		// Initialize a slice to hold all comments
+		var topLevelComments []CommentResponse
 
-		// First, add all top-level comments (those without parent comments)
+		// Add all top-level comments (those without parent comments) to the slice
 		for _, comment := range comments {
 			if !comment.IsRecomment.Bool {
-				// Top-level comment, add to map
-				commentMap[comment.CommentID] = &CommentResponse{
+				// Top-level comment, add to slice
+				topLevelComments = append(topLevelComments, CommentResponse{
 					CommentId:       comment.CommentID,
 					Content:         comment.Content.String,
 					IsRecomment:     comment.IsRecomment.Bool,
@@ -151,49 +152,95 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 					Nickname:        comment.R.Member.Nickname.String,
 					CreatedAt:       comment.CreatedAt.Time,
 					Recomments:      []CommentResponse{},
-				}
+				})
 			}
 		}
 
-		// Add recomments to their respective parent comments
+		// Add recomments to their respective parent comments in the slice
 		for _, comment := range comments {
 			if comment.IsRecomment.Bool {
-				// Recomment, add to the parent's Recomments slice
-				if parent, exists := commentMap[comment.ParentCommentID.Int64]; exists {
-					recomment := CommentResponse{
-						CommentId:       comment.CommentID,
-						Content:         comment.Content.String,
-						IsRecomment:     comment.IsRecomment.Bool,
-						ParentCommentId: comment.ParentCommentID.Int64,
-						MemberId:        comment.MemberID,
-						Nickname:        comment.R.Member.Nickname.String,
-						CreatedAt:       comment.CreatedAt.Time,
-						SongInfoId:      comment.SongInfoID,
+				// Find the parent comment in the topLevelComments slice and append the recomment
+				for i := range topLevelComments {
+					if topLevelComments[i].CommentId == comment.ParentCommentID.Int64 {
+						recomment := CommentResponse{
+							CommentId:       comment.CommentID,
+							Content:         comment.Content.String,
+							IsRecomment:     comment.IsRecomment.Bool,
+							ParentCommentId: comment.ParentCommentID.Int64,
+							MemberId:        comment.MemberID,
+							Nickname:        comment.R.Member.Nickname.String,
+							CreatedAt:       comment.CreatedAt.Time,
+							SongInfoId:      comment.SongInfoID,
+						}
+						topLevelComments[i].Recomments = append(topLevelComments[i].Recomments, recomment)
+						break
 					}
-					parent.Recomments = append(parent.Recomments, recomment)
 				}
 			}
 		}
 
-		// Prepare the final data list
-		data := make([]CommentResponse, 0, len(commentMap))
-		for _, comment := range commentMap {
-			data = append(data, *comment)
-		}
-
-		// Sort the data slice by CreatedAt timestamp
-		sort.Slice(data, func(i, j int) bool {
-			return data[i].CreatedAt.Before(data[j].CreatedAt)
-		})
-
 		// Sort recomments by CreatedAt within each top-level comment
-		for i := range data {
-			sort.Slice(data[i].Recomments, func(j, k int) bool {
-				return data[i].Recomments[j].CreatedAt.Before(data[i].Recomments[k].CreatedAt)
+		for i := range topLevelComments {
+			sort.Slice(topLevelComments[i].Recomments, func(j, k int) bool {
+				return topLevelComments[i].Recomments[j].CreatedAt.Before(topLevelComments[i].Recomments[k].CreatedAt)
 			})
 		}
 
 		// Return comments as part of the response
+		pkg.BaseResponse(c, http.StatusOK, "success", topLevelComments)
+	}
+}
+
+// GetRecommentOnSong 댓글에 대한 대댓글 정보 보기
+// @Summary      Retrieve recomments for the specified CommentId
+// @Description  Get recomments for a specific comment identified by commentId
+// @Tags         Comment
+// @Accept       json
+// @Produce      json
+// @Param        commentId   path      int  true  "Comment ID"
+// @Success      200 {object} pkg.BaseResponseStruct{data=[]CommentResponse} "Success"
+// @Router       /comment/recomment/{commentId} [get]
+// @Security BearerAuth
+func GetRecommentOnSong(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Retrieve commentId from path parameter
+		commentIdParam := c.Param("commentId")
+		commentId, err := strconv.Atoi(commentIdParam)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid commentId", nil)
+			return
+		}
+		log.Printf("commentId: %d", commentId)
+
+		// Retrieve recomments for the specified commentId
+		recomments, err := mysql.Comments(
+			qm.Load(mysql.CommentRels.Member),
+			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
+			qm.Where("comment.parent_comment_id = ?", commentId),
+			qm.OrderBy("comment.created_at ASC"),
+		).All(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		log.Printf("recomments: %d", len(recomments))
+
+		// Prepare the final data list directly in the order retrieved
+		data := make([]CommentResponse, 0, len(recomments))
+		for _, recomment := range recomments {
+			data = append(data, CommentResponse{
+				CommentId:       recomment.CommentID,
+				Content:         recomment.Content.String,
+				IsRecomment:     recomment.IsRecomment.Bool,
+				ParentCommentId: recomment.ParentCommentID.Int64,
+				SongInfoId:      recomment.SongInfoID,
+				MemberId:        recomment.MemberID,
+				Nickname:        recomment.R.Member.Nickname.String,
+				CreatedAt:       recomment.CreatedAt.Time,
+			})
+		}
+
+		// Return the response with the data list
 		pkg.BaseResponse(c, http.StatusOK, "success", data)
 	}
 }
