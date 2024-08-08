@@ -9,6 +9,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
+	"time"
 )
 
 type songReviewOptionGetResponse struct {
@@ -48,7 +49,7 @@ func GetSongReview(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		all, err := mysql.SongReviews(qm.Where("song_info_id = ?", songInfoId)).All(c, db)
+		all, err := mysql.SongReviews(qm.Where("song_info_id = ?", songInfoId), qm.And("deleted_at IS NULL")).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -153,32 +154,29 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// db에 songReview가 있다면 update, 없다면 insert
-		exist, err := mysql.SongReviews(qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", one.SongInfoID)).Exists(c, db)
+		// soft delete
+		_, err = mysql.SongReviews(
+			qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", one.SongInfoID), qm.And("deleted_at IS NULL"),
+		).UpdateAll(c, db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		if exist {
-			_, err := mysql.SongReviews(qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", one.SongInfoID)).UpdateAll(c, db, mysql.M{"song_review_option_id": request.SongReviewOptionId})
-			if err != nil {
-				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-				return
-			}
-		} else {
-			review := mysql.SongReview{
-				SongInfoID:         one.SongInfoID,
-				MemberID:           memberId,
-				SongReviewOptionID: request.SongReviewOptionId,
-				Gender:             gender,
-				Birthyear:          birthyear,
-			}
 
-			if err := review.Insert(c, db, boil.Infer()); err != nil {
-				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-				return
-			}
+		// insert
+		review := mysql.SongReview{
+			SongInfoID:         one.SongInfoID,
+			MemberID:           memberId,
+			SongReviewOptionID: request.SongReviewOptionId,
+			Gender:             gender,
+			Birthyear:          birthyear,
 		}
+
+		if err := review.Insert(c, db, boil.Infer()); err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
 		pkg.BaseResponse(c, http.StatusOK, "ok", nil)
 	}
 }
@@ -213,7 +211,10 @@ func DeleteSongReview(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		_, err := mysql.SongReviews(qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", songInfoId)).DeleteAll(c, db)
+		// soft delete
+		_, err := mysql.SongReviews(
+			qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", songInfoId), qm.And("deleted_at IS NULL"),
+		).UpdateAll(c, db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
