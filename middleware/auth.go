@@ -62,7 +62,7 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		one, err := mysql.Members(qm.Where("email = ? AND provider = ?", email, provider)).One(c, db)
+		one, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", email, provider)).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusUnauthorized, "error - invalid member", nil)
 			c.Abort()
