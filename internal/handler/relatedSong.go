@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type relatedSong struct {
@@ -106,11 +107,14 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			VectorId:        strconv.Itoa(song.SongNumber),
 			TopK:            uint32(sizeInt * pageInt),
 			Filter:          filterStruct,
-			IncludeValues:   true,
-			IncludeMetadata: true,
+			IncludeValues:   false,
+			IncludeMetadata: false,
 		})
-		log.Printf(strconv.Itoa(len(res.Matches)))
 
+		if len(res.Matches) == 0 {
+			pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{[]relatedSong{}, 1})
+			return
+		}
 		res.Matches = res.Matches[sizeInt*(pageInt-1):]
 
 		relatedSongs := make([]relatedSong, 0, sizeInt)
@@ -121,11 +125,13 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 
 		for _, each := range res.Matches {
 			v := each.Vector
+			atoi, err := strconv.Atoi(v.Id)
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
 			relatedSongs = append(relatedSongs, relatedSong{
-				SongNumber: int(v.Metadata.Fields["song_number"].GetNumberValue()),
-				SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
-				SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
-				Tags:       convertTags(v.Metadata.Fields["ssss"]),
+				SongNumber: atoi,
 			})
 		}
 
@@ -159,19 +165,38 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		songTempIdMap := make(map[int]int64)
+		songTempIdMap := make(map[int]*mysql.SongInfo)
 		for _, song := range slice {
-			songTempIdMap[song.SongNumber] = song.SongInfoID
+			songTempIdMap[song.SongNumber] = song
 		}
 
 		// response에 isKeep과 songTempId 추가
 		for i, song := range relatedSongs {
+			relatedSongs[i].SongName = songTempIdMap[song.SongNumber].SongName
+			relatedSongs[i].SingerName = songTempIdMap[song.SongNumber].ArtistName
+			relatedSongs[i].Tags = splitTags(songTempIdMap[song.SongNumber].Tags.String)
 			relatedSongs[i].IsKeep = isKeepMap[song.SongNumber]
-			relatedSongs[i].SongTempId = songTempIdMap[song.SongNumber]
+			relatedSongs[i].SongTempId = songTempIdMap[song.SongNumber].SongInfoID
 		}
-
 		pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{relatedSongs, pageInt + 1})
 	}
+}
+
+func splitTags(tags string) []string {
+	// 문자열이 빈 경우 빈 슬라이스를 반환
+	if tags == "" {
+		return []string{}
+	}
+
+	// `,`로 구분하여 문자열을 슬라이스로 변환
+	tagSlice := strings.Split(tags, ",")
+
+	// 빈 문자열 요소 제거
+	for i, tag := range tagSlice {
+		tagSlice[i] = strings.TrimSpace(tag)
+	}
+
+	return tagSlice
 }
 
 func convertTags(tag *structpb.Value) []string {

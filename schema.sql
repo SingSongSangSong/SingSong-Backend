@@ -147,3 +147,9 @@ CREATE TABLE IF NOT EXISTS report (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
+
+-- 현재 설정된 인덱스들
+CREATE INDEX idx_song_info_song_number ON song_info(song_number);
+CREATE INDEX idx_keep_list_member_id ON keep_list(member_id);
+CREATE INDEX idx_keep_song_keep_list_id ON keep_song(keep_list_id);
+CREATE INDEX idx_member_email_provider ON member(email, provider);
