@@ -11,6 +11,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"log"
 	"net/http"
+	"time"
 )
 
 type PlaylistAddRequest struct {
@@ -76,7 +77,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 			}
 
 			// 기존에 같은 keepId와 songTempId가 있는지 확인
-			existsQuery := mysql.KeepSongs(qm.Where("keep_list_id = ? AND song_info_id = ?", playlistRow.KeepListID, row.SongInfoID))
+			existsQuery := mysql.KeepSongs(qm.Where("keep_list_id = ? AND song_info_id = ? AND deleted_at IS NULL", playlistRow.KeepListID, row.SongInfoID))
 			existingRow, err := existsQuery.One(c, db)
 			if err == nil && existingRow != nil {
 				// 이미 존재하면 추가하지 않고 계속 진행
@@ -152,16 +153,18 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// 노래 정보들 가져오기
+		// 노래 삭제
 		for _, songInfoId := range songDeleteFromPlaylistRequest.SongInfoIds {
-			_, err := mysql.KeepSongs(qm.Where("keep_list_id = ? AND song_info_id = ?", playlistInfo.KeepListID, songInfoId)).DeleteAll(c, db)
+			_, err := mysql.KeepSongs(
+				qm.Where("keep_list_id = ? AND song_info_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID, songInfoId),
+			).UpdateAll(c, db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			}
 		}
 
 		// 응답에 keep 목록 넣기
-		all, errors := mysql.KeepSongs(qm.Where("keep_list_id = ?", playlistInfo.KeepListID)).All(c, db)
+		all, errors := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID)).All(c, db)
 		if errors != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
@@ -209,7 +212,7 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		result := mysql.KeepSongs(qm.Where("keep_list_id = ?", playlistInfo.KeepListID))
+		result := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID))
 		all, err2 := result.All(c, db)
 		if err2 != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
