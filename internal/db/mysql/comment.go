@@ -33,6 +33,7 @@ type Comment struct {
 	CreatedAt       null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 	UpdatedAt       null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 	DeletedAt       null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	Likes           null.Int    `boil:"likes" json:"likes,omitempty" toml:"likes" yaml:"likes,omitempty"`
 
 	R *commentR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L commentL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -48,6 +49,7 @@ var CommentColumns = struct {
 	CreatedAt       string
 	UpdatedAt       string
 	DeletedAt       string
+	Likes           string
 }{
 	CommentID:       "comment_id",
 	ParentCommentID: "parent_comment_id",
@@ -58,6 +60,7 @@ var CommentColumns = struct {
 	CreatedAt:       "created_at",
 	UpdatedAt:       "updated_at",
 	DeletedAt:       "deleted_at",
+	Likes:           "likes",
 }
 
 var CommentTableColumns = struct {
@@ -70,6 +73,7 @@ var CommentTableColumns = struct {
 	CreatedAt       string
 	UpdatedAt       string
 	DeletedAt       string
+	Likes           string
 }{
 	CommentID:       "comment.comment_id",
 	ParentCommentID: "comment.parent_comment_id",
@@ -80,6 +84,7 @@ var CommentTableColumns = struct {
 	CreatedAt:       "comment.created_at",
 	UpdatedAt:       "comment.updated_at",
 	DeletedAt:       "comment.deleted_at",
+	Likes:           "comment.likes",
 }
 
 // Generated where
@@ -156,6 +161,7 @@ var CommentWhere = struct {
 	CreatedAt       whereHelpernull_Time
 	UpdatedAt       whereHelpernull_Time
 	DeletedAt       whereHelpernull_Time
+	Likes           whereHelpernull_Int
 }{
 	CommentID:       whereHelperint64{field: "`comment`.`comment_id`"},
 	ParentCommentID: whereHelpernull_Int64{field: "`comment`.`parent_comment_id`"},
@@ -166,6 +172,7 @@ var CommentWhere = struct {
 	CreatedAt:       whereHelpernull_Time{field: "`comment`.`created_at`"},
 	UpdatedAt:       whereHelpernull_Time{field: "`comment`.`updated_at`"},
 	DeletedAt:       whereHelpernull_Time{field: "`comment`.`deleted_at`"},
+	Likes:           whereHelpernull_Int{field: "`comment`.`likes`"},
 }
 
 // CommentRels is where relationship names are stored.
@@ -196,8 +203,8 @@ func (r *commentR) GetMember() *Member {
 type commentL struct{}
 
 var (
-	commentAllColumns            = []string{"comment_id", "parent_comment_id", "song_info_id", "member_id", "content", "is_recomment", "created_at", "updated_at", "deleted_at"}
-	commentColumnsWithoutDefault = []string{"parent_comment_id", "song_info_id", "member_id", "content", "deleted_at"}
+	commentAllColumns            = []string{"comment_id", "parent_comment_id", "song_info_id", "member_id", "content", "is_recomment", "created_at", "updated_at", "deleted_at", "likes"}
+	commentColumnsWithoutDefault = []string{"parent_comment_id", "song_info_id", "member_id", "content", "deleted_at", "likes"}
 	commentColumnsWithDefault    = []string{"comment_id", "is_recomment", "created_at", "updated_at"}
 	commentPrimaryKeyColumns     = []string{"comment_id"}
 	commentGeneratedColumns      = []string{}

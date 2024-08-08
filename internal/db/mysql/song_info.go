@@ -29,6 +29,8 @@ type SongInfo struct {
 	ArtistID       null.Int64  `boil:"artist_id" json:"artist_id,omitempty" toml:"artist_id" yaml:"artist_id,omitempty"`
 	ArtistName     string      `boil:"artist_name" json:"artist_name" toml:"artist_name" yaml:"artist_name"`
 	ArtistType     null.String `boil:"artist_type" json:"artist_type,omitempty" toml:"artist_type" yaml:"artist_type,omitempty"`
+	IsMR           null.Bool   `boil:"is_mr" json:"is_mr,omitempty" toml:"is_mr" yaml:"is_mr,omitempty"`
+	IsChosen22000  null.Bool   `boil:"is_chosen_22000" json:"is_chosen_22000,omitempty" toml:"is_chosen_22000" yaml:"is_chosen_22000,omitempty"`
 	RelatedArtists null.String `boil:"related_artists" json:"related_artists,omitempty" toml:"related_artists" yaml:"related_artists,omitempty"`
 	Country        null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
 	Album          null.String `boil:"album" json:"album,omitempty" toml:"album" yaml:"album,omitempty"`
@@ -50,6 +52,8 @@ var SongInfoColumns = struct {
 	ArtistID       string
 	ArtistName     string
 	ArtistType     string
+	IsMR           string
+	IsChosen22000  string
 	RelatedArtists string
 	Country        string
 	Album          string
@@ -66,6 +70,8 @@ var SongInfoColumns = struct {
 	ArtistID:       "artist_id",
 	ArtistName:     "artist_name",
 	ArtistType:     "artist_type",
+	IsMR:           "is_mr",
+	IsChosen22000:  "is_chosen_22000",
 	RelatedArtists: "related_artists",
 	Country:        "country",
 	Album:          "album",
@@ -84,6 +90,8 @@ var SongInfoTableColumns = struct {
 	ArtistID       string
 	ArtistName     string
 	ArtistType     string
+	IsMR           string
+	IsChosen22000  string
 	RelatedArtists string
 	Country        string
 	Album          string
@@ -100,6 +108,8 @@ var SongInfoTableColumns = struct {
 	ArtistID:       "song_info.artist_id",
 	ArtistName:     "song_info.artist_name",
 	ArtistType:     "song_info.artist_type",
+	IsMR:           "song_info.is_mr",
+	IsChosen22000:  "song_info.is_chosen_22000",
 	RelatedArtists: "song_info.related_artists",
 	Country:        "song_info.country",
 	Album:          "song_info.album",
@@ -120,6 +130,8 @@ var SongInfoWhere = struct {
 	ArtistID       whereHelpernull_Int64
 	ArtistName     whereHelperstring
 	ArtistType     whereHelpernull_String
+	IsMR           whereHelpernull_Bool
+	IsChosen22000  whereHelpernull_Bool
 	RelatedArtists whereHelpernull_String
 	Country        whereHelpernull_String
 	Album          whereHelpernull_String
@@ -136,6 +148,8 @@ var SongInfoWhere = struct {
 	ArtistID:       whereHelpernull_Int64{field: "`song_info`.`artist_id`"},
 	ArtistName:     whereHelperstring{field: "`song_info`.`artist_name`"},
 	ArtistType:     whereHelpernull_String{field: "`song_info`.`artist_type`"},
+	IsMR:           whereHelpernull_Bool{field: "`song_info`.`is_mr`"},
+	IsChosen22000:  whereHelpernull_Bool{field: "`song_info`.`is_chosen_22000`"},
 	RelatedArtists: whereHelpernull_String{field: "`song_info`.`related_artists`"},
 	Country:        whereHelpernull_String{field: "`song_info`.`country`"},
 	Album:          whereHelpernull_String{field: "`song_info`.`album`"},
@@ -165,9 +179,9 @@ func (*songInfoR) NewStruct() *songInfoR {
 type songInfoL struct{}
 
 var (
-	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at"}
+	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at"}
 	songInfoColumnsWithoutDefault = []string{"song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "deleted_at"}
-	songInfoColumnsWithDefault    = []string{"song_info_id", "created_at", "updated_at"}
+	songInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at"}
 	songInfoPrimaryKeyColumns     = []string{"song_info_id"}
 	songInfoGeneratedColumns      = []string{}
 )

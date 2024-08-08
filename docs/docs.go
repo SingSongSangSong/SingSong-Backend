@@ -66,14 +66,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/comment/like": {
-            "post": {
+        "/comment/recomment/{commentId}": {
+            "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "해당하는 댓글에 좋아요 누르기",
+                "description": "Get reComments for a specific comment identified by commentId",
                 "consumes": [
                     "application/json"
                 ],
@@ -83,10 +83,19 @@ const docTemplate = `{
                 "tags": [
                     "Comment"
                 ],
-                "summary": "해당하는 댓글에 좋아요 누르기",
+                "summary": "Retrieve reComments for the specified CommentId",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Comment ID",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "성공",
+                        "description": "Success",
                         "schema": {
                             "allOf": [
                                 {
@@ -98,7 +107,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.PlaylistAddResponse"
+                                                "$ref": "#/definitions/handler.CommentResponse"
                                             }
                                         }
                                     }
@@ -155,6 +164,43 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/{commentId}/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "해당하는 댓글에 좋아요 누르기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "해당하는 댓글에 좋아요 누르기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Comment ID",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
                         }
                     }
                 }
@@ -1202,6 +1248,9 @@ const docTemplate = `{
                 },
                 "isRecomment": {
                     "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
                 },
                 "memberId": {
                     "type": "integer"
