@@ -66,45 +66,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/comment/like": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "해당하는 댓글에 좋아요 누르기",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Comment"
-                ],
-                "summary": "해당하는 댓글에 좋아요 누르기",
-                "parameters": [
-                    {
-                        "description": "CommentLikeRequest",
-                        "name": "CommentLikeRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.CommentLikeRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "$ref": "#/definitions/pkg.BaseResponseStruct"
-                        }
-                    }
-                }
-            }
-        },
         "/comment/recomment/{commentId}": {
             "get": {
                 "security": [
@@ -203,6 +164,43 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/{commentId}/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "해당하는 댓글에 좋아요 누르기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "해당하는 댓글에 좋아요 누르기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Comment ID",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
                         }
                     }
                 }
@@ -1219,17 +1217,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.CommentLikeRequest": {
-            "type": "object",
-            "properties": {
-                "commentId": {
-                    "type": "integer"
-                },
-                "isLiked": {
-                    "type": "boolean"
-                }
-            }
-        },
         "handler.CommentRequest": {
             "type": "object",
             "properties": {

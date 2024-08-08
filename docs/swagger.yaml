@@ -1,12 +1,5 @@
 basePath: /api/v1
 definitions:
-  handler.CommentLikeRequest:
-    properties:
-      commentId:
-        type: integer
-      isLiked:
-        type: boolean
-    type: object
   handler.CommentRequest:
     properties:
       content:
@@ -345,6 +338,29 @@ paths:
       summary: SongId에 댓글 달기
       tags:
       - Comment
+  /comment/{commentId}/like:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글에 좋아요 누르기
+      parameters:
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글에 좋아요 누르기
+      tags:
+      - Comment
   /comment/{songId}:
     get:
       consumes:
@@ -373,30 +389,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Retrieve comments for the specified SongId
-      tags:
-      - Comment
-  /comment/like:
-    post:
-      consumes:
-      - application/json
-      description: 해당하는 댓글에 좋아요 누르기
-      parameters:
-      - description: CommentLikeRequest
-        in: body
-        name: CommentLikeRequest
-        required: true
-        schema:
-          $ref: '#/definitions/handler.CommentLikeRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-          schema:
-            $ref: '#/definitions/pkg.BaseResponseStruct'
-      security:
-      - BearerAuth: []
-      summary: 해당하는 댓글에 좋아요 누르기
       tags:
       - Comment
   /comment/recomment/{commentId}:

@@ -303,111 +303,97 @@ func ReportComment(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-type CommentLikeRequest struct {
-	CommentId int64 `json:"commentId"`
-	IsLiked   bool  `json:"isLiked"`
-}
-
 // LikeComment godoc
 // @Summary      해당하는 댓글에 좋아요 누르기
 // @Description  해당하는 댓글에 좋아요 누르기
 // @Tags         Comment
 // @Accept       json
 // @Produce      json
-// @Param        CommentLikeRequest   body      CommentLikeRequest  true  "CommentLikeRequest"
+// @Param        commentId   path  int  true  "Comment ID"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
-// @Router       /comment/like [post]
+// @Router       /comment/{commentId}/like [post]
 // @Security BearerAuth
 func LikeComment(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// CommentLikeRequest 받기
-		commentLikeRequest := &CommentLikeRequest{}
-		if err := c.ShouldBindJSON(commentLikeRequest); err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
-			return
-		}
-		// memberId가져오기
+		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
 			return
 		}
 
-		// 이미 좋아요를 눌렀는지 확인후 이미 눌렀다면 취소 요청 보내기
-		if commentLikeRequest.IsLiked {
-			// 이미 좋아요를 누른 상태
-			commentLikes, err := mysql.CommentLikes(
-				qm.Where("member_id = ? AND comment_id = ?", memberId.(int64), commentLikeRequest.CommentId),
-			).One(c, db)
-			if err != nil {
-				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-				return
-			}
+		// commentId 가져오기
+		commentIdParam := c.Param("commentId")
+		commentId, err := strconv.ParseInt(commentIdParam, 10, 64)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid commentId", nil)
+			return
+		}
 
-			// 이미 좋아요를 누른 상태에서 좋아요 취소 요청
+		// 좋아요 상태 변경 함수
+		changeLikeStatus := func(comment *mysql.Comment, delta int) error {
+			if comment.Likes.Valid {
+				comment.Likes.Int += delta
+			} else {
+				comment.Likes = null.IntFrom(delta)
+			}
+			_, err := comment.Update(c, db, boil.Infer())
+			return err
+		}
+
+		// 이미 좋아요를 눌렀는지 확인
+		commentLikes, err := mysql.CommentLikes(
+			qm.Where("member_id = ? AND comment_id = ? AND deleted_at IS NULL", memberId.(int64), commentId),
+		).One(c, db)
+
+		// 이미 좋아요를 누른 상태에서 좋아요 취소 요청
+		if err == nil {
 			commentLikes.DeletedAt = null.TimeFrom(time.Now())
-			_, err = commentLikes.Update(c, db, boil.Infer())
-			if err != nil {
+			if _, err := commentLikes.Update(c, db, boil.Infer()); err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
 
 			// CommentTable에서 해당 CommentId의 LikeCount를 1 감소시킨다
 			comment, err := mysql.Comments(
-				qm.Where("comment_id = ?", commentLikeRequest.CommentId),
+				qm.Where("comment_id = ?", commentId),
 			).One(c, db)
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
 
-			if comment.Likes.Valid {
-				comment.Likes.Int -= 1
-			} else {
-				comment.Likes = null.IntFrom(0)
-			}
-
-			_, err = comment.Update(c, db, boil.Infer())
-			if err != nil {
+			if err := changeLikeStatus(comment, -1); err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
 
-			// CommentLikeResponse 반환
 			pkg.BaseResponse(c, http.StatusOK, "success", comment.Likes.Int)
 			return
 		}
 
 		// 댓글 좋아요 누르기
-		like := mysql.CommentLike{MemberID: memberId.(int64), CommentID: commentLikeRequest.CommentId}
-		err := like.Insert(c, db, boil.Infer())
-		if err != nil {
+		like := mysql.CommentLike{MemberID: memberId.(int64), CommentID: commentId}
+		if err := like.Insert(c, db, boil.Infer()); err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		// CommentTable에서 해당 CommentId의 LikeCount를 1 증가시킨다
 		comment, err := mysql.Comments(
-			qm.Where("comment_id = ?", commentLikeRequest.CommentId),
+			qm.Where("comment_id = ?", commentId),
 		).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		if comment.Likes.Valid {
-			comment.Likes.Int += 1
-		} else {
-			comment.Likes = null.IntFrom(1)
-		}
-
-		_, err = comment.Update(c, db, boil.Infer())
-		if err != nil {
+		if err := changeLikeStatus(comment, 1); err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		// CommentLikeResponse 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", comment.Likes.Int)
+		return
 	}
 }
