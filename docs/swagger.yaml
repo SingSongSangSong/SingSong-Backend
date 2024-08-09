@@ -124,6 +124,27 @@ definitions:
       refreshToken:
         type: string
     type: object
+  handler.blacklistRequest:
+    properties:
+      memberId:
+        type: integer
+    type: object
+  handler.blacklistResponse:
+    properties:
+      blockDate:
+        type: string
+      memberId:
+        type: integer
+      nickname:
+        type: string
+    type: object
+  handler.deleteBlacklistRequest:
+    properties:
+      memberIds:
+        items:
+          type: integer
+        type: array
+    type: object
   handler.homeRequest:
     properties:
       tags:
@@ -309,6 +330,72 @@ info:
   title: 싱송생송 API
   version: "1.0"
 paths:
+  /blacklist:
+    delete:
+      consumes:
+      - application/json
+      description: memberId를 통해 차단해제하기
+      parameters:
+      - description: deleteBlacklistRequest
+        in: body
+        name: deleteBlacklistRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.deleteBlacklistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+      security:
+      - BearerAuth: []
+      summary: memberId를 통해 차단해제하기
+      tags:
+      - Blacklist
+    get:
+      consumes:
+      - application/json
+      description: memberId를 통해 차단 목록 조회하
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.blacklistResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: memberId를 통해 차단 목록 조회하기
+      tags:
+      - Blacklist
+    post:
+      consumes:
+      - application/json
+      description: memberId를 통해 차단하기
+      parameters:
+      - description: blacklistRequest
+        in: body
+        name: blacklistRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.blacklistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+      security:
+      - BearerAuth: []
+      summary: memberId를 통해 차단하기
+      tags:
+      - Blacklist
   /comment:
     post:
       consumes:

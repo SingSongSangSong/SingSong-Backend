@@ -95,6 +95,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		comment.POST("/:commentId/like", middleware.AuthMiddleware(db), handler.LikeComment(db))
 	}
 
+	blacklist := r.Group("/api/v1/blacklist")
+	{
+		blacklist.POST("", middleware.AuthMiddleware(db), handler.AddBlacklist(db))
+		blacklist.DELETE("", middleware.AuthMiddleware(db), handler.DeleteBlacklist(db))
+		blacklist.GET("", middleware.AuthMiddleware(db), handler.GetBlacklist(db))
+	}
+
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
