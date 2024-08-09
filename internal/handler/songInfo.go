@@ -40,15 +40,9 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		value, exists := c.Get("memberId")
+		memberId, exists := c.Get("memberId")
 		if !exists {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
-			return
-		}
-
-		memberId, ok := value.(int64)
-		if !ok {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
 			return
 		}
 
@@ -87,9 +81,12 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			SongInfoId:  one.SongInfoID,
 			Album:       one.Album.String,
 			Octave:      one.Octave.String,
-			Description: "20대 남성이 가장 많이 부른 노래 Top 1", //todo: 하드 코딩 제거
+			Description: "", //todo:
 			IsKeep:      isKeep,
 		}
+
+		// 비동기적으로 member_action 저장
+		go logMemberAction(db, memberId, "CLICK", 0.5, songInfoId)
 
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
