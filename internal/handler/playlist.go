@@ -101,7 +101,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 			logMemberAction(db, memberId, "KEEP", 2, songInfoIdsStr...)
 		}(db, memberId, playlistRequest.SongInfoIds)
 
-		result := mysql.KeepSongs(qm.Where("keep_list_id = ?", playlistRow.KeepListID))
+		result := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistRow.KeepListID))
 		all, err2 := result.All(c, db)
 		if err2 != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
