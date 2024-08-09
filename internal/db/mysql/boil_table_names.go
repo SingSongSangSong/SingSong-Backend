@@ -7,11 +7,13 @@ var TableNames = struct {
 	AppVersion       string
 	Artist           string
 	AudioFeatures    string
+	Blacklist        string
 	Comment          string
 	CommentLike      string
 	KeepList         string
 	KeepSong         string
 	Member           string
+	MemberAction     string
 	RawSongInfo      string
 	Report           string
 	SongInfo         string
@@ -21,11 +23,13 @@ var TableNames = struct {
 	AppVersion:       "app_version",
 	Artist:           "artist",
 	AudioFeatures:    "audio_features",
+	Blacklist:        "blacklist",
 	Comment:          "comment",
 	CommentLike:      "comment_like",
 	KeepList:         "keep_list",
 	KeepSong:         "keep_song",
 	Member:           "member",
+	MemberAction:     "member_action",
 	RawSongInfo:      "raw_song_info",
 	Report:           "report",
 	SongInfo:         "song_info",

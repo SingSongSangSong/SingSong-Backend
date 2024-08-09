@@ -204,8 +204,8 @@ type commentL struct{}
 
 var (
 	commentAllColumns            = []string{"comment_id", "parent_comment_id", "song_info_id", "member_id", "content", "is_recomment", "created_at", "updated_at", "deleted_at", "likes"}
-	commentColumnsWithoutDefault = []string{"parent_comment_id", "song_info_id", "member_id", "content", "deleted_at", "likes"}
-	commentColumnsWithDefault    = []string{"comment_id", "is_recomment", "created_at", "updated_at"}
+	commentColumnsWithoutDefault = []string{"parent_comment_id", "song_info_id", "member_id", "content", "deleted_at"}
+	commentColumnsWithDefault    = []string{"comment_id", "is_recomment", "created_at", "updated_at", "likes"}
 	commentPrimaryKeyColumns     = []string{"comment_id"}
 	commentGeneratedColumns      = []string{}
 )
@@ -988,7 +988,7 @@ func (o *Comment) Upsert(ctx context.Context, exec boil.ContextExecutor, updateC
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			commentAllColumns,
 			commentColumnsWithDefault,
 			commentColumnsWithoutDefault,
@@ -1004,8 +1004,7 @@ func (o *Comment) Upsert(ctx context.Context, exec boil.ContextExecutor, updateC
 			return errors.New("mysql: unable to upsert comment, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(commentAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`comment`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `comment` WHERE %s",

@@ -179,3 +179,12 @@ ALTER TABLE member
         GENERATED ALWAYS AS (IF(deleted_at IS NULL, 1, NULL)) VIRTUAL;
 ALTER TABLE member
     ADD CONSTRAINT UNIQUE (email, provider, not_archived);
+
+CREATE TABLE IF NOT EXISTS blacklist (
+    blacklist_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    blocker_member_id BIGINT NOT NULL,
+    blocked_member_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);

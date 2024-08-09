@@ -976,7 +976,7 @@ func (o *AudioFeature) Upsert(ctx context.Context, exec boil.ContextExecutor, up
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			audioFeatureAllColumns,
 			audioFeatureColumnsWithDefault,
 			audioFeatureColumnsWithoutDefault,
@@ -992,8 +992,7 @@ func (o *AudioFeature) Upsert(ctx context.Context, exec boil.ContextExecutor, up
 			return errors.New("mysql: unable to upsert audio_features, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(audioFeatureAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`audio_features`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `audio_features` WHERE %s",
