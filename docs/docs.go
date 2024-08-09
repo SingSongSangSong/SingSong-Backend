@@ -1640,6 +1640,9 @@ const docTemplate = `{
         "handler.songReviewOptionAddRequest": {
             "type": "object",
             "properties": {
+                "enum": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
                 }

@@ -12,6 +12,7 @@ import (
 
 type songReviewOptionAddRequest struct {
 	Title string `json:"title"`
+	Enum  string `json:"enum"`
 }
 
 // AddSongReviewOption godoc
@@ -33,7 +34,8 @@ func AddSongReviewOption(db *sql.DB) gin.HandlerFunc {
 
 		// Convert the string to null.String
 		title := null.StringFrom(request.Title)
-		option := mysql.SongReviewOption{Title: title}
+		enum := null.StringFrom(request.Enum)
+		option := mysql.SongReviewOption{Title: title, Enum: enum}
 
 		if err := option.Insert(c, db, boil.Infer()); err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
