@@ -89,7 +89,7 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 		}
 
 		// Delete member
-		_, err := mysql.Members(qm.Where("member_id = ?", memberId)).UpdateAll(c, db, mysql.M{"deleted_at": time.Now()})
+		_, err := mysql.Members(qm.Where("member_id = ? AND deleted_at is null", memberId)).UpdateAll(c, db, mysql.M{"deleted_at": time.Now()})
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

@@ -98,7 +98,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		}
 
 		// 모든 KeepSongs 가져오기
-		keepSongs, err := mysql.KeepSongs(qm.Where("keep_list_id = ?", one.KeepListID)).All(c, db)
+		keepSongs, err := mysql.KeepSongs(qm.Where("keep_list_id = ?", one.KeepListID), qm.And("deleted_at IS NULL")).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

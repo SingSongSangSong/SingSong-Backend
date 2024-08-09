@@ -129,7 +129,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		nullGender := null.StringFrom(loginRequest.Gender)
 
 		// email+Provider db에 있는지 확인
-		_, err = mysql.Members(qm.Where("email = ? AND provider = ?", payload.Email, loginRequest.Provider)).One(c, db)
+		_, err = mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c, db)
 		if err != nil {
 			//DB에 없는경우
 			m := mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}

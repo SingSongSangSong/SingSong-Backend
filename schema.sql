@@ -158,3 +158,24 @@ CREATE INDEX idx_song_info_song_number ON song_info(song_number);
 CREATE INDEX idx_keep_list_member_id ON keep_list(member_id);
 CREATE INDEX idx_keep_song_keep_list_id ON keep_song(keep_list_id);
 CREATE INDEX idx_member_email_provider ON member(email, provider);
+
+CREATE TABLE IF NOT EXISTS member_action (
+    member_action_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    gender VARCHAR(20),
+    birthyear INT,
+    song_info_id BIGINT NOT NULL,
+    action_type VARCHAR(20) NOT NULL,
+    action_score FLOAT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+-- soft delete시 재가입을 고려하여 기존 (email, provider) 유니크 인덱스 삭제
+ALTER TABLE member DROP INDEX email;
+ALTER TABLE member
+    ADD not_archived BOOLEAN
+        GENERATED ALWAYS AS (IF(deleted_at IS NULL, 1, NULL)) VIRTUAL;
+ALTER TABLE member
+    ADD CONSTRAINT UNIQUE (email, provider, not_archived);

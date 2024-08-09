@@ -156,7 +156,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		for i, keep := range all {
 			keepIds[i] = keep.KeepListID
 		}
-		keepSongs, err := mysql.KeepSongs(qm.WhereIn("keep_list_id in ?", keepIds...)).All(c, db)
+		keepSongs, err := mysql.KeepSongs(qm.WhereIn("keep_list_id in ?", keepIds...), qm.And("deleted_at IS NULL")).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
