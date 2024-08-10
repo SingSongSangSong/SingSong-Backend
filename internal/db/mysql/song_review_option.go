@@ -29,6 +29,7 @@ type SongReviewOption struct {
 	CreatedAt          null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 	UpdatedAt          null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 	DeletedAt          null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	Enum               null.String `boil:"enum" json:"enum,omitempty" toml:"enum" yaml:"enum,omitempty"`
 
 	R *songReviewOptionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L songReviewOptionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -40,12 +41,14 @@ var SongReviewOptionColumns = struct {
 	CreatedAt          string
 	UpdatedAt          string
 	DeletedAt          string
+	Enum               string
 }{
 	SongReviewOptionID: "song_review_option_id",
 	Title:              "title",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 	DeletedAt:          "deleted_at",
+	Enum:               "enum",
 }
 
 var SongReviewOptionTableColumns = struct {
@@ -54,12 +57,14 @@ var SongReviewOptionTableColumns = struct {
 	CreatedAt          string
 	UpdatedAt          string
 	DeletedAt          string
+	Enum               string
 }{
 	SongReviewOptionID: "song_review_option.song_review_option_id",
 	Title:              "song_review_option.title",
 	CreatedAt:          "song_review_option.created_at",
 	UpdatedAt:          "song_review_option.updated_at",
 	DeletedAt:          "song_review_option.deleted_at",
+	Enum:               "song_review_option.enum",
 }
 
 // Generated where
@@ -70,12 +75,14 @@ var SongReviewOptionWhere = struct {
 	CreatedAt          whereHelpernull_Time
 	UpdatedAt          whereHelpernull_Time
 	DeletedAt          whereHelpernull_Time
+	Enum               whereHelpernull_String
 }{
 	SongReviewOptionID: whereHelperint64{field: "`song_review_option`.`song_review_option_id`"},
 	Title:              whereHelpernull_String{field: "`song_review_option`.`title`"},
 	CreatedAt:          whereHelpernull_Time{field: "`song_review_option`.`created_at`"},
 	UpdatedAt:          whereHelpernull_Time{field: "`song_review_option`.`updated_at`"},
 	DeletedAt:          whereHelpernull_Time{field: "`song_review_option`.`deleted_at`"},
+	Enum:               whereHelpernull_String{field: "`song_review_option`.`enum`"},
 }
 
 // SongReviewOptionRels is where relationship names are stored.
@@ -95,8 +102,8 @@ func (*songReviewOptionR) NewStruct() *songReviewOptionR {
 type songReviewOptionL struct{}
 
 var (
-	songReviewOptionAllColumns            = []string{"song_review_option_id", "title", "created_at", "updated_at", "deleted_at"}
-	songReviewOptionColumnsWithoutDefault = []string{"title", "deleted_at"}
+	songReviewOptionAllColumns            = []string{"song_review_option_id", "title", "created_at", "updated_at", "deleted_at", "enum"}
+	songReviewOptionColumnsWithoutDefault = []string{"title", "deleted_at", "enum"}
 	songReviewOptionColumnsWithDefault    = []string{"song_review_option_id", "created_at", "updated_at"}
 	songReviewOptionPrimaryKeyColumns     = []string{"song_review_option_id"}
 	songReviewOptionGeneratedColumns      = []string{}
@@ -702,7 +709,7 @@ func (o *SongReviewOption) Upsert(ctx context.Context, exec boil.ContextExecutor
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			songReviewOptionAllColumns,
 			songReviewOptionColumnsWithDefault,
 			songReviewOptionColumnsWithoutDefault,
@@ -718,8 +725,7 @@ func (o *SongReviewOption) Upsert(ctx context.Context, exec boil.ContextExecutor
 			return errors.New("mysql: unable to upsert song_review_option, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(songReviewOptionAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`song_review_option`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `song_review_option` WHERE %s",

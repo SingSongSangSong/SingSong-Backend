@@ -179,3 +179,6 @@ ALTER TABLE member
         GENERATED ALWAYS AS (IF(deleted_at IS NULL, 1, NULL)) VIRTUAL;
 ALTER TABLE member
     ADD CONSTRAINT UNIQUE (email, provider, not_archived);
+
+-- song_review_option 테이블에 영어 enum 추가
+ALTER TABLE song_review_option ADD COLUMN enum VARCHAR(20);

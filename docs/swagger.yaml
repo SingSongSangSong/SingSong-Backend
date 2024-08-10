@@ -274,6 +274,8 @@ definitions:
     type: object
   handler.songReviewOptionAddRequest:
     properties:
+      enum:
+        type: string
       title:
         type: string
     type: object

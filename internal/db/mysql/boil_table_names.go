@@ -12,6 +12,7 @@ var TableNames = struct {
 	KeepList         string
 	KeepSong         string
 	Member           string
+	MemberAction     string
 	RawSongInfo      string
 	Report           string
 	SongInfo         string
@@ -26,6 +27,7 @@ var TableNames = struct {
 	KeepList:         "keep_list",
 	KeepSong:         "keep_song",
 	Member:           "member",
+	MemberAction:     "member_action",
 	RawSongInfo:      "raw_song_info",
 	Report:           "report",
 	SongInfo:         "song_info",

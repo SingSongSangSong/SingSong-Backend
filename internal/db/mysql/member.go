@@ -24,86 +24,93 @@ import (
 
 // Member is an object representing the database table.
 type Member struct {
-	MemberID  int64       `boil:"member_id" json:"member_id" toml:"member_id" yaml:"member_id"`
-	Nickname  null.String `boil:"nickname" json:"nickname,omitempty" toml:"nickname" yaml:"nickname,omitempty"`
-	Email     string      `boil:"email" json:"email" toml:"email" yaml:"email"`
-	Gender    null.String `boil:"gender" json:"gender,omitempty" toml:"gender" yaml:"gender,omitempty"`
-	Birthyear null.Int    `boil:"birthyear" json:"birthyear,omitempty" toml:"birthyear" yaml:"birthyear,omitempty"`
-	Provider  string      `boil:"provider" json:"provider" toml:"provider" yaml:"provider"`
-	CreatedAt null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
-	DeletedAt null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	MemberID    int64       `boil:"member_id" json:"member_id" toml:"member_id" yaml:"member_id"`
+	Nickname    null.String `boil:"nickname" json:"nickname,omitempty" toml:"nickname" yaml:"nickname,omitempty"`
+	Email       string      `boil:"email" json:"email" toml:"email" yaml:"email"`
+	Gender      null.String `boil:"gender" json:"gender,omitempty" toml:"gender" yaml:"gender,omitempty"`
+	Birthyear   null.Int    `boil:"birthyear" json:"birthyear,omitempty" toml:"birthyear" yaml:"birthyear,omitempty"`
+	Provider    string      `boil:"provider" json:"provider" toml:"provider" yaml:"provider"`
+	CreatedAt   null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
+	UpdatedAt   null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
+	DeletedAt   null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	NotArchived null.Bool   `boil:"not_archived" json:"not_archived,omitempty" toml:"not_archived" yaml:"not_archived,omitempty"`
 
 	R *memberR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L memberL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var MemberColumns = struct {
-	MemberID  string
-	Nickname  string
-	Email     string
-	Gender    string
-	Birthyear string
-	Provider  string
-	CreatedAt string
-	UpdatedAt string
-	DeletedAt string
+	MemberID    string
+	Nickname    string
+	Email       string
+	Gender      string
+	Birthyear   string
+	Provider    string
+	CreatedAt   string
+	UpdatedAt   string
+	DeletedAt   string
+	NotArchived string
 }{
-	MemberID:  "member_id",
-	Nickname:  "nickname",
-	Email:     "email",
-	Gender:    "gender",
-	Birthyear: "birthyear",
-	Provider:  "provider",
-	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
-	DeletedAt: "deleted_at",
+	MemberID:    "member_id",
+	Nickname:    "nickname",
+	Email:       "email",
+	Gender:      "gender",
+	Birthyear:   "birthyear",
+	Provider:    "provider",
+	CreatedAt:   "created_at",
+	UpdatedAt:   "updated_at",
+	DeletedAt:   "deleted_at",
+	NotArchived: "not_archived",
 }
 
 var MemberTableColumns = struct {
-	MemberID  string
-	Nickname  string
-	Email     string
-	Gender    string
-	Birthyear string
-	Provider  string
-	CreatedAt string
-	UpdatedAt string
-	DeletedAt string
+	MemberID    string
+	Nickname    string
+	Email       string
+	Gender      string
+	Birthyear   string
+	Provider    string
+	CreatedAt   string
+	UpdatedAt   string
+	DeletedAt   string
+	NotArchived string
 }{
-	MemberID:  "member.member_id",
-	Nickname:  "member.nickname",
-	Email:     "member.email",
-	Gender:    "member.gender",
-	Birthyear: "member.birthyear",
-	Provider:  "member.provider",
-	CreatedAt: "member.created_at",
-	UpdatedAt: "member.updated_at",
-	DeletedAt: "member.deleted_at",
+	MemberID:    "member.member_id",
+	Nickname:    "member.nickname",
+	Email:       "member.email",
+	Gender:      "member.gender",
+	Birthyear:   "member.birthyear",
+	Provider:    "member.provider",
+	CreatedAt:   "member.created_at",
+	UpdatedAt:   "member.updated_at",
+	DeletedAt:   "member.deleted_at",
+	NotArchived: "member.not_archived",
 }
 
 // Generated where
 
 var MemberWhere = struct {
-	MemberID  whereHelperint64
-	Nickname  whereHelpernull_String
-	Email     whereHelperstring
-	Gender    whereHelpernull_String
-	Birthyear whereHelpernull_Int
-	Provider  whereHelperstring
-	CreatedAt whereHelpernull_Time
-	UpdatedAt whereHelpernull_Time
-	DeletedAt whereHelpernull_Time
+	MemberID    whereHelperint64
+	Nickname    whereHelpernull_String
+	Email       whereHelperstring
+	Gender      whereHelpernull_String
+	Birthyear   whereHelpernull_Int
+	Provider    whereHelperstring
+	CreatedAt   whereHelpernull_Time
+	UpdatedAt   whereHelpernull_Time
+	DeletedAt   whereHelpernull_Time
+	NotArchived whereHelpernull_Bool
 }{
-	MemberID:  whereHelperint64{field: "`member`.`member_id`"},
-	Nickname:  whereHelpernull_String{field: "`member`.`nickname`"},
-	Email:     whereHelperstring{field: "`member`.`email`"},
-	Gender:    whereHelpernull_String{field: "`member`.`gender`"},
-	Birthyear: whereHelpernull_Int{field: "`member`.`birthyear`"},
-	Provider:  whereHelperstring{field: "`member`.`provider`"},
-	CreatedAt: whereHelpernull_Time{field: "`member`.`created_at`"},
-	UpdatedAt: whereHelpernull_Time{field: "`member`.`updated_at`"},
-	DeletedAt: whereHelpernull_Time{field: "`member`.`deleted_at`"},
+	MemberID:    whereHelperint64{field: "`member`.`member_id`"},
+	Nickname:    whereHelpernull_String{field: "`member`.`nickname`"},
+	Email:       whereHelperstring{field: "`member`.`email`"},
+	Gender:      whereHelpernull_String{field: "`member`.`gender`"},
+	Birthyear:   whereHelpernull_Int{field: "`member`.`birthyear`"},
+	Provider:    whereHelperstring{field: "`member`.`provider`"},
+	CreatedAt:   whereHelpernull_Time{field: "`member`.`created_at`"},
+	UpdatedAt:   whereHelpernull_Time{field: "`member`.`updated_at`"},
+	DeletedAt:   whereHelpernull_Time{field: "`member`.`deleted_at`"},
+	NotArchived: whereHelpernull_Bool{field: "`member`.`not_archived`"},
 }
 
 // MemberRels is where relationship names are stored.
@@ -134,11 +141,11 @@ func (r *memberR) GetComments() CommentSlice {
 type memberL struct{}
 
 var (
-	memberAllColumns            = []string{"member_id", "nickname", "email", "gender", "birthyear", "provider", "created_at", "updated_at", "deleted_at"}
+	memberAllColumns            = []string{"member_id", "nickname", "email", "gender", "birthyear", "provider", "created_at", "updated_at", "deleted_at", "not_archived"}
 	memberColumnsWithoutDefault = []string{"nickname", "email", "gender", "birthyear", "provider", "deleted_at"}
-	memberColumnsWithDefault    = []string{"member_id", "created_at", "updated_at"}
+	memberColumnsWithDefault    = []string{"member_id", "created_at", "updated_at", "not_archived"}
 	memberPrimaryKeyColumns     = []string{"member_id"}
-	memberGeneratedColumns      = []string{}
+	memberGeneratedColumns      = []string{"not_archived"}
 )
 
 type (
@@ -668,6 +675,7 @@ func (o *Member) Insert(ctx context.Context, exec boil.ContextExecutor, columns 
 			memberColumnsWithoutDefault,
 			nzDefaults,
 		)
+		wl = strmangle.SetComplement(wl, memberGeneratedColumns)
 
 		cache.valueMapping, err = queries.BindMapping(memberType, memberMapping, wl)
 		if err != nil {
@@ -765,6 +773,8 @@ func (o *Member) Update(ctx context.Context, exec boil.ContextExecutor, columns 
 			memberAllColumns,
 			memberPrimaryKeyColumns,
 		)
+		wl = strmangle.SetComplement(wl, memberGeneratedColumns)
+
 		if len(wl) == 0 {
 			return 0, errors.New("mysql: unable to update member, could not build whitelist")
 		}
@@ -922,7 +932,7 @@ func (o *Member) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			memberAllColumns,
 			memberColumnsWithDefault,
 			memberColumnsWithoutDefault,
@@ -934,12 +944,14 @@ func (o *Member) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 			memberPrimaryKeyColumns,
 		)
 
+		insert = strmangle.SetComplement(insert, memberGeneratedColumns)
+		update = strmangle.SetComplement(update, memberGeneratedColumns)
+
 		if !updateColumns.IsNone() && len(update) == 0 {
 			return errors.New("mysql: unable to upsert member, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(memberAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`member`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `member` WHERE %s",
