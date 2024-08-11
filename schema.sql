@@ -180,6 +180,9 @@ ALTER TABLE member
 ALTER TABLE member
     ADD CONSTRAINT UNIQUE (email, provider, not_archived);
 
+-- song_review_option 테이블에 영어 enum 추가
+ALTER TABLE song_review_option ADD COLUMN enum VARCHAR(20);
+
 CREATE TABLE IF NOT EXISTS blacklist (
     blacklist_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     blocker_member_id BIGINT NOT NULL,

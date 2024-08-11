@@ -8,6 +8,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"log"
 	"net/http"
 	"time"
 )
@@ -176,6 +177,15 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
+
+		go func(db *sql.DB, memberId interface{}, songReviewOptionId int64) {
+			option, err2 := mysql.SongReviewOptions(qm.Where("song_review_option_id = ?", songReviewOptionId)).One(c, db)
+			if err2 != nil {
+				log.Printf("failed to get song review option: " + err2.Error())
+				return
+			}
+			logMemberAction(db, memberId, "REVIEW_"+option.Enum.String, 3, songInfoId)
+		}(db, value, request.SongReviewOptionId)
 
 		pkg.BaseResponse(c, http.StatusOK, "ok", nil)
 	}

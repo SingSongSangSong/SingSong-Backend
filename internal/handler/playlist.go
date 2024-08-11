@@ -11,6 +11,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -91,6 +92,14 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 				return
 			}
 		}
+
+		go func(db *sql.DB, memberId interface{}, songInfoIds []int) {
+			songInfoIdsStr := make([]string, len(songInfoIds))
+			for i, v := range songInfoIds {
+				songInfoIdsStr[i] = strconv.Itoa(v)
+			}
+			logMemberAction(db, memberId, "KEEP", 2, songInfoIdsStr...)
+		}(db, memberId, playlistRequest.SongInfoIds)
 
 		result := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistRow.KeepListID))
 		all, err2 := result.All(c, db)
