@@ -2,6 +2,7 @@ package handler
 
 import (
 	"SingSong-Server/internal/pkg"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"net/http"
@@ -29,7 +30,7 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 			return
 		}
 		// refreshToken이 redis에 있는지 확인
-		email, err := redis.Get(c, reissueRequest.RefreshToken).Result()
+		payload, err := redis.Get(c, reissueRequest.RefreshToken).Result()
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "Get Redis error - "+err.Error(), nil)
 			return
@@ -41,8 +42,15 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 			return
 		}
 
+		// payload를 Claims 구조체로 변환
+		var claims *Claims
+		if err := json.Unmarshal([]byte(payload), &claims); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "JSON Unmarshal error - "+err.Error(), nil)
+			return
+		}
+
 		// accessToken, refreshToken 생성
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, email, KAKAO_PROVIDER)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, claims, claims.BirthYear, claims.Gender, KAKAO_PROVIDER)
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
