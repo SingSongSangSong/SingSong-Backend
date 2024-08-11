@@ -182,3 +182,12 @@ ALTER TABLE member
 
 -- song_review_option 테이블에 영어 enum 추가
 ALTER TABLE song_review_option ADD COLUMN enum VARCHAR(20);
+
+CREATE TABLE IF NOT EXISTS blacklist (
+    blacklist_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    blocker_member_id BIGINT NOT NULL,
+    blocked_member_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);

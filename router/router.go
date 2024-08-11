@@ -89,10 +89,17 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	comment := r.Group("/api/v1/comment")
 	{
 		comment.POST("", middleware.AuthMiddleware(db), handler.CommentOnSong(db))
-		comment.GET("/:songId", handler.GetCommentOnSong(db))
+		comment.GET("/:songId", middleware.AuthMiddleware(db), handler.GetCommentOnSong(db))
 		comment.POST("/report", middleware.AuthMiddleware(db), handler.ReportComment(db))
-		comment.GET("/recomment/:commentId", handler.GetReCommentOnSong(db))
+		comment.GET("/recomment/:commentId", middleware.AuthMiddleware(db), handler.GetReCommentOnSong(db))
 		comment.POST("/:commentId/like", middleware.AuthMiddleware(db), handler.LikeComment(db))
+	}
+
+	blacklist := r.Group("/api/v1/blacklist")
+	{
+		blacklist.POST("", middleware.AuthMiddleware(db), handler.AddBlacklist(db))
+		blacklist.DELETE("", middleware.AuthMiddleware(db), handler.DeleteBlacklist(db))
+		blacklist.GET("", middleware.AuthMiddleware(db), handler.GetBlacklist(db))
 	}
 
 	// 스웨거 설정

@@ -117,11 +117,31 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		blockerId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
+
+		//차단 유저 제외
+		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		//blocked_member_id 리스트 만들기
+		blockedMemberIds := make([]interface{}, 0, len(blacklists))
+		for _, blacklist := range blacklists {
+			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
+		}
+
 		// Retrieve comments for the specified songId
 		comments, err := mysql.Comments(
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
 			qm.Where("comment.song_info_id = ?", songId),
+			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.OrderBy("comment.created_at DESC"),
 		).All(c, db)
 		if err != nil {
@@ -167,6 +187,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 							CreatedAt:       comment.CreatedAt.Time,
 							SongInfoId:      comment.SongInfoID,
 							Likes:           comment.Likes.Int,
+							Recomments:      []CommentResponse{},
 						}
 						topLevelComments[i].Recomments = append(topLevelComments[i].Recomments, reComment)
 						break
@@ -208,11 +229,30 @@ func GetReCommentOnSong(db *sql.DB) gin.HandlerFunc {
 		}
 		log.Printf("commentId: %d", commentId)
 
+		blockerId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
+
+		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		//blocked_member_id 리스트 만들기
+		blockedMemberIds := make([]interface{}, 0, len(blacklists))
+		for _, blacklist := range blacklists {
+			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
+		}
+
 		// Retrieve reComments for the specified commentId
 		reComments, err := mysql.Comments(
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
 			qm.Where("comment.parent_comment_id = ?", commentId),
+			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.OrderBy("comment.created_at ASC"),
 		).All(c, db)
 		if err != nil {
