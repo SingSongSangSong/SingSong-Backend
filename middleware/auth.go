@@ -3,6 +3,7 @@ package middleware
 import (
 	"SingSong-Server/conf"
 	"SingSong-Server/internal/db/mysql"
+	"SingSong-Server/internal/handler"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"fmt"
@@ -16,12 +17,6 @@ import (
 var (
 	secretKey = []byte(conf.AuthConfigInstance.SECRET_KEY)
 )
-
-type claims struct {
-	Email    string
-	Provider string
-	jwt.StandardClaims
-}
 
 func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -39,7 +34,7 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		token, err := jwt.ParseWithClaims(tokenString, &claims{}, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, &handler.Claims{}, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("error - invalid signing method")
 			}
@@ -53,7 +48,7 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 		}
 
 		var email, provider string
-		if claims, ok := token.Claims.(*claims); ok && token.Valid {
+		if claims, ok := token.Claims.(*handler.Claims); ok && token.Valid {
 			email = claims.Email
 			provider = claims.Provider
 		} else {
@@ -68,9 +63,10 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
 		c.Set("memberId", one.MemberID)
-		c.Set("gender", one.Gender)
-		c.Set("birthyear", one.Birthyear)
+		c.Set("gender", one.Gender.String)
+		c.Set("birthyear", one.Birthyear.Int)
 		c.Next()
 	}
 }

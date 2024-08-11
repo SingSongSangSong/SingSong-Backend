@@ -95,6 +95,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		comment.POST("/:commentId/like", middleware.AuthMiddleware(db), handler.LikeComment(db))
 	}
 
+	chart := r.Group("/api/v1/chart")
+	{
+		chart.GET("", middleware.AuthMiddleware(db), handler.GetChart(rdb))
+	}
+
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
