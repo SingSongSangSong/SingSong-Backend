@@ -7,6 +7,7 @@ var TableNames = struct {
 	AppVersion       string
 	Artist           string
 	AudioFeatures    string
+	Blacklist        string
 	Comment          string
 	CommentLike      string
 	KeepList         string
@@ -22,6 +23,7 @@ var TableNames = struct {
 	AppVersion:       "app_version",
 	Artist:           "artist",
 	AudioFeatures:    "audio_features",
+	Blacklist:        "blacklist",
 	Comment:          "comment",
 	CommentLike:      "comment_like",
 	KeepList:         "keep_list",
