@@ -15,8 +15,6 @@ type OldChartResponse struct {
 	Ranking       int     `json:"ranking"`
 	SongInfoId    int     `json:"song_info_id"`
 	TotalScore    float32 `json:"total_score"`
-	Gender        string  `json:"gender"`
-	BirthYear     int     `json:"birthYear"`
 	New           string  `json:"new"`
 	RankingChange int     `json:"rankingChange"`
 	ArtistName    string  `json:"artist_name"`
@@ -30,8 +28,6 @@ type ChartResponse struct {
 	Ranking       int     `json:"ranking"`
 	SongInfoId    int     `json:"songId"`
 	TotalScore    float32 `json:"totalScore"`
-	Gender        string  `json:"gender"`
-	BirthYear     int     `json:"birthYear"`
 	New           string  `json:"new"`
 	RankingChange int     `json:"rankingChange"`
 	ArtistName    string  `json:"artistName"`
@@ -47,8 +43,6 @@ func convertOldToNew(old []OldChartResponse) []ChartResponse {
 			Ranking:       o.Ranking,
 			SongInfoId:    o.SongInfoId,
 			TotalScore:    o.TotalScore,
-			Gender:        o.Gender,
-			BirthYear:     o.BirthYear,
 			New:           o.New,
 			RankingChange: o.RankingChange,
 			ArtistName:    o.ArtistName,

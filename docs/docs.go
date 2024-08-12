@@ -1377,12 +1377,6 @@ const docTemplate = `{
                 "artistName": {
                     "type": "string"
                 },
-                "birthYear": {
-                    "type": "integer"
-                },
-                "gender": {
-                    "type": "string"
-                },
                 "isMr": {
                     "type": "integer"
                 },
