@@ -61,13 +61,20 @@ func convertOldToNew(old []OldChartResponse) []ChartResponse {
 	return newCharts
 }
 
+type TotalChartResponse struct {
+	Time   string          `json:"time"`
+	Gender string          `json:"gender"`
+	Male   []ChartResponse `json:"male"`
+	Female []ChartResponse `json:"female"`
+}
+
 // GetChart godoc
 // @Summary      인기차트 조회
 // @Description  인기차트 조회
 // @Tags         Chart
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} pkg.BaseResponseStruct{data=[]ChartResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=[]TotalChartResponse} "성공"
 // @Router       /chart [get]
 // @Security BearerAuth
 func GetChart(rdb *redis.Client) gin.HandlerFunc {
@@ -128,14 +135,13 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 
 		wg.Wait() // 모든 goroutine이 끝날 때까지 대기
 
-		// 결과 조합
-		totalChart := map[string]interface{}{
-			"Time":   currentTime.Format("2006-01-02-15"),
-			"Gender": gender,
-			"Male":   maleCharts,
-			"Female": femaleCharts,
+		totalChartResponse := TotalChartResponse{
+			Time:   currentTime.Format("2006-01-02-15"),
+			Gender: gender.(string),
+			Male:   maleCharts,
+			Female: femaleCharts,
 		}
 
-		pkg.BaseResponse(c, http.StatusOK, "success", totalChart)
+		pkg.BaseResponse(c, http.StatusOK, "success", totalChartResponse)
 	}
 }

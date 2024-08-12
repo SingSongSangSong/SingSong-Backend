@@ -158,7 +158,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.ChartResponse"
+                                                "$ref": "#/definitions/handler.TotalChartResponse"
                                             }
                                         }
                                     }
@@ -1593,6 +1593,29 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "handler.TotalChartResponse": {
+            "type": "object",
+            "properties": {
+                "female": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ChartResponse"
+                    }
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "male": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ChartResponse"
+                    }
+                },
+                "time": {
+                    "type": "string"
                 }
             }
         },
