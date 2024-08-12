@@ -11,7 +11,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 ## Install tzdata
-RUN apk --no-cache add tzdata**
+RUN apk --no-cache add tzdata
 
 # Copy the rest of the source code into the container
 COPY . .
