@@ -2,13 +2,13 @@ basePath: /api/v1
 definitions:
   handler.ChartResponse:
     properties:
-      artist_name:
+      artistName:
         type: string
       birthYear:
         type: integer
       gender:
         type: string
-      is_mr:
+      isMr:
         type: integer
       new:
         type: string
@@ -16,13 +16,13 @@ definitions:
         type: integer
       rankingChange:
         type: integer
-      song_info_id:
+      songId:
         type: integer
-      song_name:
+      songName:
         type: string
-      song_number:
+      songNumber:
         type: integer
-      total_score:
+      totalScore:
         type: number
     type: object
   handler.CommentRequest:
@@ -44,6 +44,8 @@ definitions:
         type: string
       createdAt:
         type: string
+      isLiked:
+        type: boolean
       isRecomment:
         type: boolean
       likes:
