@@ -1,5 +1,30 @@
 basePath: /api/v1
 definitions:
+  handler.ChartResponse:
+    properties:
+      artist_name:
+        type: string
+      birthYear:
+        type: integer
+      gender:
+        type: string
+      is_mr:
+        type: integer
+      new:
+        type: string
+      ranking:
+        type: integer
+      rankingChange:
+        type: integer
+      song_info_id:
+        type: integer
+      song_name:
+        type: string
+      song_number:
+        type: integer
+      total_score:
+        type: number
+    type: object
   handler.CommentRequest:
     properties:
       content:
@@ -398,6 +423,30 @@ paths:
       summary: memberId를 통해 차단하기
       tags:
       - Blacklist
+  /chart:
+    get:
+      consumes:
+      - application/json
+      description: 인기차트 조회
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.ChartResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 인기차트 조회
+      tags:
+      - Chart
   /comment:
     post:
       consumes:

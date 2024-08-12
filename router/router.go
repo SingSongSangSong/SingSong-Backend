@@ -102,6 +102,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		blacklist.GET("", middleware.AuthMiddleware(db), handler.GetBlacklist(db))
 	}
 
+	chart := r.Group("/api/v1/chart")
+	{
+		chart.GET("", middleware.AuthMiddleware(db), handler.GetChart(rdb))
+	}
+
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
