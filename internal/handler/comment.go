@@ -33,6 +33,7 @@ type CommentResponse struct {
 	Nickname        string            `json:"nickname"`
 	CreatedAt       time.Time         `json:"createdAt"`
 	Likes           int               `json:"likes"`
+	IsLiked         bool              `json:"isLiked"`
 	Recomments      []CommentResponse `json:"recomments"`
 }
 

@@ -1374,7 +1374,7 @@ const docTemplate = `{
         "handler.ChartResponse": {
             "type": "object",
             "properties": {
-                "artist_name": {
+                "artistName": {
                     "type": "string"
                 },
                 "birthYear": {
@@ -1383,7 +1383,7 @@ const docTemplate = `{
                 "gender": {
                     "type": "string"
                 },
-                "is_mr": {
+                "isMr": {
                     "type": "integer"
                 },
                 "new": {
@@ -1395,16 +1395,16 @@ const docTemplate = `{
                 "rankingChange": {
                     "type": "integer"
                 },
-                "song_info_id": {
+                "songId": {
                     "type": "integer"
                 },
-                "song_name": {
+                "songName": {
                     "type": "string"
                 },
-                "song_number": {
+                "songNumber": {
                     "type": "integer"
                 },
-                "total_score": {
+                "totalScore": {
                     "type": "number"
                 }
             }
@@ -1437,6 +1437,9 @@ const docTemplate = `{
                 },
                 "createdAt": {
                     "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
                 },
                 "isRecomment": {
                     "type": "boolean"

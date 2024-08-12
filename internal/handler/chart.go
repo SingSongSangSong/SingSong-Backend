@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-type ChartResponse struct {
+// 기존 구조체 (스네이크 케이스)
+type OldChartResponse struct {
 	Ranking       int     `json:"ranking"`
 	SongInfoId    int     `json:"song_info_id"`
 	TotalScore    float32 `json:"total_score"`
@@ -23,6 +24,41 @@ type ChartResponse struct {
 	SongName      string  `json:"song_name"`
 	SongNumber    int     `json:"song_number"`
 	IsMR          int     `json:"is_mr"`
+}
+
+// 카멜케이스 구조체
+type ChartResponse struct {
+	Ranking       int     `json:"ranking"`
+	SongInfoId    int     `json:"songId"`
+	TotalScore    float32 `json:"totalScore"`
+	Gender        string  `json:"gender"`
+	BirthYear     int     `json:"birthYear"`
+	New           string  `json:"new"`
+	RankingChange int     `json:"rankingChange"`
+	ArtistName    string  `json:"artistName"`
+	SongName      string  `json:"songName"`
+	SongNumber    int     `json:"songNumber"`
+	IsMR          int     `json:"isMr"`
+}
+
+func convertOldToNew(old []OldChartResponse) []ChartResponse {
+	var newCharts []ChartResponse
+	for _, o := range old {
+		newCharts = append(newCharts, ChartResponse{
+			Ranking:       o.Ranking,
+			SongInfoId:    o.SongInfoId,
+			TotalScore:    o.TotalScore,
+			Gender:        o.Gender,
+			BirthYear:     o.BirthYear,
+			New:           o.New,
+			RankingChange: o.RankingChange,
+			ArtistName:    o.ArtistName,
+			SongName:      o.SongName,
+			SongNumber:    o.SongNumber,
+			IsMR:          o.IsMR,
+		})
+	}
+	return newCharts
 }
 
 // GetChart godoc
@@ -43,6 +79,8 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 			return
 		}
 
+		var oldMaleCharts []OldChartResponse
+		var oldFemaleCharts []OldChartResponse
 		var maleCharts, femaleCharts []ChartResponse
 		currentTime := time.Now()
 
@@ -59,9 +97,10 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 				return
 			}
 			// JSON 파싱
-			if err := json.Unmarshal([]byte(maleChart), &maleCharts); err != nil {
+			if err := json.Unmarshal([]byte(maleChart), &oldMaleCharts); err != nil {
 				log.Printf("Error parsing male chart JSON: %v", err)
 			}
+			maleCharts = convertOldToNew(oldMaleCharts)
 		}()
 
 		go func() {
@@ -74,9 +113,10 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 				return
 			}
 			// JSON 파싱
-			if err := json.Unmarshal([]byte(femaleChart), &femaleCharts); err != nil {
+			if err := json.Unmarshal([]byte(femaleChart), &oldFemaleCharts); err != nil {
 				log.Printf("Error parsing female chart JSON: %v", err)
 			}
+			femaleCharts = convertOldToNew(oldMaleCharts)
 		}()
 
 		wg.Wait() // 모든 goroutine이 끝날 때까지 대기
