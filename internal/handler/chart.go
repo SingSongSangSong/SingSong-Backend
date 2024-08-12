@@ -123,7 +123,7 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 			if err := json.Unmarshal([]byte(femaleChart), &oldFemaleCharts); err != nil {
 				log.Printf("Error parsing female chart JSON: %v", err)
 			}
-			femaleCharts = convertOldToNew(oldMaleCharts)
+			femaleCharts = convertOldToNew(oldFemaleCharts)
 		}()
 
 		wg.Wait() // 모든 goroutine이 끝날 때까지 대기

@@ -2,7 +2,7 @@ name: Go
 
 on:
   push:
-    branches: ["develop"]
+    branches: ["develop", "feat/#57"]
 
 jobs:
   build:
