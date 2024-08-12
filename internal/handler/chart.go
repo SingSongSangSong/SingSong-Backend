@@ -7,7 +7,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 )
 
@@ -98,42 +97,35 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 		time.Local = location
 		currentTime := time.Now()
 
-		var wg sync.WaitGroup
-		wg.Add(2) // 두 개의 goroutine을 기다리기 위해 WaitGroup에 2를 추가
-
-		go func() {
-			defer wg.Done() // goroutine이 끝날 때 WaitGroup에 Done을 호출
-			// 남성 차트 조회
-			maleFormattedTime := currentTime.Format("2006-01-02-15") + "-Hot_Trend_MALE"
-			maleChart, err := rdb.Get(c, maleFormattedTime).Result()
-			if err != nil && err != redis.Nil {
-				log.Printf("error - failed to get male chart: %v", err)
-				return
-			}
-			// JSON 파싱
+		// 남성 차트 조회
+		maleFormattedTime := currentTime.Format("2006-01-02-15") + "-Hot_Trend_MALE"
+		maleChart, err := rdb.Get(c, maleFormattedTime).Result()
+		if err == redis.Nil {
+			log.Printf("No data found for male chart at %s", maleFormattedTime)
+		} else if err != nil {
+			log.Printf("Error retrieving male chart: %v", err)
+		} else {
 			if err := json.Unmarshal([]byte(maleChart), &oldMaleCharts); err != nil {
 				log.Printf("Error parsing male chart JSON: %v", err)
+			} else {
+				maleCharts = convertOldToNew(oldMaleCharts)
 			}
-			maleCharts = convertOldToNew(oldMaleCharts)
-		}()
+		}
 
-		go func() {
-			defer wg.Done() // goroutine이 끝날 때 WaitGroup에 Done을 호출
-			// 여성 차트 조회
-			femaleFormattedTime := currentTime.Format("2006-01-02-15") + "-Hot_Trend_FEMALE"
-			femaleChart, err := rdb.Get(c, femaleFormattedTime).Result()
-			if err != nil && err != redis.Nil {
-				log.Printf("error - failed to get female chart: %v", err)
-				return
-			}
-			// JSON 파싱
+		// 여성 차트 조회
+		femaleFormattedTime := currentTime.Format("2006-01-02-15") + "-Hot_Trend_FEMALE"
+		femaleChart, err := rdb.Get(c, femaleFormattedTime).Result()
+		if err == redis.Nil {
+			log.Printf("No data found for female chart at %s", femaleFormattedTime)
+		} else if err != nil {
+			log.Printf("Error retrieving female chart: %v", err)
+		} else {
 			if err := json.Unmarshal([]byte(femaleChart), &oldFemaleCharts); err != nil {
 				log.Printf("Error parsing female chart JSON: %v", err)
+			} else {
+				femaleCharts = convertOldToNew(oldFemaleCharts)
 			}
-			femaleCharts = convertOldToNew(oldFemaleCharts)
-		}()
-
-		wg.Wait() // 모든 goroutine이 끝날 때까지 대기
+		}
 
 		totalChartResponse := TotalChartResponse{
 			Time:   currentTime.Format("2006-01-02-15"),
