@@ -83,6 +83,7 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 
 		// 결과 조합
 		totalChart := map[string]interface{}{
+			"Time":   currentTime.Format("2006-01-02-15"),
 			"Gender": gender,
 			"Male":   maleCharts,
 			"Female": femaleCharts,

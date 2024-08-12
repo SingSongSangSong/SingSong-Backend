@@ -27,7 +27,7 @@ import (
 
 const (
 	REQUEST_URL    = "https://kauth.kakao.com/.well-known/jwks.json"
-	KAKAO_PROVIDER = "KAKAO" // 공개키 목록 조회 URL
+	KAKAO_PROVIDER = "KAKAO_KEY" // 공개키 목록 조회 URL
 )
 
 var (
@@ -428,7 +428,7 @@ func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) error {
 	}
 
 	// Redis에 저장
-	key := redis.Set(c, KAKAO_PROVIDER, jsonData, 0)
+	key := redis.Set(c, KAKAO_PROVIDER, jsonData, 24*time.Hour)
 	log.Println("데이터가 성공적으로 Redis에 저장되었습니다." + key.Val())
 
 	//pkg.BaseResponse(c, http.StatusOK, "공개키 저장 성공", key)
