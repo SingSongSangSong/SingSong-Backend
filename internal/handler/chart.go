@@ -82,6 +82,13 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 		var oldMaleCharts []OldChartResponse
 		var oldFemaleCharts []OldChartResponse
 		var maleCharts, femaleCharts []ChartResponse
+		location, err := time.LoadLocation("Asia/Seoul")
+		if err != nil {
+			panic(err)
+		}
+
+		// Set the timezone for the current process
+		time.Local = location
 		currentTime := time.Now()
 
 		var wg sync.WaitGroup

@@ -87,15 +87,26 @@ var CommentLikeWhere = struct {
 
 // CommentLikeRels is where relationship names are stored.
 var CommentLikeRels = struct {
-}{}
+	Comment string
+}{
+	Comment: "Comment",
+}
 
 // commentLikeR is where relationships are stored.
 type commentLikeR struct {
+	Comment *Comment `boil:"Comment" json:"Comment" toml:"Comment" yaml:"Comment"`
 }
 
 // NewStruct creates a new relationship struct
 func (*commentLikeR) NewStruct() *commentLikeR {
 	return &commentLikeR{}
+}
+
+func (r *commentLikeR) GetComment() *Comment {
+	if r == nil {
+		return nil
+	}
+	return r.Comment
 }
 
 // commentLikeL is where Load methods for each relationship are stored.
@@ -385,6 +396,184 @@ func (q commentLikeQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 	}
 
 	return count > 0, nil
+}
+
+// Comment pointed to by the foreign key.
+func (o *CommentLike) Comment(mods ...qm.QueryMod) commentQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("`comment_id` = ?", o.CommentID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	return Comments(queryMods...)
+}
+
+// LoadComment allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for an N-1 relationship.
+func (commentLikeL) LoadComment(ctx context.Context, e boil.ContextExecutor, singular bool, maybeCommentLike interface{}, mods queries.Applicator) error {
+	var slice []*CommentLike
+	var object *CommentLike
+
+	if singular {
+		var ok bool
+		object, ok = maybeCommentLike.(*CommentLike)
+		if !ok {
+			object = new(CommentLike)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeCommentLike)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeCommentLike))
+			}
+		}
+	} else {
+		s, ok := maybeCommentLike.(*[]*CommentLike)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeCommentLike)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeCommentLike))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &commentLikeR{}
+		}
+		args = append(args, object.CommentID)
+
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &commentLikeR{}
+			}
+
+			for _, a := range args {
+				if a == obj.CommentID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.CommentID)
+
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`comment`),
+		qm.WhereIn(`comment.comment_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load Comment")
+	}
+
+	var resultSlice []*Comment
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice Comment")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for comment")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for comment")
+	}
+
+	if len(commentAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.Comment = foreign
+		if foreign.R == nil {
+			foreign.R = &commentR{}
+		}
+		foreign.R.CommentLikes = append(foreign.R.CommentLikes, object)
+		return nil
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.CommentID == foreign.CommentID {
+				local.R.Comment = foreign
+				if foreign.R == nil {
+					foreign.R = &commentR{}
+				}
+				foreign.R.CommentLikes = append(foreign.R.CommentLikes, local)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// SetComment of the commentLike to the related item.
+// Sets o.R.Comment to related.
+// Adds o to related.R.CommentLikes.
+func (o *CommentLike) SetComment(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Comment) error {
+	var err error
+	if insert {
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	}
+
+	updateQuery := fmt.Sprintf(
+		"UPDATE `comment_like` SET %s WHERE %s",
+		strmangle.SetParamNames("`", "`", 0, []string{"comment_id"}),
+		strmangle.WhereClause("`", "`", 0, commentLikePrimaryKeyColumns),
+	)
+	values := []interface{}{related.CommentID, o.CommentLikeID}
+
+	if boil.IsDebug(ctx) {
+		writer := boil.DebugWriterFrom(ctx)
+		fmt.Fprintln(writer, updateQuery)
+		fmt.Fprintln(writer, values)
+	}
+	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+		return errors.Wrap(err, "failed to update local table")
+	}
+
+	o.CommentID = related.CommentID
+	if o.R == nil {
+		o.R = &commentLikeR{
+			Comment: related,
+		}
+	} else {
+		o.R.Comment = related
+	}
+
+	if related.R == nil {
+		related.R = &commentR{
+			CommentLikes: CommentLikeSlice{o},
+		}
+	} else {
+		related.R.CommentLikes = append(related.R.CommentLikes, o)
+	}
+
+	return nil
 }
 
 // CommentLikes retrieves all the records using an executor.
@@ -709,7 +898,7 @@ func (o *CommentLike) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			commentLikeAllColumns,
 			commentLikeColumnsWithDefault,
 			commentLikeColumnsWithoutDefault,
@@ -725,7 +914,8 @@ func (o *CommentLike) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 			return errors.New("mysql: unable to upsert comment_like, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(commentLikeAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`comment_like`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `comment_like` WHERE %s",

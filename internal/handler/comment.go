@@ -123,6 +123,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
 			return
 		}
+		log.Println("blockerId: ", blockerId)
 
 		//차단 유저 제외
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c, db)
@@ -130,6 +131,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
+		log.Printf("blacklists: %d", len(blacklists))
 
 		//blocked_member_id 리스트 만들기
 		blockedMemberIds := make([]interface{}, 0, len(blacklists))
@@ -140,7 +142,9 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 		// Retrieve comments for the specified songId
 		comments, err := mysql.Comments(
 			qm.Load(mysql.CommentRels.Member),
+			qm.Load(mysql.CommentRels.CommentLikes),
 			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
+			qm.LeftOuterJoin("comment_like on comment_like.comment_id = comment.comment_id AND comment_like.member_id = ?", blockerId),
 			qm.Where("comment.song_info_id = ?", songId),
 			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.OrderBy("comment.created_at DESC"),
@@ -156,6 +160,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 		// Add all top-level comments (those without parent comments) to the slice
 		for _, comment := range comments {
 			if !comment.IsRecomment.Bool {
+				log.Println(comment.R.GetCommentLikes())
 				// Top-level comment, add to slice
 				topLevelComments = append(topLevelComments, CommentResponse{
 					CommentId:       comment.CommentID,
@@ -167,6 +172,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 					Nickname:        comment.R.Member.Nickname.String,
 					CreatedAt:       comment.CreatedAt.Time,
 					Likes:           comment.Likes.Int,
+					IsLiked:         comment.R.CommentLikes != nil,
 					Recomments:      []CommentResponse{},
 				})
 			}
@@ -188,6 +194,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 							CreatedAt:       comment.CreatedAt.Time,
 							SongInfoId:      comment.SongInfoID,
 							Likes:           comment.Likes.Int,
+							IsLiked:         comment.R.CommentLikes != nil,
 							Recomments:      []CommentResponse{},
 						}
 						topLevelComments[i].Recomments = append(topLevelComments[i].Recomments, reComment)
