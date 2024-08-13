@@ -189,7 +189,7 @@ func queryVectorByTag(c *gin.Context, englishTag string, idxConnection *pinecone
 		TopK:            uint32(vectorQuerySize),
 		Filter:          filterStruct,
 		SparseValues:    nil,
-		IncludeValues:   true,
+		IncludeValues:   false,
 		IncludeMetadata: true,
 	})
 	return values, err
