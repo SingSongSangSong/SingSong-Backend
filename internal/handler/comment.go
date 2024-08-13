@@ -147,9 +147,13 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.OrderBy("comment.created_at DESC"),
 		).All(c, db)
-
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		if len(comments) == 0 {
+			pkg.BaseResponse(c, http.StatusOK, "success", []CommentResponse{})
 			return
 		}
 
