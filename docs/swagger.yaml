@@ -4,10 +4,6 @@ definitions:
     properties:
       artistName:
         type: string
-      birthYear:
-        type: integer
-      gender:
-        type: string
       isMr:
         type: integer
       new:
@@ -145,6 +141,21 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  handler.TotalChartResponse:
+    properties:
+      female:
+        items:
+          $ref: '#/definitions/handler.ChartResponse'
+        type: array
+      gender:
+        type: string
+      male:
+        items:
+          $ref: '#/definitions/handler.ChartResponse'
+        type: array
+      time:
+        type: string
     type: object
   handler.WithdrawRequest:
     properties:
@@ -441,7 +452,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/handler.ChartResponse'
+                    $ref: '#/definitions/handler.TotalChartResponse'
                   type: array
               type: object
       security:
