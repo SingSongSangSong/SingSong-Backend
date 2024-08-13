@@ -35,6 +35,25 @@ func init() {
 	}
 }
 
+var defaultOrder = []string{
+	"그 시절 띵곡",
+	"마무리 1분 노래!",
+	"지붕 뚫는 고음",
+	"음치 탈출 넘버원!",
+	"Dance The Night Away",
+	"잠깐! 쉬어가실게요~",
+	"이별후... 나는 가끔 눈물을 흘린다",
+	"신남에 잔잔 두스푼",
+	"비도오고 그래서..",
+	"산타도 인정한 캐롤송",
+	"내꺼인듯 내꺼아닌 너",
+	"두근두근 듀엣송",
+	"결혼 축하축가송~",
+	"필승! 입대를 명 받았습니다!",
+	"사회생활 S.O.S",
+	"내가바로팝스타",
+}
+
 // ListTags godoc
 // @Summary      ssss 태그 목록 가져오기
 // @Description  ssss 태그 목록을 조회합니다.
@@ -45,8 +64,8 @@ func init() {
 // @Router       /tags [get]
 func ListTags() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		tags := make([]string, 0, len(tagMapToEnglish))
-		for tag := range tagMapToEnglish {
+		tags := make([]string, 0, len(defaultOrder))
+		for _, tag := range defaultOrder {
 			tags = append(tags, tag)
 		}
 		pkg.BaseResponse(c, http.StatusOK, "ok", tags)

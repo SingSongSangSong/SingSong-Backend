@@ -16,7 +16,7 @@ type homeSongResponse struct {
 	SingerName string   `json:"singerName"`
 	Tags       []string `json:"tags"`
 	SongInfoId int64    `json:"songId"`
-	Album      string   `json:"album"`
+	Album      string   `json:"Album"`
 }
 
 var (

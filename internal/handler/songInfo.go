@@ -16,7 +16,7 @@ type songInfoResponse struct {
 	SingerName  string   `json:"singerName"`
 	Tags        []string `json:"tags"`
 	SongInfoId  int64    `json:"songId"`
-	Album       string   `json:"album"`
+	Album       string   `json:"Album"`
 	Octave      string   `json:"octave"`
 	Description string   `json:"description"`
 	IsKeep      bool     `json:"isKeep"`
