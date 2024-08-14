@@ -33,6 +33,7 @@ type CommentResponse struct {
 	Nickname        string            `json:"nickname"`
 	CreatedAt       time.Time         `json:"createdAt"`
 	Likes           int               `json:"likes"`
+	IsLiked         bool              `json:"isLiked"`
 	Recomments      []CommentResponse `json:"recomments"`
 }
 
@@ -122,6 +123,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
 			return
 		}
+		log.Println("blockerId: ", blockerId)
 
 		//차단 유저 제외
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c, db)
@@ -129,6 +131,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
+		log.Printf("blacklists: %d", len(blacklists))
 
 		//blocked_member_id 리스트 만들기
 		blockedMemberIds := make([]interface{}, 0, len(blacklists))
@@ -149,6 +152,34 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		if len(comments) == 0 {
+			pkg.BaseResponse(c, http.StatusOK, "success", []CommentResponse{})
+			return
+		}
+
+		// comment_id들만 추출
+		commentIDs := make([]interface{}, len(comments))
+		for i, comment := range comments {
+			commentIDs[i] = comment.CommentID
+		}
+
+		// 해당 song_id와 member_id에 대한 모든 좋아요를 가져오기
+		likes, err := mysql.CommentLikes(
+			qm.WhereIn("comment_id IN ?", commentIDs...),
+			qm.And("member_id = ?", blockerId),
+		).All(c, db)
+
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// 좋아요를 누른 comment_id를 맵으로 저장 (빠른 조회를 위해)
+		likedCommentMap := make(map[int64]bool)
+		for _, like := range likes {
+			likedCommentMap[like.CommentID] = true
+		}
+
 		// Initialize a slice to hold all comments
 		var topLevelComments []CommentResponse
 
@@ -166,6 +197,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 					Nickname:        comment.R.Member.Nickname.String,
 					CreatedAt:       comment.CreatedAt.Time,
 					Likes:           comment.Likes.Int,
+					IsLiked:         likedCommentMap[comment.CommentID],
 					Recomments:      []CommentResponse{},
 				})
 			}
@@ -187,6 +219,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 							CreatedAt:       comment.CreatedAt.Time,
 							SongInfoId:      comment.SongInfoID,
 							Likes:           comment.Likes.Int,
+							IsLiked:         likedCommentMap[comment.CommentID],
 							Recomments:      []CommentResponse{},
 						}
 						topLevelComments[i].Recomments = append(topLevelComments[i].Recomments, reComment)

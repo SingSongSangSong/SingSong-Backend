@@ -137,6 +137,11 @@ CREATE TABLE IF NOT EXISTS comment_like (
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
 
+ALTER TABLE comment_like
+    ADD CONSTRAINT fk_comment_id
+        FOREIGN KEY (comment_id) REFERENCES comment(comment_id)
+            ON DELETE CASCADE ON UPDATE CASCADE;
+
 CREATE TABLE IF NOT EXISTS report (
     report_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     comment_id BIGINT NOT NULL,

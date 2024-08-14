@@ -177,14 +177,17 @@ var CommentWhere = struct {
 
 // CommentRels is where relationship names are stored.
 var CommentRels = struct {
-	Member string
+	Member       string
+	CommentLikes string
 }{
-	Member: "Member",
+	Member:       "Member",
+	CommentLikes: "CommentLikes",
 }
 
 // commentR is where relationships are stored.
 type commentR struct {
-	Member *Member `boil:"Member" json:"Member" toml:"Member" yaml:"Member"`
+	Member       *Member          `boil:"Member" json:"Member" toml:"Member" yaml:"Member"`
+	CommentLikes CommentLikeSlice `boil:"CommentLikes" json:"CommentLikes" toml:"CommentLikes" yaml:"CommentLikes"`
 }
 
 // NewStruct creates a new relationship struct
@@ -197,6 +200,13 @@ func (r *commentR) GetMember() *Member {
 		return nil
 	}
 	return r.Member
+}
+
+func (r *commentR) GetCommentLikes() CommentLikeSlice {
+	if r == nil {
+		return nil
+	}
+	return r.CommentLikes
 }
 
 // commentL is where Load methods for each relationship are stored.
@@ -499,6 +509,20 @@ func (o *Comment) Member(mods ...qm.QueryMod) memberQuery {
 	return Members(queryMods...)
 }
 
+// CommentLikes retrieves all the comment_like's CommentLikes with an executor.
+func (o *Comment) CommentLikes(mods ...qm.QueryMod) commentLikeQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("`comment_like`.`comment_id`=?", o.CommentID),
+	)
+
+	return CommentLikes(queryMods...)
+}
+
 // LoadMember allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (commentL) LoadMember(ctx context.Context, e boil.ContextExecutor, singular bool, maybeComment interface{}, mods queries.Applicator) error {
@@ -619,6 +643,120 @@ func (commentL) LoadMember(ctx context.Context, e boil.ContextExecutor, singular
 	return nil
 }
 
+// LoadCommentLikes allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (commentL) LoadCommentLikes(ctx context.Context, e boil.ContextExecutor, singular bool, maybeComment interface{}, mods queries.Applicator) error {
+	var slice []*Comment
+	var object *Comment
+
+	if singular {
+		var ok bool
+		object, ok = maybeComment.(*Comment)
+		if !ok {
+			object = new(Comment)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeComment)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeComment))
+			}
+		}
+	} else {
+		s, ok := maybeComment.(*[]*Comment)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeComment)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeComment))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &commentR{}
+		}
+		args = append(args, object.CommentID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &commentR{}
+			}
+
+			for _, a := range args {
+				if a == obj.CommentID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.CommentID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`comment_like`),
+		qm.WhereIn(`comment_like.comment_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load comment_like")
+	}
+
+	var resultSlice []*CommentLike
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice comment_like")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on comment_like")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for comment_like")
+	}
+
+	if len(commentLikeAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.CommentLikes = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &commentLikeR{}
+			}
+			foreign.R.Comment = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.CommentID == foreign.CommentID {
+				local.R.CommentLikes = append(local.R.CommentLikes, foreign)
+				if foreign.R == nil {
+					foreign.R = &commentLikeR{}
+				}
+				foreign.R.Comment = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetMember of the comment to the related item.
 // Sets o.R.Member to related.
 // Adds o to related.R.Comments.
@@ -663,6 +801,59 @@ func (o *Comment) SetMember(ctx context.Context, exec boil.ContextExecutor, inse
 		related.R.Comments = append(related.R.Comments, o)
 	}
 
+	return nil
+}
+
+// AddCommentLikes adds the given related objects to the existing relationships
+// of the comment, optionally inserting them as new records.
+// Appends related to o.R.CommentLikes.
+// Sets related.R.Comment appropriately.
+func (o *Comment) AddCommentLikes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*CommentLike) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.CommentID = o.CommentID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `comment_like` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"comment_id"}),
+				strmangle.WhereClause("`", "`", 0, commentLikePrimaryKeyColumns),
+			)
+			values := []interface{}{o.CommentID, rel.CommentLikeID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.CommentID = o.CommentID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &commentR{
+			CommentLikes: related,
+		}
+	} else {
+		o.R.CommentLikes = append(o.R.CommentLikes, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &commentLikeR{
+				Comment: o,
+			}
+		} else {
+			rel.R.Comment = o
+		}
+	}
 	return nil
 }
 
@@ -988,7 +1179,7 @@ func (o *Comment) Upsert(ctx context.Context, exec boil.ContextExecutor, updateC
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			commentAllColumns,
 			commentColumnsWithDefault,
 			commentColumnsWithoutDefault,
@@ -1004,7 +1195,8 @@ func (o *Comment) Upsert(ctx context.Context, exec boil.ContextExecutor, updateC
 			return errors.New("mysql: unable to upsert comment, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(commentAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`comment`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `comment` WHERE %s",

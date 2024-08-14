@@ -125,24 +125,14 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthyear not found", nil)
 			return
 		}
-
-		birthyear, ok := value2.(null.Int)
-		if !ok {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthyear not type null.int", nil)
-			return
-		}
+		birthyear := value2.(int)
 
 		value3, exists := c.Get("gender")
 		if !exists {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not found", nil)
 			return
 		}
-
-		gender, ok := value3.(null.String)
-		if !ok {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not type null.String", nil)
-			return
-		}
+		gender := value3.(string)
 
 		var request songReviewOptionPutRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -169,8 +159,8 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			SongInfoID:         one.SongInfoID,
 			MemberID:           memberId,
 			SongReviewOptionID: request.SongReviewOptionId,
-			Gender:             gender,
-			Birthyear:          birthyear,
+			Gender:             null.StringFrom(gender),
+			Birthyear:          null.IntFrom(birthyear),
 		}
 
 		if err := review.Insert(c, db, boil.Infer()); err != nil {

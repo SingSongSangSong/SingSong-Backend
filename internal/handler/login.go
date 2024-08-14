@@ -56,10 +56,12 @@ type JsonWebKey struct {
 
 // Claims 구조체 정의 (필요에 따라 조정 가능)
 type Claims struct {
-	Email    string `json:"email"`
-	Nickname string `json:"nickname"`
-	Picture  string `json:"picture"`
-	Provider string `json:"provider"`
+	Email     string `json:"email"`
+	Nickname  string `json:"nickname"`
+	Gender    string `json:"gender"`
+	BirthYear string `json:"birthYear"`
+	Picture   string `json:"picture"`
+	Provider  string `json:"provider"`
 	jwt.StandardClaims
 }
 
@@ -142,7 +144,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 		}
 
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload.Email, KAKAO_PROVIDER)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, loginRequest.BirthYear, loginRequest.Gender, KAKAO_PROVIDER)
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
@@ -159,7 +161,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email string, provider string) (string, string, error) {
+func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, payload *Claims, birthYear string, gender string, provider string) (string, string, error) {
 	jwtAccessValidityStr := JWT_ACCESS_VALIDITY_SECONDS
 	if jwtAccessValidityStr == "" {
 		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
@@ -174,8 +176,11 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 
 	accessTokenExpiresAt := time.Now().Add(time.Duration(jwtAccessValidity) * time.Second).Unix()
 	at := Claims{
-		Email:    email,
-		Provider: provider,
+		Email:     payload.Email,
+		Nickname:  payload.Nickname,
+		Gender:    gender,
+		BirthYear: birthYear,
+		Provider:  provider,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: accessTokenExpiresAt,
 			Issuer:    JWT_ISSUER,
@@ -218,7 +223,15 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 		return "", "", err
 	}
 
-	_, err = redis.Set(c, refreshTokenString, email, time.Duration(jwtRefreshValidity)*time.Second).Result()
+	payload.BirthYear = birthYear
+	payload.Gender = gender
+
+	claims, err := json.Marshal(payload)
+	if err != nil {
+		return "", "", err
+	}
+
+	_, err = redis.Set(c, refreshTokenString, claims, time.Duration(jwtRefreshValidity)*time.Second).Result()
 	if err != nil {
 		return "", "", err
 	}
@@ -415,7 +428,7 @@ func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) error {
 	}
 
 	// Redis에 저장
-	key := redis.Set(c, KAKAO_PROVIDER, jsonData, 0)
+	key := redis.Set(c, KAKAO_PROVIDER, jsonData, 24*time.Hour)
 	log.Println("데이터가 성공적으로 Redis에 저장되었습니다." + key.Val())
 
 	//pkg.BaseResponse(c, http.StatusOK, "공개키 저장 성공", key)

@@ -41,8 +41,6 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	//recommend.Use(middleware.AuthMiddleware()) // 추천 엔드포인트 전체에서 인증을 쓴다면 이렇게도 가능
 	{
 		recommend.POST("/home", handler.HomeRecommendation(db, rdb, idxConnection))
-		recommend.GET("/home/songs", handler.HomeSongRecommendation(db))
-		recommend.POST("/songs", handler.SongRecommendation(db, rdb, idxConnection))
 		recommend.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendation(db, rdb, idxConnection)) //일단 새로고침에만 적용
 	}
 
@@ -100,6 +98,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		blacklist.POST("", middleware.AuthMiddleware(db), handler.AddBlacklist(db))
 		blacklist.DELETE("", middleware.AuthMiddleware(db), handler.DeleteBlacklist(db))
 		blacklist.GET("", middleware.AuthMiddleware(db), handler.GetBlacklist(db))
+	}
+
+	chart := r.Group("/api/v1/chart")
+	{
+		chart.GET("", middleware.AuthMiddleware(db), handler.GetChart(rdb))
 	}
 
 	// 스웨거 설정

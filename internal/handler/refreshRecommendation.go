@@ -22,12 +22,12 @@ type refreshRequest struct {
 }
 
 type refreshResponse struct {
-	SongNumber int      `json:"songNumber"`
-	SongName   string   `json:"songName"`
-	SingerName string   `json:"singerName"`
-	Tags       []string `json:"tags"`
-	IsKeep     bool     `json:"isKeep"`
-	SongInfoId int64    `json:"songId"`
+	SongNumber int    `json:"songNumber"`
+	SongName   string `json:"songName"`
+	SingerName string `json:"singerName"`
+	Album      string `json:"album"`
+	IsKeep     bool   `json:"isKeep"`
+	SongInfoId int64  `json:"songId"`
 }
 
 var (
@@ -127,14 +127,15 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			return
 		}
 
-		songTempIdMap := make(map[int]int64)
+		songTempIdMap := make(map[int]*mysql.SongInfo)
 		for _, song := range all {
-			songTempIdMap[song.SongNumber] = song.SongInfoID
+			songTempIdMap[song.SongNumber] = song
 		}
 
 		// refreshSongs에 songTempId 추가
 		for i, song := range refreshedSongs {
-			refreshedSongs[i].SongInfoId = songTempIdMap[song.SongNumber]
+			refreshedSongs[i].SongInfoId = songTempIdMap[song.SongNumber].SongInfoID
+			refreshedSongs[i].Album = songTempIdMap[song.SongNumber].Album.String
 		}
 
 		// history 갱신
@@ -189,7 +190,7 @@ func queryVectorByTag(c *gin.Context, englishTag string, idxConnection *pinecone
 		TopK:            uint32(vectorQuerySize),
 		Filter:          filterStruct,
 		SparseValues:    nil,
-		IncludeValues:   true,
+		IncludeValues:   false,
 		IncludeMetadata: true,
 	})
 	return values, err
@@ -204,22 +205,10 @@ func extractSongInfo(vectorQuerySize int, values *pinecone.QueryVectorsResponse)
 			log.Printf("Failed to convert ID to int, error: %+v", err)
 		}
 
-		ssssField := v.Metadata.Fields["ssss"].GetListValue().AsSlice()
-		ssssArray := make([]string, len(ssssField))
-		for i, eTag := range ssssField {
-			ssssArray[i] = eTag.(string)
-		}
-
-		koreanTags, err := MapTagsEnglishToKorean(ssssArray)
-		if err != nil {
-			log.Printf("Failed to convert tags to korean, error: %+v", err)
-			koreanTags = []string{}
-		}
 		querySongs = append(querySongs, refreshResponse{
 			SongNumber: songNumber,
 			SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
 			SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
-			Tags:       koreanTags,
 		})
 	}
 	return querySongs
