@@ -1697,12 +1697,6 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },

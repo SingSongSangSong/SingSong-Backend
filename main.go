@@ -9,7 +9,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"log"
 )
 
@@ -27,12 +26,12 @@ func main() {
 	var idxConnection *pinecone.IndexConnection
 	conf.SetupConfig(ctx, &db, &rdb, &idxConnection)
 	// SQLBoiler의 디버그 모드 활성화
-	boil.DebugMode = true
+	//boil.DebugMode = true
 
 	r := router.SetupRouter(db, rdb, idxConnection)
 
 	// 서버 실행
-	if err := r.Run(":9090"); err != nil {
+	if err := r.Run(); err != nil {
 		log.Fatalf("서버 실행 실패: %v", err)
 	}
 

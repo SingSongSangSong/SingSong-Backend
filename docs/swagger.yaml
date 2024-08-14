@@ -268,10 +268,6 @@ definitions:
         type: string
       songNumber:
         type: integer
-      tags:
-        items:
-          type: string
-        type: array
     type: object
   handler.songInfoResponse:
     properties:
