@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
-	"strconv"
 )
 
+// getUnicodeRange returns the Unicode range for a given Korean consonant.
 func getUnicodeRange(consonant string) (string, string, bool) {
 	ranges := map[string][2]string{
 		"ㄱ": {"가", "깋"},
@@ -35,73 +35,48 @@ func getUnicodeRange(consonant string) (string, string, bool) {
 	return val[0], val[1], true
 }
 
+// SearchSongs godoc
+// @Summary      노래 검색 API
+// @Description  노래 검색 API로, 노래 제목 또는 아티스트 이름을 검색합니다.
+// @Tags         Search
+// @Accept       json
+// @Produce      json
+// @Param        searchKeyword path string true "검색 키워드"
+// @Success      200 {object} pkg.BaseResponseStruct{data=map[string][]songInfoResponse} "성공"
+// @Failure      400 {object} pkg.BaseResponseStruct{data=map[string][]songInfoResponse} "실패 - 빈 리스트 반환"
+// @Router       /search/{searchKeyword} [get]
 func SearchSongs(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		memberId := c.Param("memberId")
-		if memberId == "" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find memberId in path variable", nil)
-			return
-		}
-
+		// 검색어를 URL 파라미터에서 가져오기
 		searchKeyword := c.Param("searchKeyword")
-		if searchKeyword == "" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find searchKeyword in path variable", nil)
-			return
-		}
 
-		var one []*mysql.SongInfo
-		var err error
-
-		// 초성인지 확인
-		if startChar, endChar, ok := getUnicodeRange(searchKeyword); ok {
-			// 초성 검색 (song_name 및 artist_name)
-			one, err = mysql.SongInfos(
-				qm.Where("(song_name >= ? AND song_name <= ?) OR (artist_name >= ? AND artist_name <= ?)", startChar, endChar, startChar, endChar),
-			).All(c, db)
-		} else if _, err := strconv.Atoi(searchKeyword); err == nil {
-			// 숫자 검색 (song_number)
-			one, err = mysql.SongInfos(
-				qm.Where("song_number = ?", searchKeyword),
-			).All(c, db)
-		} else {
-			// 일반 검색 (song_name 및 artist_name)
-			one, err = mysql.SongInfos(
-				qm.Where("song_name LIKE ? OR artist_name LIKE ?", "%"+searchKeyword+"%", "%"+searchKeyword+"%"),
-			).All(c, db)
-		}
-
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - no song", nil)
-			return
-		}
-
-		// 유저의 keep 여부 조회
-		all, err := mysql.KeepLists(
-			qm.Where("member_id = ?", memberId),
+		// 노래 이름으로 검색
+		songsWithName, err := mysql.SongInfos(
+			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
+			qm.Limit(10),
 		).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		// 결과
-		response := make([]songInfoResponse, len(one))
-		for i, song := range one {
-			keepListIds := make([]interface{}, len(all))
-			for j, keep := range all {
-				keepListIds[j] = keep.KeepListID
-			}
-			isKeep, err := mysql.KeepSongs(
-				qm.WhereIn("keep_list_id in ?", keepListIds...),
-				qm.And("song_info_id = ?", song.SongInfoID),
-				qm.And("deleted_at IS NULL"),
-			).Exists(c, db)
-			if err != nil {
-				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-				return
-			}
+		// 아티스트 이름으로 검색
+		songsWithArtist, err := mysql.SongInfos(
+			qm.Where("artist_name LIKE ?", "%"+searchKeyword+"%"),
+			qm.Limit(10),
+		).All(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
 
-			response[i] = songInfoResponse{
+		// 검색 결과를 담을 맵 생성
+		response := make(map[string][]songInfoResponse)
+
+		// songName 해당하는 검색 결과를 response 추가
+		response["songName"] = make([]songInfoResponse, len(songsWithName))
+		for i, song := range songsWithName {
+			response["songName"][i] = songInfoResponse{
 				SongNumber:  song.SongNumber,
 				SongName:    song.SongName,
 				SingerName:  song.ArtistName,
@@ -109,11 +84,26 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				SongInfoId:  song.SongInfoID,
 				Album:       song.Album.String,
 				Octave:      song.Octave.String,
-				Description: "", //todo:
-				IsKeep:      isKeep,
+				Description: "", // todo: Add description logic
 			}
 		}
 
+		// artistName 해당하는 검색 결과를 response 추가
+		response["artistName"] = make([]songInfoResponse, len(songsWithArtist))
+		for i, song := range songsWithArtist {
+			response["artistName"][i] = songInfoResponse{
+				SongNumber:  song.SongNumber,
+				SongName:    song.SongName,
+				SingerName:  song.ArtistName,
+				Tags:        parseTags(song.Tags.String),
+				SongInfoId:  song.SongInfoID,
+				Album:       song.Album.String,
+				Octave:      song.Octave.String,
+				Description: "", // todo: Add description logic
+			}
+		}
+
+		// 응답 반환
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }

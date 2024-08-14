@@ -956,6 +956,80 @@ const docTemplate = `{
                 }
             }
         },
+        "/search/{searchKeyword}": {
+            "get": {
+                "description": "노래 검색 API로, 노래 제목 또는 아티스트 이름을 검색합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "노래 검색 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "searchKeyword",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/definitions/handler.songInfoResponse"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패 - 빈 리스트 반환",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "$ref": "#/definitions/handler.songInfoResponse"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/song-review-options": {
             "get": {
                 "description": "노래 평가 선택지를 모두 조회합니다.",
@@ -1682,7 +1756,7 @@ const docTemplate = `{
         "handler.homeSongResponse": {
             "type": "object",
             "properties": {
-                "album": {
+                "Album": {
                     "type": "string"
                 },
                 "singerName": {
@@ -1796,6 +1870,9 @@ const docTemplate = `{
         "handler.songHomeResponse": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1819,7 +1896,7 @@ const docTemplate = `{
         "handler.songInfoResponse": {
             "type": "object",
             "properties": {
-                "album": {
+                "Album": {
                     "type": "string"
                 },
                 "description": {

@@ -201,7 +201,7 @@ definitions:
     type: object
   handler.homeSongResponse:
     properties:
-      album:
+      Album:
         type: string
       singerName:
         type: string
@@ -275,6 +275,8 @@ definitions:
     type: object
   handler.songHomeResponse:
     properties:
+      album:
+        type: string
       singerName:
         type: string
       songId:
@@ -290,7 +292,7 @@ definitions:
     type: object
   handler.songInfoResponse:
     properties:
-      album:
+      Album:
         type: string
       description:
         type: string
@@ -918,6 +920,49 @@ paths:
       summary: '[미사용] 노래 추천 by 노래 번호 목록'
       tags:
       - Recommendation
+  /search/{searchKeyword}:
+    get:
+      consumes:
+      - application/json
+      description: 노래 검색 API로, 노래 제목 또는 아티스트 이름을 검색합니다.
+      parameters:
+      - description: 검색 키워드
+        in: path
+        name: searchKeyword
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  additionalProperties:
+                    items:
+                      $ref: '#/definitions/handler.songInfoResponse'
+                    type: array
+                  type: object
+              type: object
+        "400":
+          description: 실패 - 빈 리스트 반환
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  additionalProperties:
+                    items:
+                      $ref: '#/definitions/handler.songInfoResponse'
+                    type: array
+                  type: object
+              type: object
+      summary: 노래 검색 API
+      tags:
+      - Search
   /song-review-options:
     get:
       consumes:
