@@ -1433,6 +1433,9 @@ const docTemplate = `{
         "handler.PlaylistAddResponse": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },

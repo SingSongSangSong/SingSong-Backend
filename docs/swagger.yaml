@@ -97,6 +97,8 @@ definitions:
     type: object
   handler.PlaylistAddResponse:
     properties:
+      album:
+        type: string
       singerName:
         type: string
       songId:
