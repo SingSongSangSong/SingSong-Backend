@@ -25,6 +25,8 @@ func main() {
 	var rdb *redis.Client
 	var idxConnection *pinecone.IndexConnection
 	conf.SetupConfig(ctx, &db, &rdb, &idxConnection)
+	// SQLBoiler의 디버그 모드 활성화
+	//boil.DebugMode = true
 
 	r := router.SetupRouter(db, rdb, idxConnection)
 
