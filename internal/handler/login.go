@@ -27,7 +27,7 @@ import (
 
 const (
 	REQUEST_URL    = "https://kauth.kakao.com/.well-known/jwks.json"
-	KAKAO_PROVIDER = "KAKAO" // 공개키 목록 조회 URL
+	KAKAO_PROVIDER = "KAKAO_KEY" // 공개키 목록 조회 URL
 )
 
 var (
