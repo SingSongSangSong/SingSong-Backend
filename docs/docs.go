@@ -1620,6 +1620,9 @@ const docTemplate = `{
         "handler.refreshResponse": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
                 "isKeep": {
                     "type": "boolean"
                 },
@@ -1634,18 +1637,15 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
         "handler.relatedSong": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
                 "isKeep": {
                     "type": "boolean"
                 },
@@ -1660,12 +1660,6 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },

@@ -8,19 +8,17 @@ import (
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/protobuf/types/known/structpb"
-	"log"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type relatedSong struct {
-	SongNumber int      `json:"songNumber"`
-	SongName   string   `json:"songName"`
-	SingerName string   `json:"singerName"`
-	Tags       []string `json:"tags"`
-	IsKeep     bool     `json:"isKeep"`
-	SongTempId int64    `json:"songId"`
+	SongNumber int    `json:"songNumber"`
+	SongName   string `json:"songName"`
+	SingerName string `json:"singerName"`
+	Album      string `json:"album"`
+	IsKeep     bool   `json:"isKeep"`
+	SongTempId int64  `json:"songId"`
 }
 
 type relatedSongResponse struct {
@@ -185,7 +183,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		for i, song := range relatedSongs {
 			relatedSongs[i].SongName = songTempIdMap[song.SongNumber].SongName
 			relatedSongs[i].SingerName = songTempIdMap[song.SongNumber].ArtistName
-			relatedSongs[i].Tags = splitTags(songTempIdMap[song.SongNumber].Tags.String)
+			relatedSongs[i].Album = songTempIdMap[song.SongNumber].Album.String
 			relatedSongs[i].IsKeep = isKeepMap[song.SongNumber]
 			relatedSongs[i].SongTempId = songTempIdMap[song.SongNumber].SongInfoID
 		}
@@ -196,29 +194,4 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		}
 		pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{relatedSongs, nextPage})
 	}
-}
-
-func splitTags(tags string) []string {
-	if tags == "" {
-		return []string{}
-	}
-	tagSlice := strings.Split(tags, ",")
-	for i, tag := range tagSlice {
-		tagSlice[i] = strings.TrimSpace(tag)
-	}
-	return tagSlice
-}
-
-func convertTags(tag *structpb.Value) []string {
-	ssssField := tag.GetListValue().AsSlice()
-	ssssArray := make([]string, len(ssssField))
-	for i, eTag := range ssssField {
-		ssssArray[i] = eTag.(string)
-	}
-	koreanTags, err := MapTagsEnglishToKorean(ssssArray)
-	if err != nil {
-		log.Printf("Failed to convert tags to korean, error: %+v", err)
-		koreanTags = []string{}
-	}
-	return koreanTags
 }

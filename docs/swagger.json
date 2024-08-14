@@ -1612,6 +1612,9 @@
         "handler.refreshResponse": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
                 "isKeep": {
                     "type": "boolean"
                 },
@@ -1626,18 +1629,15 @@
                 },
                 "songNumber": {
                     "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
         "handler.relatedSong": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
                 "isKeep": {
                     "type": "boolean"
                 },
@@ -1652,12 +1652,6 @@
                 },
                 "songNumber": {
                     "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 }
             }
         },
