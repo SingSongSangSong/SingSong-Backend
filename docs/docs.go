@@ -778,7 +778,7 @@ const docTemplate = `{
                 "tags": [
                     "Recommendation"
                 ],
-                "summary": "[미사용] 노래 추천 by 태그",
+                "summary": "노래 추천 by 태그",
                 "parameters": [
                     {
                         "description": "태그 목록",
@@ -805,44 +805,6 @@ const docTemplate = `{
                                             "type": "array",
                                             "items": {
                                                 "$ref": "#/definitions/handler.homeResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/recommend/home/songs": {
-            "get": {
-                "description": "앨범 이미지와 함께 노래를 추천",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Recommendation"
-                ],
-                "summary": "[미사용] 노래 추천 5곡",
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.homeSongResponse"
                                             }
                                         }
                                     }
@@ -897,55 +859,6 @@ const docTemplate = `{
                                             "type": "array",
                                             "items": {
                                                 "$ref": "#/definitions/handler.refreshResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/recommend/songs": {
-            "post": {
-                "description": "노래 번호 목록을 보내면 유사한 노래들을 추천합니다.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Recommendation"
-                ],
-                "summary": "[미사용] 노래 추천 by 노래 번호 목록",
-                "parameters": [
-                    {
-                        "description": "노래 번호 목록",
-                        "name": "songs",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.songRecommendRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.songRecommendResponse"
                                             }
                                         }
                                     }
@@ -1679,32 +1592,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.homeSongResponse": {
-            "type": "object",
-            "properties": {
-                "album": {
-                    "type": "string"
-                },
-                "singerName": {
-                    "type": "string"
-                },
-                "songId": {
-                    "type": "integer"
-                },
-                "songName": {
-                    "type": "string"
-                },
-                "songNumber": {
-                    "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "handler.latestVersionUpdateRequest": {
             "type": "object",
             "properties": {
@@ -1796,6 +1683,9 @@ const docTemplate = `{
         "handler.songHomeResponse": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1836,37 +1726,6 @@ const docTemplate = `{
                 },
                 "songId": {
                     "type": "integer"
-                },
-                "songName": {
-                    "type": "string"
-                },
-                "songNumber": {
-                    "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "handler.songRecommendRequest": {
-            "type": "object",
-            "properties": {
-                "songNumbers": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                }
-            }
-        },
-        "handler.songRecommendResponse": {
-            "type": "object",
-            "properties": {
-                "singerName": {
-                    "type": "string"
                 },
                 "songName": {
                     "type": "string"

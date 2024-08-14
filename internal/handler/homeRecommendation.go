@@ -37,7 +37,7 @@ type homeResponse struct {
 }
 
 // HomeRecommendation godoc
-// @Summary      [미사용] 노래 추천 by 태그
+// @Summary      노래 추천 by 태그
 // @Description  태그에 해당하는 노래를 추천합니다.
 // @Tags         Recommendation
 // @Accept       json
