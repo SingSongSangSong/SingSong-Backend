@@ -97,6 +97,8 @@ definitions:
     type: object
   handler.PlaylistAddResponse:
     properties:
+      album:
+        type: string
       singerName:
         type: string
       songId:
@@ -199,23 +201,6 @@ definitions:
       tag:
         type: string
     type: object
-  handler.homeSongResponse:
-    properties:
-      Album:
-        type: string
-      singerName:
-        type: string
-      songId:
-        type: integer
-      songName:
-        type: string
-      songNumber:
-        type: integer
-      tags:
-        items:
-          type: string
-        type: array
-    type: object
   handler.latestVersionUpdateRequest:
     properties:
       forceUpdate:
@@ -232,6 +217,8 @@ definitions:
     type: object
   handler.refreshResponse:
     properties:
+      album:
+        type: string
       isKeep:
         type: boolean
       singerName:
@@ -242,13 +229,11 @@ definitions:
         type: string
       songNumber:
         type: integer
-      tags:
-        items:
-          type: string
-        type: array
     type: object
   handler.relatedSong:
     properties:
+      album:
+        type: string
       isKeep:
         type: boolean
       singerName:
@@ -259,10 +244,6 @@ definitions:
         type: string
       songNumber:
         type: integer
-      tags:
-        items:
-          type: string
-        type: array
     type: object
   handler.relatedSongResponse:
     properties:
@@ -285,14 +266,10 @@ definitions:
         type: string
       songNumber:
         type: integer
-      tags:
-        items:
-          type: string
-        type: array
     type: object
   handler.songInfoResponse:
     properties:
-      Album:
+      album:
         type: string
       description:
         type: string
@@ -304,26 +281,6 @@ definitions:
         type: string
       songId:
         type: integer
-      songName:
-        type: string
-      songNumber:
-        type: integer
-      tags:
-        items:
-          type: string
-        type: array
-    type: object
-  handler.songRecommendRequest:
-    properties:
-      songNumbers:
-        items:
-          type: integer
-        type: array
-    type: object
-  handler.songRecommendResponse:
-    properties:
-      singerName:
-        type: string
       songName:
         type: string
       songNumber:
@@ -863,29 +820,7 @@ paths:
                     $ref: '#/definitions/handler.homeResponse'
                   type: array
               type: object
-      summary: '[미사용] 노래 추천 by 태그'
-      tags:
-      - Recommendation
-  /recommend/home/songs:
-    get:
-      consumes:
-      - application/json
-      description: 앨범 이미지와 함께 노래를 추천
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-          schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/handler.homeSongResponse'
-                  type: array
-              type: object
-      summary: '[미사용] 노래 추천 5곡'
+      summary: 노래 추천 by 태그
       tags:
       - Recommendation
   /recommend/refresh:
@@ -919,40 +854,12 @@ paths:
       summary: 새로고침 노래 추천
       tags:
       - Recommendation
-  /recommend/songs:
-    post:
-      consumes:
-      - application/json
-      description: 노래 번호 목록을 보내면 유사한 노래들을 추천합니다.
-      parameters:
-      - description: 노래 번호 목록
-        in: body
-        name: songs
-        required: true
-        schema:
-          $ref: '#/definitions/handler.songRecommendRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-          schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/handler.songRecommendResponse'
-                  type: array
-              type: object
-      summary: '[미사용] 노래 추천 by 노래 번호 목록'
-      tags:
-      - Recommendation
   /search/{searchKeyword}:
     get:
       consumes:
       - application/json
-      description: 노래 검색 API로, 노래 제목 또는 아티스트 이름을 검색합니다.
+      description: 노래 검색 API, 노래 제목 또는 아티스트 이름을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명,
+        노래 번호를 반환합니다.
       parameters:
       - description: 검색 키워드
         in: path

@@ -19,12 +19,11 @@ import (
 
 // Home 추천
 type songHomeResponse struct {
-	SongNumber int      `json:"songNumber"`
-	SongName   string   `json:"songName"`
-	SingerName string   `json:"singerName"`
-	Tags       []string `json:"tags"`
-	SongInfoId int64    `json:"songId"`
-	Album      string   `json:"album"`
+	SongNumber int    `json:"songNumber"`
+	SongName   string `json:"songName"`
+	SingerName string `json:"singerName"`
+	SongInfoId int64  `json:"songId"`
+	Album      string `json:"album"`
 }
 
 type homeRequest struct {
@@ -37,7 +36,7 @@ type homeResponse struct {
 }
 
 // HomeRecommendation godoc
-// @Summary      [미사용] 노래 추천 by 태그
+// @Summary      노래 추천 by 태그
 // @Description  태그에 해당하는 노래를 추천합니다.
 // @Tags         Recommendation
 // @Accept       json
@@ -116,23 +115,11 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 						log.Printf("Failed to convert ID to int, error: %+v", err)
 					}
 
-					ssssField := v.Metadata.Fields["ssss"].GetListValue().AsSlice()
-					ssssArray := make([]string, len(ssssField))
-					for i, eTag := range ssssField {
-						ssssArray[i] = eTag.(string)
-					}
-					koreanTags, err := MapTagsEnglishToKorean(ssssArray)
-
-					if err != nil {
-						log.Printf("Failed to convert tags to korean, error: %+v", err)
-						koreanTags = []string{}
-					}
 					//todo: 메타데이터 걷어내기
 					returnSongs = append(returnSongs, songHomeResponse{
 						SongNumber: songNumber,
 						SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
 						SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
-						Tags:       koreanTags,
 					})
 				}
 
