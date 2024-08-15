@@ -1703,11 +1703,17 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "commentCount": {
+                    "type": "integer"
+                },
                 "description": {
                     "type": "string"
                 },
                 "isKeep": {
                     "type": "boolean"
+                },
+                "keepCount": {
+                    "type": "integer"
                 },
                 "octave": {
                     "type": "string"
