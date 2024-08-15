@@ -105,6 +105,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		chart.GET("", middleware.AuthMiddleware(db), handler.GetChart(rdb))
 	}
 
+	search := r.Group("/api/v1/search")
+	{
+		search.GET("/:searchKeyword", handler.SearchSongs(db))
+	}
+
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
