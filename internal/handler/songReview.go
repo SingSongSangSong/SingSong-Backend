@@ -120,12 +120,12 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		value2, exists := c.Get("birthyear")
+		value2, exists := c.Get("birthYear")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthyear not found", nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthYear not found", nil)
 			return
 		}
-		birthyear := value2.(int)
+		birthYear := value2.(int)
 
 		value3, exists := c.Get("gender")
 		if !exists {
@@ -160,7 +160,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			MemberID:           memberId,
 			SongReviewOptionID: request.SongReviewOptionId,
 			Gender:             null.StringFrom(gender),
-			Birthyear:          null.IntFrom(birthyear),
+			Birthyear:          null.IntFrom(birthYear),
 		}
 
 		if err := review.Insert(c, db, boil.Infer()); err != nil {
