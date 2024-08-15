@@ -11,15 +11,17 @@ import (
 )
 
 type songInfoResponse struct {
-	SongNumber  int      `json:"songNumber"`
-	SongName    string   `json:"songName"`
-	SingerName  string   `json:"singerName"`
-	Tags        []string `json:"tags"`
-	SongInfoId  int64    `json:"songId"`
-	Album       string   `json:"album"`
-	Octave      string   `json:"octave"`
-	Description string   `json:"description"`
-	IsKeep      bool     `json:"isKeep"`
+	SongNumber   int      `json:"songNumber"`
+	SongName     string   `json:"songName"`
+	SingerName   string   `json:"singerName"`
+	Tags         []string `json:"tags"`
+	SongInfoId   int64    `json:"songId"`
+	Album        string   `json:"album"`
+	Octave       string   `json:"octave"`
+	Description  string   `json:"description"`
+	IsKeep       bool     `json:"isKeep"`
+	KeepCount    int64    `json:"keepCount"`
+	CommentCount int64    `json:"commentCount"`
 }
 
 // GetSongInfo godoc
@@ -73,16 +75,30 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		commentCount, err := mysql.Comments(qm.Where("song_info_id = ? AND deleted_at is null", one.SongInfoID)).Count(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepCount, err := mysql.KeepSongs(qm.Where("song_info_id = ? AND deleted_at is null", one.SongInfoID)).Count(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
 		response := songInfoResponse{
-			SongNumber:  one.SongNumber,
-			SongName:    one.SongName,
-			SingerName:  one.ArtistName,
-			Tags:        parseTags(one.Tags.String),
-			SongInfoId:  one.SongInfoID,
-			Album:       one.Album.String,
-			Octave:      one.Octave.String,
-			Description: "", //todo:
-			IsKeep:      isKeep,
+			SongNumber:   one.SongNumber,
+			SongName:     one.SongName,
+			SingerName:   one.ArtistName,
+			Tags:         parseTags(one.Tags.String),
+			SongInfoId:   one.SongInfoID,
+			Album:        one.Album.String,
+			Octave:       one.Octave.String,
+			Description:  "", //todo:
+			IsKeep:       isKeep,
+			CommentCount: commentCount,
+			KeepCount:    keepCount,
 		}
 
 		// 비동기적으로 member_action 저장
