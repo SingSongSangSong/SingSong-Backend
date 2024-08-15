@@ -28,6 +28,7 @@ type refreshResponse struct {
 	Album      string `json:"album"`
 	IsKeep     bool   `json:"isKeep"`
 	SongInfoId int64  `json:"songId"`
+	IsMr       bool   `json:"isMr"`
 }
 
 var (
@@ -136,6 +137,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		for i, song := range refreshedSongs {
 			refreshedSongs[i].SongInfoId = songTempIdMap[song.SongNumber].SongInfoID
 			refreshedSongs[i].Album = songTempIdMap[song.SongNumber].Album.String
+			refreshedSongs[i].IsMr = songTempIdMap[song.SongNumber].IsMR.Bool
 		}
 
 		// history 갱신

@@ -99,6 +99,8 @@ definitions:
     properties:
       album:
         type: string
+      isMr:
+        type: boolean
       singerName:
         type: string
       songId:
@@ -221,6 +223,8 @@ definitions:
         type: string
       isKeep:
         type: boolean
+      isMr:
+        type: boolean
       singerName:
         type: string
       songId:
@@ -235,6 +239,8 @@ definitions:
       album:
         type: string
       isKeep:
+        type: boolean
+      isMr:
         type: boolean
       singerName:
         type: string
@@ -258,6 +264,8 @@ definitions:
     properties:
       album:
         type: string
+      isMr:
+        type: boolean
       singerName:
         type: string
       songId:
@@ -276,6 +284,8 @@ definitions:
       description:
         type: string
       isKeep:
+        type: boolean
+      isMr:
         type: boolean
       keepCount:
         type: integer
@@ -321,6 +331,8 @@ definitions:
     properties:
       album:
         type: string
+      isMr:
+        type: boolean
       singerName:
         type: string
       songId:

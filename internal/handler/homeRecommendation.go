@@ -24,6 +24,7 @@ type songHomeResponse struct {
 	SingerName string `json:"singerName"`
 	SongInfoId int64  `json:"songId"`
 	Album      string `json:"album"`
+	IsMr       bool   `json:"isMr"`
 }
 
 type homeRequest struct {
@@ -165,10 +166,12 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 				if song, ok := songsMap[songNumber]; ok {
 					homeResponse.Songs[i].SongInfoId = song.SongInfoID
 					homeResponse.Songs[i].Album = song.Album.String
+					homeResponse.Songs[i].IsMr = song.IsMR.Bool
 				} else {
 					log.Printf("SongInfoId not found for SongNumber: %v", songNumber)
 					homeResponse.Songs[i].SongInfoId = 0 // 혹은 디폴트 값 설정
 					homeResponse.Songs[i].Album = ""
+					homeResponse.Songs[i].IsMr = false
 				}
 			}
 		}

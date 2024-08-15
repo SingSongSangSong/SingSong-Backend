@@ -1490,6 +1490,9 @@
                 "album": {
                     "type": "string"
                 },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1680,6 +1683,9 @@
                 "isKeep": {
                     "type": "boolean"
                 },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1701,6 +1707,9 @@
                     "type": "string"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isMr": {
                     "type": "boolean"
                 },
                 "singerName": {
@@ -1737,6 +1746,9 @@
                 "album": {
                     "type": "string"
                 },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1764,6 +1776,9 @@
                     "type": "string"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isMr": {
                     "type": "boolean"
                 },
                 "keepCount": {
@@ -1833,6 +1848,9 @@
             "properties": {
                 "album": {
                     "type": "string"
+                },
+                "isMr": {
+                    "type": "boolean"
                 },
                 "singerName": {
                     "type": "string"
