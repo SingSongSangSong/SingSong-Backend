@@ -356,6 +356,34 @@ definitions:
       songReviewOptionId:
         type: integer
     type: object
+  handler.songSearchInfoResponse:
+    properties:
+      album:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
+  handler.songSearchInfoResponses:
+    properties:
+      artistName:
+        items:
+          $ref: '#/definitions/handler.songSearchInfoResponse'
+        type: array
+      songName:
+        items:
+          $ref: '#/definitions/handler.songSearchInfoResponse'
+        type: array
+      songNumber:
+        items:
+          $ref: '#/definitions/handler.songSearchInfoResponse'
+        type: array
+    type: object
   handler.versionCheckRequest:
     properties:
       version:
@@ -941,11 +969,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  additionalProperties:
-                    items:
-                      $ref: '#/definitions/handler.songInfoResponse'
-                    type: array
-                  type: object
+                  $ref: '#/definitions/handler.songSearchInfoResponses'
               type: object
         "400":
           description: 실패 - 빈 리스트 반환
@@ -954,10 +978,6 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  additionalProperties:
-                    items:
-                      $ref: '#/definitions/handler.songInfoResponse'
-                    type: array
                   type: object
               type: object
       summary: 노래 검색 API

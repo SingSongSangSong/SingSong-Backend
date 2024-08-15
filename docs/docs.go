@@ -990,13 +990,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "array",
-                                                "items": {
-                                                    "$ref": "#/definitions/handler.songInfoResponse"
-                                                }
-                                            }
+                                            "$ref": "#/definitions/handler.songSearchInfoResponses"
                                         }
                                     }
                                 }
@@ -1014,13 +1008,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "array",
-                                                "items": {
-                                                    "$ref": "#/definitions/handler.songInfoResponse"
-                                                }
-                                            }
+                                            "type": "object"
                                         }
                                     }
                                 }
@@ -1992,6 +1980,49 @@ const docTemplate = `{
             "properties": {
                 "songReviewOptionId": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.songSearchInfoResponse": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.songSearchInfoResponses": {
+            "type": "object",
+            "properties": {
+                "artistName": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songSearchInfoResponse"
+                    }
+                },
+                "songName": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songSearchInfoResponse"
+                    }
+                },
+                "songNumber": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songSearchInfoResponse"
+                    }
                 }
             }
         },
