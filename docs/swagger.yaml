@@ -446,6 +446,15 @@ paths:
                     $ref: '#/definitions/handler.TotalChartResponse'
                   type: array
               type: object
+        "400":
+          description: 실패
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
       security:
       - BearerAuth: []
       summary: 인기차트 조회

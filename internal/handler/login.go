@@ -56,6 +56,7 @@ type JsonWebKey struct {
 
 // Claims 구조체 정의 (필요에 따라 조정 가능)
 type Claims struct {
+	MemberId  int64  `json:"memberId"`
 	Email     string `json:"email"`
 	Nickname  string `json:"nickname"`
 	Gender    string `json:"gender"`
@@ -131,7 +132,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		nullGender := null.StringFrom(loginRequest.Gender)
 
 		// email+Provider db에 있는지 확인
-		_, err = mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c, db)
+		member, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c, db)
 		if err != nil {
 			//DB에 없는경우
 			m := mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
@@ -144,7 +145,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 		}
 
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, loginRequest.BirthYear, loginRequest.Gender, KAKAO_PROVIDER)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, loginRequest.BirthYear, loginRequest.Gender, member.MemberID, KAKAO_PROVIDER)
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
@@ -161,7 +162,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, payload *Claims, birthYear string, gender string, provider string) (string, string, error) {
+func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, payload *Claims, birthYear string, gender string, memberId int64, provider string) (string, string, error) {
 	jwtAccessValidityStr := JWT_ACCESS_VALIDITY_SECONDS
 	if jwtAccessValidityStr == "" {
 		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
@@ -176,11 +177,9 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, paylo
 
 	accessTokenExpiresAt := time.Now().Add(time.Duration(jwtAccessValidity) * time.Second).Unix()
 	at := Claims{
-		Email:     payload.Email,
-		Nickname:  payload.Nickname,
+		MemberId:  memberId,
 		Gender:    gender,
 		BirthYear: birthYear,
-		Provider:  provider,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: accessTokenExpiresAt,
 			Issuer:    JWT_ISSUER,

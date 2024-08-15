@@ -22,7 +22,7 @@ type CommentRequest struct {
 	IsRecomment     bool   `json:"isRecomment"`
 }
 
-// Define the CommentResponse struct
+// CommentResponse Define the CommentResponse struct
 type CommentResponse struct {
 	CommentId       int64             `json:"commentId"`
 	Content         string            `json:"content"`
