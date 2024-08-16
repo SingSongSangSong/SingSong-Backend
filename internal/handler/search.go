@@ -15,6 +15,7 @@ type songSearchInfoResponse struct {
 	SingerName string `json:"singerName"`
 	SongInfoId int64  `json:"songId"`
 	Album      string `json:"album"`
+	IsMr       bool   `json:"isMr"`
 }
 
 type songSearchInfoResponses struct {
@@ -83,6 +84,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				SingerName: song.ArtistName,
 				SongInfoId: song.SongInfoID,
 				Album:      song.Album.String,
+				IsMr:       song.IsMR.Bool,
 			})
 		}
 
@@ -94,6 +96,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				SingerName: song.ArtistName,
 				SongInfoId: song.SongInfoID,
 				Album:      song.Album.String,
+				IsMr:       song.IsMR.Bool,
 			})
 		}
 
@@ -105,6 +108,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				SingerName: song.ArtistName,
 				SongInfoId: song.SongInfoID,
 				Album:      song.Album.String,
+				IsMr:       song.IsMR.Bool,
 			})
 		}
 

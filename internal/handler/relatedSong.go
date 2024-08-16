@@ -19,6 +19,7 @@ type relatedSong struct {
 	Album      string `json:"album"`
 	IsKeep     bool   `json:"isKeep"`
 	SongTempId int64  `json:"songId"`
+	IsMr       bool   `json:"isMr"`
 }
 
 type relatedSongResponse struct {
@@ -186,6 +187,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			relatedSongs[i].Album = songTempIdMap[song.SongNumber].Album.String
 			relatedSongs[i].IsKeep = isKeepMap[song.SongNumber]
 			relatedSongs[i].SongTempId = songTempIdMap[song.SongNumber].SongInfoID
+			relatedSongs[i].IsMr = songTempIdMap[song.SongNumber].IsMR.Bool
 		}
 
 		nextPage := pageInt + 1

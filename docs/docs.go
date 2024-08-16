@@ -1516,6 +1516,9 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1706,6 +1709,9 @@ const docTemplate = `{
                 "isKeep": {
                     "type": "boolean"
                 },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1727,6 +1733,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isMr": {
                     "type": "boolean"
                 },
                 "singerName": {
@@ -1763,6 +1772,9 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1790,6 +1802,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isMr": {
                     "type": "boolean"
                 },
                 "keepCount": {
@@ -1859,6 +1874,9 @@ const docTemplate = `{
             "properties": {
                 "album": {
                     "type": "string"
+                },
+                "isMr": {
+                    "type": "boolean"
                 },
                 "singerName": {
                     "type": "string"

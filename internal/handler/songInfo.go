@@ -22,6 +22,7 @@ type songInfoResponse struct {
 	IsKeep       bool     `json:"isKeep"`
 	KeepCount    int64    `json:"keepCount"`
 	CommentCount int64    `json:"commentCount"`
+	IsMr         bool     `json:"isMr"`
 }
 
 // GetSongInfo godoc
@@ -99,6 +100,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			IsKeep:       isKeep,
 			CommentCount: commentCount,
 			KeepCount:    keepCount,
+			IsMr:         one.IsMR.Bool,
 		}
 
 		// 비동기적으로 member_action 저장
