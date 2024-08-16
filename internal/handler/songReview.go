@@ -10,6 +10,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -125,7 +126,12 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthYear not found", nil)
 			return
 		}
-		birthYear := value2.(int)
+		birthYearStr := value2.(string)
+		birthYear, err := strconv.Atoi(birthYearStr)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not found", nil)
+			return
+		}
 
 		value3, exists := c.Get("gender")
 		if !exists {
