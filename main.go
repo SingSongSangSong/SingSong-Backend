@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/conf"
 	_ "SingSong-Server/docs"
 	"SingSong-Server/router"
+	"context"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pinecone-io/go-pinecone/pinecone"
@@ -18,7 +19,7 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	//ctx := context.Background()
+	ctx := context.Background()
 
 	var db *sql.DB
 	var rdb *redis.Client
