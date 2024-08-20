@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"SingSong-Server/conf"
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
@@ -176,7 +177,7 @@ func generateRefreshKey(memberId int64, englishTag string) string {
 }
 
 func queryVectorByTag(c *gin.Context, englishTag string, idxConnection *pinecone.IndexConnection, vectorQuerySize int) (*pinecone.QueryVectorsResponse, error) {
-	dummyVector := make([]float32, 30)
+	dummyVector := make([]float32, conf.VectorDBConfigInstance.DIMENSION)
 	for i := range dummyVector {
 		dummyVector[i] = rand.Float32()*2 - 1 // -1 ~ 1
 	}

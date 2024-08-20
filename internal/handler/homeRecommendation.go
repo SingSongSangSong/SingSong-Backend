@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"SingSong-Server/conf"
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"context"
@@ -83,7 +84,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 				returnSongs := make([]songHomeResponse, 0, len(englishTags))
 
 				// Define a dummy vector (e.g., zero vector) for the query
-				dummyVector := make([]float32, 30) // Assuming the vector length is 1536, adjust as necessary
+				dummyVector := make([]float32, conf.VectorDBConfigInstance.DIMENSION) // Assuming the vector length is 1536, adjust as necessary
 				for i := range dummyVector {
 					dummyVector[i] = rand.Float32() //random vector
 				}
