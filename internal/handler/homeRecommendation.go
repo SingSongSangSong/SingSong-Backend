@@ -112,14 +112,14 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 				// 받아온 입력들의 아이디 및 다른 값들을 할당합니다
 				for _, match := range values.Matches {
 					v := match.Vector
-					songNumber, err := strconv.Atoi(v.Id)
+					songInfoId, err := strconv.Atoi(v.Id)
 					if err != nil {
 						log.Printf("Failed to convert ID to int, error: %+v", err)
 					}
 
 					//todo: 메타데이터 걷어내기
 					returnSongs = append(returnSongs, songHomeResponse{
-						SongNumber: songNumber,
+						SongInfoId: int64(songInfoId),
 						SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
 						SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
 					})
@@ -142,35 +142,35 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 		}
 
 		// 모든 태그의 노래 정보를 한 번에 가져옵니다.
-		var songNumbers []interface{}
+		var songInfoIds []interface{}
 		for _, homeResponse := range homeResponses {
 			for _, song := range homeResponse.Songs {
-				songNumbers = append(songNumbers, song.SongNumber)
+				songInfoIds = append(songInfoIds, song.SongInfoId)
 			}
 		}
 
-		allSongs, err := mysql.SongInfos(qm.WhereIn("song_number IN ?", songNumbers...)).All(c, db)
+		allSongs, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		songsMap := make(map[int]*mysql.SongInfo, len(allSongs))
+		songsMap := make(map[int64]*mysql.SongInfo, len(allSongs))
 		for _, song := range allSongs {
-			songsMap[song.SongNumber] = song
+			songsMap[song.SongInfoID] = song
 		}
 
 		// homeResponses 업데이트
 		for _, homeResponse := range homeResponses {
 			for i := range homeResponse.Songs {
-				songNumber := homeResponse.Songs[i].SongNumber
-				if song, ok := songsMap[songNumber]; ok {
-					homeResponse.Songs[i].SongInfoId = song.SongInfoID
+				songInfoId := homeResponse.Songs[i].SongInfoId
+				if song, ok := songsMap[songInfoId]; ok {
+					homeResponse.Songs[i].SongNumber = song.SongNumber
 					homeResponse.Songs[i].Album = song.Album.String
 					homeResponse.Songs[i].IsMr = song.IsMR.Bool
 				} else {
-					log.Printf("SongInfoId not found for SongNumber: %v", songNumber)
-					homeResponse.Songs[i].SongInfoId = 0 // 혹은 디폴트 값 설정
+					log.Printf("SongInfoId not found from database: %v", songInfoId)
+					homeResponse.Songs[i].SongNumber = 0 // 혹은 디폴트 값 설정
 					homeResponse.Songs[i].Album = ""
 					homeResponse.Songs[i].IsMr = false
 				}
