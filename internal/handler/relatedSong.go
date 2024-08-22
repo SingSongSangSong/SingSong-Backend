@@ -18,7 +18,7 @@ type relatedSong struct {
 	SingerName string `json:"singerName"`
 	Album      string `json:"album"`
 	IsKeep     bool   `json:"isKeep"`
-	SongTempId int64  `json:"songId"`
+	SongInfoId int64  `json:"songId"`
 	IsMr       bool   `json:"isMr"`
 }
 
@@ -89,24 +89,17 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			return
 		}
 
-		//songInfoId로 songNumber 조회
-		song, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c, db)
+		//songInfoId로 벡터 디비에서 조회
+		songInfoIdInt, err := strconv.Atoi(songInfoId)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - no song", nil)
-			return
-		}
-
-		//songNumber로 벡터 디비에서 조회
-		songNumberInt := song.SongNumber
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid songNumber", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid songInfoId", nil)
 			return
 		}
 		filterStruct := &structpb.Struct{
 			Fields: map[string]*structpb.Value{
-				"song_number": structpb.NewStructValue(&structpb.Struct{
+				"song_id": structpb.NewStructValue(&structpb.Struct{
 					Fields: map[string]*structpb.Value{
-						"$ne": structpb.NewNumberValue(float64(songNumberInt)),
+						"$ne": structpb.NewNumberValue(float64(songInfoIdInt)),
 					},
 				}),
 				"MR": structpb.NewBoolValue(false),
@@ -114,7 +107,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		}
 
 		res, err := idxConnection.QueryByVectorId(c, &pinecone.QueryByVectorIdRequest{
-			VectorId:        strconv.Itoa(song.SongNumber),
+			VectorId:        songInfoId,
 			TopK:            uint32(vectorSize),
 			Filter:          filterStruct,
 			IncludeValues:   false,
@@ -141,7 +134,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 				return
 			}
 			relatedSongs = append(relatedSongs, relatedSong{
-				SongNumber: atoi,
+				SongInfoId: int64(atoi),
 			})
 		}
 
@@ -160,34 +153,35 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		isKeepMap := make(map[int]bool)
+		isKeepMap := make(map[int64]bool)
 		for _, keepSong := range keepSongs {
-			isKeepMap[keepSong.SongNumber] = true
+			isKeepMap[keepSong.SongInfoID] = true
 		}
 
-		//songTempId
-		var songNumbers []interface{}
+		//songInfoId로 노래 정보 가져오기
+		var songInfoIds []interface{}
 		for _, song := range relatedSongs {
-			songNumbers = append(songNumbers, song.SongNumber)
+			songInfoIds = append(songInfoIds, song.SongInfoId)
 		}
-		slice, err := mysql.SongInfos(qm.WhereIn("song_number IN ?", songNumbers...)).All(c, db)
+		slice, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		songTempIdMap := make(map[int]*mysql.SongInfo)
+		songInfoMap := make(map[int64]*mysql.SongInfo)
 		for _, song := range slice {
-			songTempIdMap[song.SongNumber] = song
+			songInfoMap[song.SongInfoID] = song
 		}
 
 		// response에 isKeep과 songTempId 추가
 		for i, song := range relatedSongs {
-			relatedSongs[i].SongName = songTempIdMap[song.SongNumber].SongName
-			relatedSongs[i].SingerName = songTempIdMap[song.SongNumber].ArtistName
-			relatedSongs[i].Album = songTempIdMap[song.SongNumber].Album.String
-			relatedSongs[i].IsKeep = isKeepMap[song.SongNumber]
-			relatedSongs[i].SongTempId = songTempIdMap[song.SongNumber].SongInfoID
-			relatedSongs[i].IsMr = songTempIdMap[song.SongNumber].IsMR.Bool
+			found := songInfoMap[song.SongInfoId]
+			relatedSongs[i].SongName = found.SongName
+			relatedSongs[i].SingerName = found.ArtistName
+			relatedSongs[i].Album = found.Album.String
+			relatedSongs[i].IsKeep = isKeepMap[song.SongInfoId]
+			relatedSongs[i].SongInfoId = found.SongInfoID
+			relatedSongs[i].IsMr = found.IsMR.Bool
 		}
 
 		nextPage := pageInt + 1

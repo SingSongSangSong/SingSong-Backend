@@ -20,8 +20,13 @@ type AuthConfig struct {
 	JWT_REFRESH_VALIDITY_SECONDS string
 }
 
+type VectorDBConfig struct {
+	DIMENSION int
+}
+
 var (
-	AuthConfigInstance *AuthConfig
+	AuthConfigInstance     *AuthConfig
+	VectorDBConfigInstance *VectorDBConfig
 )
 
 func init() {
@@ -37,6 +42,10 @@ func init() {
 		JWT_ACCESS_VALIDITY_SECONDS:  os.Getenv("JWT_ACCESS_VALIDITY_SECONDS"),
 		JWT_REFRESH_VALIDITY_SECONDS: os.Getenv("JWT_REFRESH_VALIDITY_SECONDS"),
 	}
+	VectorDBConfigInstance = &VectorDBConfig{
+		DIMENSION: 548,
+	}
+
 }
 
 func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
