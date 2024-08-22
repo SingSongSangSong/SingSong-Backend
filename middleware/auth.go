@@ -2,14 +2,12 @@ package middleware
 
 import (
 	"SingSong-Server/conf"
-	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/handler"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strings"
 )
@@ -47,26 +45,23 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		var email, provider string
+		var gender, birthYear string
+		var memberId int64
+
 		if claims, ok := token.Claims.(*handler.Claims); ok && token.Valid {
-			email = claims.Email
-			provider = claims.Provider
+			memberId = claims.MemberId
+			gender = claims.Gender
+			birthYear = claims.BirthYear
+
 		} else {
 			pkg.BaseResponse(c, http.StatusUnauthorized, "error - invalid token", nil)
 			c.Abort()
 			return
 		}
 
-		one, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", email, provider)).One(c, db)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusUnauthorized, "error - invalid member", nil)
-			c.Abort()
-			return
-		}
-
-		c.Set("memberId", one.MemberID)
-		c.Set("gender", one.Gender.String)
-		c.Set("birthyear", one.Birthyear.Int)
+		c.Set("memberId", memberId)
+		c.Set("gender", gender)
+		c.Set("birthYear", birthYear)
 		c.Next()
 	}
 }

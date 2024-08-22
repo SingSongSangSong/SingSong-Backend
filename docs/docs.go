@@ -165,6 +165,24 @@ const docTemplate = `{
                                 }
                             ]
                         }
+                    },
+                    "400": {
+                        "description": "실패",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             }
@@ -869,6 +887,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/search/{searchKeyword}": {
+            "get": {
+                "description": "노래 검색 API, 노래 제목 또는 아티스트 이름을 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "노래 검색 API",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "searchKeyword",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.songSearchInfoResponses"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패 - 빈 리스트 반환",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/song-review-options": {
             "get": {
                 "description": "노래 평가 선택지를 모두 조회합니다.",
@@ -1436,6 +1516,9 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1626,6 +1709,9 @@ const docTemplate = `{
                 "isKeep": {
                     "type": "boolean"
                 },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1647,6 +1733,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isMr": {
                     "type": "boolean"
                 },
                 "singerName": {
@@ -1683,6 +1772,9 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -1703,11 +1795,20 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "commentCount": {
+                    "type": "integer"
+                },
                 "description": {
                     "type": "string"
                 },
                 "isKeep": {
                     "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "keepCount": {
+                    "type": "integer"
                 },
                 "octave": {
                     "type": "string"
@@ -1765,6 +1866,52 @@ const docTemplate = `{
             "properties": {
                 "songReviewOptionId": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.songSearchInfoResponse": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.songSearchInfoResponses": {
+            "type": "object",
+            "properties": {
+                "artistName": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songSearchInfoResponse"
+                    }
+                },
+                "songName": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songSearchInfoResponse"
+                    }
+                },
+                "songNumber": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songSearchInfoResponse"
+                    }
                 }
             }
         },

@@ -3,6 +3,7 @@ package handler
 import (
 	"SingSong-Server/internal/pkg"
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"log"
@@ -10,7 +11,7 @@ import (
 	"time"
 )
 
-// 기존 구조체 (스네이크 케이스)
+// OldChartResponse 기존 구조체 (스네이크 케이스)
 type OldChartResponse struct {
 	Ranking       int     `json:"ranking"`
 	SongInfoId    int     `json:"song_info_id"`
@@ -23,7 +24,7 @@ type OldChartResponse struct {
 	IsMR          int     `json:"is_mr"`
 }
 
-// 카멜케이스 구조체
+// ChartResponse 카멜케이스 구조체
 type ChartResponse struct {
 	Ranking       int     `json:"ranking"`
 	SongInfoId    int     `json:"songId"`
@@ -68,6 +69,7 @@ type TotalChartResponse struct {
 // @Accept       json
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]TotalChartResponse} "성공"
+// @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
 // @Router       /chart [get]
 // @Security BearerAuth
 func GetChart(rdb *redis.Client) gin.HandlerFunc {
@@ -84,7 +86,8 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 		var maleCharts, femaleCharts []ChartResponse
 		location, err := time.LoadLocation("Asia/Seoul")
 		if err != nil {
-			panic(err)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot load location", nil)
+			return
 		}
 
 		// Set the timezone for the current process
@@ -94,7 +97,7 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 		// 남성 차트 조회
 		maleFormattedTime := currentTime.Format("2006-01-02-15") + "-Hot_Trend_MALE"
 		maleChart, err := rdb.Get(c, maleFormattedTime).Result()
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			log.Printf("No data found for male chart at %s", maleFormattedTime)
 		} else if err != nil {
 			log.Printf("Error retrieving male chart: %v", err)
@@ -109,7 +112,7 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 		// 여성 차트 조회
 		femaleFormattedTime := currentTime.Format("2006-01-02-15") + "-Hot_Trend_FEMALE"
 		femaleChart, err := rdb.Get(c, femaleFormattedTime).Result()
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			log.Printf("No data found for female chart at %s", femaleFormattedTime)
 		} else if err != nil {
 			log.Printf("Error retrieving female chart: %v", err)

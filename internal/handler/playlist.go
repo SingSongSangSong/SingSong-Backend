@@ -25,6 +25,7 @@ type PlaylistAddResponse struct {
 	SingerName string `json:"singerName"`
 	SongInfoId int64  `json:"songId"`
 	Album      string `json:"album"`
+	IsMr       bool   `json:"isMr"`
 }
 
 // GoRoutine으로 회원가입시에 플레이리스트를 생성한다 (context따로 가져와야함)
@@ -118,7 +119,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String}
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String, IsMr: row.IsMR.Bool}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
 
@@ -189,7 +190,7 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String}
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String, IsMr: row.IsMR.Bool}
 			keepSongs = append(keepSongs, response)
 		}
 		pkg.BaseResponse(c, http.StatusOK, "success", keepSongs)
@@ -238,7 +239,7 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String}
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String, IsMr: row.IsMR.Bool}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
 
