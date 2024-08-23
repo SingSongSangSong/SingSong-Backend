@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"SingSong-Server/conf"
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
@@ -22,12 +23,13 @@ type refreshRequest struct {
 }
 
 type refreshResponse struct {
-	SongNumber int      `json:"songNumber"`
-	SongName   string   `json:"songName"`
-	SingerName string   `json:"singerName"`
-	Tags       []string `json:"tags"`
-	IsKeep     bool     `json:"isKeep"`
-	SongTempId int64    `json:"songId"`
+	SongNumber int    `json:"songNumber"`
+	SongName   string `json:"songName"`
+	SingerName string `json:"singerName"`
+	Album      string `json:"album"`
+	IsKeep     bool   `json:"isKeep"`
+	SongInfoId int64  `json:"songId"`
+	IsMr       bool   `json:"isMr"`
 }
 
 var (
@@ -87,59 +89,64 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		if len(refreshedSongs) < pageSize {
 			refreshedSongs = fillSongsAgain(refreshedSongs, querySongs)
 			// 기록 비우기
-			historySongs = []int{}
+			historySongs = []int64{}
 		}
 
 		//list
-		one, err := mysql.KeepLists(qm.Where("memberId = ?", memberId)).One(c, db)
+		one, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		// 모든 KeepSongs 가져오기
-		keepSongs, err := mysql.KeepSongs(qm.Where("keepId = ?", one.KeepId)).All(c, db)
+		keepSongs, err := mysql.KeepSongs(qm.Where("keep_list_id = ?", one.KeepListID), qm.And("deleted_at IS NULL")).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		// Map으로 KeepSongs를 구성하여 존재 여부를 빠르게 확인
-		isKeepMap := make(map[int]bool)
+		isKeepMap := make(map[int64]bool)
 		for _, keepSong := range keepSongs {
-			isKeepMap[keepSong.SongNumber] = true
+			isKeepMap[keepSong.SongInfoID] = true
 		}
 
 		// refreshSongs에 isKeep 여부 추가
 		for i, song := range refreshedSongs {
-			refreshedSongs[i].IsKeep = isKeepMap[song.SongNumber]
+			refreshedSongs[i].IsKeep = isKeepMap[song.SongInfoId]
 		}
 
-		// SongTempId 가져오기
-		songNumbers := make([]interface{}, 0, len(refreshedSongs))
+		// SongInfo 가져오기
+		songInfoIds := make([]interface{}, 0, len(refreshedSongs))
 		for _, song := range refreshedSongs {
-			songNumbers = append(songNumbers, song.SongNumber)
+			songInfoIds = append(songInfoIds, song.SongInfoId)
 		}
 
-		all, err := mysql.SongTempInfos(qm.WhereIn("songNumber IN ?", songNumbers...)).All(c, db)
+		all, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		songTempIdMap := make(map[int]int64)
+		songInfoMap := make(map[int64]*mysql.SongInfo)
 		for _, song := range all {
-			songTempIdMap[song.SongNumber] = song.SongTempId
+			songInfoMap[song.SongInfoID] = song
 		}
 
 		// refreshSongs에 songTempId 추가
 		for i, song := range refreshedSongs {
-			refreshedSongs[i].SongTempId = songTempIdMap[song.SongNumber]
+			found := songInfoMap[song.SongInfoId]
+			refreshedSongs[i].SongNumber = found.SongNumber
+			refreshedSongs[i].Album = found.Album.String
+			refreshedSongs[i].IsMr = found.IsMR.Bool
+			refreshedSongs[i].SongName = found.SongName
+			refreshedSongs[i].SingerName = found.ArtistName
 		}
 
 		// history 갱신
 		for _, song := range refreshedSongs {
-			historySongs = append(historySongs, song.SongNumber)
+			historySongs = append(historySongs, song.SongInfoId)
 		}
 		setRefreshHistory(c, redisClient, memberId, historySongs, englishTag)
 
@@ -147,22 +154,22 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 	}
 }
 
-func getRefreshHistory(c *gin.Context, redisClient *redis.Client, memberId int64, englishTag string) []int {
+func getRefreshHistory(c *gin.Context, redisClient *redis.Client, memberId int64, englishTag string) []int64 {
 	key := generateRefreshKey(memberId, englishTag)
 
 	val, err := redisClient.Get(c, key).Result()
 	if err == redis.Nil {
-		return []int{}
+		return []int64{}
 	} else if err != nil {
 		log.Printf("Failed to get history from Redis: %v", err)
-		return []int{}
+		return []int64{}
 	}
 
-	var history []int
+	var history []int64
 	err = json.Unmarshal([]byte(val), &history)
 	if err != nil {
 		log.Printf("Failed to unmarshal history: %v", err)
-		return []int{}
+		return []int64{}
 	}
 
 	return history
@@ -173,7 +180,7 @@ func generateRefreshKey(memberId int64, englishTag string) string {
 }
 
 func queryVectorByTag(c *gin.Context, englishTag string, idxConnection *pinecone.IndexConnection, vectorQuerySize int) (*pinecone.QueryVectorsResponse, error) {
-	dummyVector := make([]float32, 30)
+	dummyVector := make([]float32, conf.VectorDBConfigInstance.DIMENSION)
 	for i := range dummyVector {
 		dummyVector[i] = rand.Float32()*2 - 1 // -1 ~ 1
 	}
@@ -189,8 +196,8 @@ func queryVectorByTag(c *gin.Context, englishTag string, idxConnection *pinecone
 		TopK:            uint32(vectorQuerySize),
 		Filter:          filterStruct,
 		SparseValues:    nil,
-		IncludeValues:   true,
-		IncludeMetadata: true,
+		IncludeValues:   false,
+		IncludeMetadata: false,
 	})
 	return values, err
 }
@@ -199,33 +206,19 @@ func extractSongInfo(vectorQuerySize int, values *pinecone.QueryVectorsResponse)
 	querySongs := make([]refreshResponse, 0, vectorQuerySize)
 	for _, match := range values.Matches {
 		v := match.Vector
-		songNumber, err := strconv.Atoi(v.Id)
+		songInfoId, err := strconv.Atoi(v.Id)
 		if err != nil {
 			log.Printf("Failed to convert ID to int, error: %+v", err)
 		}
 
-		ssssField := v.Metadata.Fields["ssss"].GetListValue().AsSlice()
-		ssssArray := make([]string, len(ssssField))
-		for i, eTag := range ssssField {
-			ssssArray[i] = eTag.(string)
-		}
-
-		koreanTags, err := MapTagsEnglishToKorean(ssssArray)
-		if err != nil {
-			log.Printf("Failed to convert tags to korean, error: %+v", err)
-			koreanTags = []string{}
-		}
 		querySongs = append(querySongs, refreshResponse{
-			SongNumber: songNumber,
-			SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
-			SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
-			Tags:       koreanTags,
+			SongInfoId: int64(songInfoId),
 		})
 	}
 	return querySongs
 }
 
-func getTopSongsWithoutHistory(historySongs []int, querySongs []refreshResponse) []refreshResponse {
+func getTopSongsWithoutHistory(historySongs []int64, querySongs []refreshResponse) []refreshResponse {
 	// golang에는 set이 없기 때문에 map을 구현해서 key만 사용하도록 했다
 	refreshedSongs := make([]refreshResponse, 0, pageSize)
 	historySet := toSet(historySongs)
@@ -233,7 +226,7 @@ func getTopSongsWithoutHistory(historySongs []int, querySongs []refreshResponse)
 		if len(refreshedSongs) >= pageSize {
 			break
 		}
-		if _, exists := historySet[song.SongNumber]; !exists {
+		if _, exists := historySet[song.SongInfoId]; !exists {
 			refreshedSongs = append(refreshedSongs, song)
 		}
 	}
@@ -241,25 +234,25 @@ func getTopSongsWithoutHistory(historySongs []int, querySongs []refreshResponse)
 }
 
 func fillSongsAgain(refreshedSongs []refreshResponse, querySongs []refreshResponse) []refreshResponse {
-	refreshedSongNumbers := make([]int, 0, len(refreshedSongs))
+	refreshedSongInfoIds := make([]int64, 0, len(refreshedSongs))
 	for _, song := range refreshedSongs {
-		refreshedSongNumbers = append(refreshedSongNumbers, song.SongNumber)
+		refreshedSongInfoIds = append(refreshedSongInfoIds, song.SongInfoId)
 	}
-	refreshedSet := toSet(refreshedSongNumbers)
+	refreshedSet := toSet(refreshedSongInfoIds)
 
 	for _, song := range querySongs {
 		if len(refreshedSongs) >= pageSize {
 			break
 		}
 		// refreshedSongs 에 없는 곡으로 넣는다
-		if _, exists := refreshedSet[song.SongNumber]; !exists {
+		if _, exists := refreshedSet[song.SongInfoId]; !exists {
 			refreshedSongs = append(refreshedSongs, song)
 		}
 	}
 	return refreshedSongs
 }
 
-func setRefreshHistory(c *gin.Context, redisClient *redis.Client, memberId int64, history []int, englishTag string) {
+func setRefreshHistory(c *gin.Context, redisClient *redis.Client, memberId int64, history []int64, englishTag string) {
 	key := generateRefreshKey(memberId, englishTag)
 
 	historyJSON, err := json.Marshal(history)
@@ -271,8 +264,8 @@ func setRefreshHistory(c *gin.Context, redisClient *redis.Client, memberId int64
 	redisClient.Set(c, key, historyJSON, 30*time.Minute)
 }
 
-func toSet(slice []int) map[int]struct{} {
-	set := make(map[int]struct{}, len(slice))
+func toSet(slice []int64) map[int64]struct{} {
+	set := make(map[int64]struct{}, len(slice))
 	for _, e := range slice {
 		set[e] = struct{}{}
 	}

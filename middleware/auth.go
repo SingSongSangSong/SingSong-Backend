@@ -2,13 +2,12 @@ package middleware
 
 import (
 	"SingSong-Server/conf"
-	"SingSong-Server/internal/db/mysql"
+	"SingSong-Server/internal/handler"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strings"
 )
@@ -16,12 +15,6 @@ import (
 var (
 	secretKey = []byte(conf.AuthConfigInstance.SECRET_KEY)
 )
-
-type claims struct {
-	Email    string
-	Provider string
-	jwt.StandardClaims
-}
 
 func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -39,7 +32,7 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		token, err := jwt.ParseWithClaims(tokenString, &claims{}, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, &handler.Claims{}, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("error - invalid signing method")
 			}
@@ -52,23 +45,23 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		var email, provider string
-		if claims, ok := token.Claims.(*claims); ok && token.Valid {
-			email = claims.Email
-			provider = claims.Provider
+		var gender, birthYear string
+		var memberId int64
+
+		if claims, ok := token.Claims.(*handler.Claims); ok && token.Valid {
+			memberId = claims.MemberId
+			gender = claims.Gender
+			birthYear = claims.BirthYear
+
 		} else {
 			pkg.BaseResponse(c, http.StatusUnauthorized, "error - invalid token", nil)
 			c.Abort()
 			return
 		}
 
-		one, err := mysql.Members(qm.Where("email = ? AND provider = ?", email, provider)).One(c, db)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusUnauthorized, "error - invalid member", nil)
-			c.Abort()
-			return
-		}
-		c.Set("memberId", one.ID)
+		c.Set("memberId", memberId)
+		c.Set("gender", gender)
+		c.Set("birthYear", birthYear)
 		c.Next()
 	}
 }

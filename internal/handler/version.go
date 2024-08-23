@@ -8,7 +8,6 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
-	"time"
 )
 
 type versionCheckRequest struct {
@@ -55,7 +54,7 @@ func VersionCheck(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		latestVersion, err := mysql.AppVersions(qm.Where("platform = ?", platform), qm.OrderBy("releaseDate DESC")).One(c, db)
+		latestVersion, err := mysql.AppVersions(qm.Where("platform = ?", platform), qm.OrderBy("created_at DESC")).One(c, db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -102,7 +101,7 @@ func LatestVersionUpdate(db *sql.DB) gin.HandlerFunc {
 
 		if request.ForceUpdate == true {
 			// 강제 업데이트가 필요하다면, 이전 버전들을 모두 강제 업데이트로 변경한다
-			_, err := mysql.AppVersions(qm.Where("platform = ? AND version != ?", request.Platform, request.Version)).UpdateAll(c, db, mysql.M{"forceUpdate": true})
+			_, err := mysql.AppVersions(qm.Where("platform = ? AND version != ?", request.Platform, request.Version)).UpdateAll(c, db, mysql.M{"force_update": true})
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
@@ -117,7 +116,6 @@ type VersionResponse struct {
 	Platform    string `json:"platform"`
 	Version     string `json:"version"`
 	ForceUpdate bool   `json:"forceUpdate"`
-	ReleaseDate string `json:"releaseDate"`
 }
 
 // AllVersion godoc
@@ -142,7 +140,6 @@ func AllVersion(db *sql.DB) gin.HandlerFunc {
 				Platform:    v.Platform,
 				Version:     v.Version,
 				ForceUpdate: v.ForceUpdate,
-				ReleaseDate: v.ReleaseDate.Time.Format(time.RFC3339),
 			})
 		}
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)

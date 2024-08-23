@@ -1,10 +1,73 @@
 basePath: /api/v1
 definitions:
+  handler.ChartResponse:
+    properties:
+      artistName:
+        type: string
+      isMr:
+        type: integer
+      new:
+        type: string
+      ranking:
+        type: integer
+      rankingChange:
+        type: integer
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+      totalScore:
+        type: number
+    type: object
+  handler.CommentRequest:
+    properties:
+      content:
+        type: string
+      isRecomment:
+        type: boolean
+      parentCommentId:
+        type: integer
+      songId:
+        type: integer
+    type: object
+  handler.CommentResponse:
+    properties:
+      commentId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentCommentId:
+        type: integer
+      recomments:
+        items:
+          $ref: '#/definitions/handler.CommentResponse'
+        type: array
+      songId:
+        type: integer
+    type: object
   handler.LoginRequest:
     properties:
-      IdToken:
+      birthYear:
         type: string
-      Provider:
+      gender:
+        type: string
+      idToken:
+        type: string
+      provider:
         type: string
     type: object
   handler.LoginResponse:
@@ -14,15 +77,30 @@ definitions:
       refreshToken:
         type: string
     type: object
+  handler.MemberResponse:
+    properties:
+      birthYear:
+        type: integer
+      email:
+        type: string
+      gender:
+        type: string
+      nickname:
+        type: string
+    type: object
   handler.PlaylistAddRequest:
     properties:
-      songNumbers:
+      songId:
         items:
           type: integer
         type: array
     type: object
   handler.PlaylistAddResponse:
     properties:
+      album:
+        type: string
+      isMr:
+        type: boolean
       singerName:
         type: string
       songId:
@@ -39,9 +117,72 @@ definitions:
       refreshToken:
         type: string
     type: object
+  handler.ReportRequest:
+    properties:
+      commentId:
+        type: integer
+      reason:
+        type: string
+      subjectMemberId:
+        type: integer
+    type: object
+  handler.ReportResponse:
+    properties:
+      commentId:
+        type: integer
+      reason:
+        type: string
+      reportId:
+        type: integer
+      reporterId:
+        type: integer
+      subjectMemberId:
+        type: integer
+    type: object
   handler.SongDeleteFromPlaylistRequest:
     properties:
-      songNumbers:
+      songIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  handler.TotalChartResponse:
+    properties:
+      female:
+        items:
+          $ref: '#/definitions/handler.ChartResponse'
+        type: array
+      gender:
+        type: string
+      male:
+        items:
+          $ref: '#/definitions/handler.ChartResponse'
+        type: array
+      time:
+        type: string
+    type: object
+  handler.WithdrawRequest:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  handler.blacklistRequest:
+    properties:
+      memberId:
+        type: integer
+    type: object
+  handler.blacklistResponse:
+    properties:
+      blockDate:
+        type: string
+      memberId:
+        type: integer
+      nickname:
+        type: string
+    type: object
+  handler.deleteBlacklistRequest:
+    properties:
+      memberIds:
         items:
           type: integer
         type: array
@@ -62,23 +203,6 @@ definitions:
       tag:
         type: string
     type: object
-  handler.homeSongResponse:
-    properties:
-      album:
-        type: string
-      singerName:
-        type: string
-      songId:
-        type: integer
-      songName:
-        type: string
-      songNumber:
-        type: integer
-      tags:
-        items:
-          type: string
-        type: array
-    type: object
   handler.latestVersionUpdateRequest:
     properties:
       forceUpdate:
@@ -95,7 +219,11 @@ definitions:
     type: object
   handler.refreshResponse:
     properties:
+      album:
+        type: string
       isKeep:
+        type: boolean
+      isMr:
         type: boolean
       singerName:
         type: string
@@ -105,13 +233,64 @@ definitions:
         type: string
       songNumber:
         type: integer
-      tags:
+    type: object
+  handler.relatedSong:
+    properties:
+      album:
+        type: string
+      isKeep:
+        type: boolean
+      isMr:
+        type: boolean
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
+  handler.relatedSongResponse:
+    properties:
+      nextPage:
+        type: integer
+      songs:
         items:
-          type: string
+          $ref: '#/definitions/handler.relatedSong'
         type: array
     type: object
   handler.songHomeResponse:
     properties:
+      album:
+        type: string
+      isMr:
+        type: boolean
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
+  handler.songInfoResponse:
+    properties:
+      album:
+        type: string
+      commentCount:
+        type: integer
+      description:
+        type: string
+      isKeep:
+        type: boolean
+      isMr:
+        type: boolean
+      keepCount:
+        type: integer
+      octave:
+        type: string
       singerName:
         type: string
       songId:
@@ -125,24 +304,57 @@ definitions:
           type: string
         type: array
     type: object
-  handler.songRecommendRequest:
+  handler.songReviewOptionAddRequest:
     properties:
-      songNumbers:
-        items:
-          type: integer
-        type: array
+      enum:
+        type: string
+      title:
+        type: string
     type: object
-  handler.songRecommendResponse:
+  handler.songReviewOptionGetResponse:
     properties:
+      count:
+        type: integer
+      selected:
+        type: boolean
+      songReviewOptionId:
+        type: integer
+      title:
+        type: string
+    type: object
+  handler.songReviewOptionPutRequest:
+    properties:
+      songReviewOptionId:
+        type: integer
+    type: object
+  handler.songSearchInfoResponse:
+    properties:
+      album:
+        type: string
+      isMr:
+        type: boolean
       singerName:
         type: string
+      songId:
+        type: integer
       songName:
         type: string
       songNumber:
         type: integer
-      tags:
+    type: object
+  handler.songSearchInfoResponses:
+    properties:
+      artistName:
         items:
-          type: string
+          $ref: '#/definitions/handler.songSearchInfoResponse'
+        type: array
+      songName:
+        items:
+          $ref: '#/definitions/handler.songSearchInfoResponse'
+        type: array
+      songNumber:
+        items:
+          $ref: '#/definitions/handler.songSearchInfoResponse'
         type: array
     type: object
   handler.versionCheckRequest:
@@ -161,6 +373,246 @@ info:
   title: 싱송생송 API
   version: "1.0"
 paths:
+  /blacklist:
+    delete:
+      consumes:
+      - application/json
+      description: memberId를 통해 차단해제하기
+      parameters:
+      - description: deleteBlacklistRequest
+        in: body
+        name: deleteBlacklistRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.deleteBlacklistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+      security:
+      - BearerAuth: []
+      summary: memberId를 통해 차단해제하기
+      tags:
+      - Blacklist
+    get:
+      consumes:
+      - application/json
+      description: memberId를 통해 차단 목록 조회하
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.blacklistResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: memberId를 통해 차단 목록 조회하기
+      tags:
+      - Blacklist
+    post:
+      consumes:
+      - application/json
+      description: memberId를 통해 차단하기
+      parameters:
+      - description: blacklistRequest
+        in: body
+        name: blacklistRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.blacklistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+      security:
+      - BearerAuth: []
+      summary: memberId를 통해 차단하기
+      tags:
+      - Blacklist
+  /chart:
+    get:
+      consumes:
+      - application/json
+      description: 인기차트 조회
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.TotalChartResponse'
+                  type: array
+              type: object
+        "400":
+          description: 실패
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 인기차트 조회
+      tags:
+      - Chart
+  /comment:
+    post:
+      consumes:
+      - application/json
+      description: SongId에 댓글 달기
+      parameters:
+      - description: commentRequest
+        in: body
+        name: CommentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.CommentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: SongId에 댓글 달기
+      tags:
+      - Comment
+  /comment/{commentId}/like:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글에 좋아요 누르기
+      parameters:
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글에 좋아요 누르기
+      tags:
+      - Comment
+  /comment/{songId}:
+    get:
+      consumes:
+      - application/json
+      description: Get comments for a specific song identified by songId
+      parameters:
+      - description: Song ID
+        in: path
+        name: songId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.CommentResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve comments for the specified SongId
+      tags:
+      - Comment
+  /comment/recomment/{commentId}:
+    get:
+      consumes:
+      - application/json
+      description: Get reComments for a specific comment identified by commentId
+      parameters:
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.CommentResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve reComments for the specified CommentId
+      tags:
+      - Comment
+  /comment/report:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글ID를 통해 신고하기
+      parameters:
+      - description: ReportRequest
+        in: body
+        name: ReportRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.ReportResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글ID를 통해 신고하기
+      tags:
+      - Comment
   /keep:
     delete:
       consumes:
@@ -243,6 +695,130 @@ paths:
       summary: 플레이리스트에 노래를 추가한다
       tags:
       - Playlist
+  /member:
+    get:
+      consumes:
+      - application/json
+      description: 사용자 정보 조회
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.MemberResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Member의 정보를 가져온다
+      tags:
+      - Member
+  /member/login:
+    post:
+      consumes:
+      - application/json
+      description: IdToken을 이용한 회원가입 및 로그인
+      parameters:
+      - description: idToken 및 Provider
+        in: body
+        name: songs
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.LoginResponse'
+              type: object
+      summary: 회원가입 및 로그인
+      tags:
+      - Signup and Login
+  /member/logout:
+    post:
+      consumes:
+      - application/json
+      description: 멤버 회원 로그아웃
+      parameters:
+      - description: refreshToken
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          $ref: '#/definitions/handler.WithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 멤버 회원 로그아웃
+      tags:
+      - Member
+  /member/reissue:
+    post:
+      consumes:
+      - application/json
+      description: AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)
+      parameters:
+      - description: accessToken 및 refreshToken
+        in: body
+        name: songs
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReissueRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.LoginResponse'
+              type: object
+      summary: AccessToken RefreshToken 재발급
+      tags:
+      - Reissue
+  /member/withdraw:
+    post:
+      consumes:
+      - application/json
+      description: 멤버 회원 탈퇴
+      parameters:
+      - description: refreshToken
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          $ref: '#/definitions/handler.WithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 멤버 회원 탈퇴
+      tags:
+      - Member
   /recommend/home:
     post:
       consumes:
@@ -270,28 +846,6 @@ paths:
                   type: array
               type: object
       summary: 노래 추천 by 태그
-      tags:
-      - Recommendation
-  /recommend/home/songs:
-    get:
-      consumes:
-      - application/json
-      description: 앨범 이미지와 함께 노래를 추천
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-          schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/handler.homeSongResponse'
-                  type: array
-              type: object
-      summary: 노래 추천 5곡
       tags:
       - Recommendation
   /recommend/refresh:
@@ -325,18 +879,47 @@ paths:
       summary: 새로고침 노래 추천
       tags:
       - Recommendation
-  /recommend/songs:
-    post:
+  /search/{searchKeyword}:
+    get:
       consumes:
       - application/json
-      description: 노래 번호 목록을 보내면 유사한 노래들을 추천합니다.
+      description: 노래 검색 API, 노래 제목 또는 아티스트 이름을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명,
+        노래 번호를 반환합니다.
       parameters:
-      - description: 노래 번호 목록
-        in: body
-        name: songs
+      - description: 검색 키워드
+        in: path
+        name: searchKeyword
         required: true
-        schema:
-          $ref: '#/definitions/handler.songRecommendRequest'
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.songSearchInfoResponses'
+              type: object
+        "400":
+          description: 실패 - 빈 리스트 반환
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: 노래 검색 API
+      tags:
+      - Search
+  /song-review-options:
+    get:
+      consumes:
+      - application/json
+      description: 노래 평가 선택지를 모두 조회합니다.
       produces:
       - application/json
       responses:
@@ -348,12 +931,175 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/handler.songRecommendResponse'
+                    type: string
                   type: array
               type: object
-      summary: 노래 추천 by 노래 번호 목록
+      summary: 노래 평가 선택지를 모두 조회합니다.
       tags:
-      - Recommendation
+      - Song review option CR for admin
+    post:
+      consumes:
+      - application/json
+      description: 노래 평가 선택지를 추가합니다.
+      parameters:
+      - description: 평가 선택지
+        in: body
+        name: songReviewOptionAddRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.songReviewOptionAddRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+      summary: 노래 평가 선택지를 추가합니다.
+      tags:
+      - Song review option CR for admin
+  /songs/{songId}:
+    get:
+      consumes:
+      - application/json
+      description: 노래 상세 정보를 조회합니다
+      parameters:
+      - description: songId
+        in: path
+        name: songId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.songInfoResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 노래 상세 정보를 조회합니다
+      tags:
+      - Songs
+  /songs/{songId}/related:
+    get:
+      consumes:
+      - application/json
+      description: 연관된 노래들과 다음 페이지 번호를 함께 조회합니다. 노래 상세 화면에 첫 진입했을 경우 page 번호는 1입니다.
+        무한스크롤을 진행한다면 응답에 포함되어 오는 nextPage를 다음번에 포함하여 보내면 됩니다. nextPage는 1씩 증가합니다.
+        더이상 노래가 없을 경우, 응답에는 빈 배열과 함께 nextPage는 1로 반환됩니다.
+      parameters:
+      - description: songId
+        in: path
+        name: songId
+        required: true
+        type: string
+      - description: 현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회
+        in: query
+        name: page
+        type: integer
+      - description: 한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.relatedSongResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 연관된 노래들을 조회합니다
+      tags:
+      - Songs
+  /songs/{songId}/reviews:
+    delete:
+      consumes:
+      - application/json
+      description: 노래 평가를 삭제합니다.
+      parameters:
+      - description: songId
+        in: path
+        name: songId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+      security:
+      - BearerAuth: []
+      summary: 노래 평가를 삭제합니다.
+      tags:
+      - Songs
+    get:
+      consumes:
+      - application/json
+      description: 노래 평가를 조회합니다.
+      parameters:
+      - description: songId
+        in: path
+        name: songId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.songReviewOptionGetResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 노래 평가를 조회합니다.
+      tags:
+      - Songs
+    put:
+      consumes:
+      - application/json
+      description: 노래 평가를 등록/수정합니다.
+      parameters:
+      - description: songId
+        in: path
+        name: songId
+        required: true
+        type: string
+      - description: songReviewOptionId
+        in: body
+        name: songReview
+        required: true
+        schema:
+          $ref: '#/definitions/handler.songReviewOptionPutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+      security:
+      - BearerAuth: []
+      summary: 노래 평가를 등록/수정합니다.
+      tags:
+      - Songs
   /tags:
     get:
       consumes:
@@ -369,60 +1115,6 @@ paths:
       summary: ssss 태그 목록 가져오기
       tags:
       - Tags
-  /user/login:
-    post:
-      consumes:
-      - application/json
-      description: IdToken을 이용한 회원가입 및 로그인
-      parameters:
-      - description: idToken 및 Provider
-        in: body
-        name: songs
-        required: true
-        schema:
-          $ref: '#/definitions/handler.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-          schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.LoginResponse'
-              type: object
-      summary: 회원가입 및 로그인
-      tags:
-      - Signup and Login
-  /user/reissue:
-    post:
-      consumes:
-      - application/json
-      description: AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)
-      parameters:
-      - description: accessToken 및 refreshToken
-        in: body
-        name: songs
-        required: true
-        schema:
-          $ref: '#/definitions/handler.ReissueRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-          schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.LoginResponse'
-              type: object
-      summary: AccessToken RefreshToken 재발급
-      tags:
-      - Reissue
   /version:
     get:
       consumes:

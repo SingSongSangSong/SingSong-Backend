@@ -15,6 +15,421 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/blacklist": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "memberId를 통해 차단 목록 조회하",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Blacklist"
+                ],
+                "summary": "memberId를 통해 차단 목록 조회하기",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.blacklistResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "memberId를 통해 차단하기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Blacklist"
+                ],
+                "summary": "memberId를 통해 차단하기",
+                "parameters": [
+                    {
+                        "description": "blacklistRequest",
+                        "name": "blacklistRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.blacklistRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "memberId를 통해 차단해제하기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Blacklist"
+                ],
+                "summary": "memberId를 통해 차단해제하기",
+                "parameters": [
+                    {
+                        "description": "deleteBlacklistRequest",
+                        "name": "deleteBlacklistRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.deleteBlacklistRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    }
+                }
+            }
+        },
+        "/chart": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "인기차트 조회",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Chart"
+                ],
+                "summary": "인기차트 조회",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.TotalChartResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/comment": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "SongId에 댓글 달기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "SongId에 댓글 달기",
+                "parameters": [
+                    {
+                        "description": "commentRequest",
+                        "name": "CommentRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.CommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.CommentResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/recomment/{commentId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get reComments for a specific comment identified by commentId",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "Retrieve reComments for the specified CommentId",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Comment ID",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.CommentResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/report": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "해당하는 댓글ID를 통해 신고하기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "해당하는 댓글ID를 통해 신고하기",
+                "parameters": [
+                    {
+                        "description": "ReportRequest",
+                        "name": "ReportRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.ReportResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/{commentId}/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "해당하는 댓글에 좋아요 누르기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "해당하는 댓글에 좋아요 누르기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Comment ID",
+                        "name": "commentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/comment/{songId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get comments for a specific song identified by songId",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "Retrieve comments for the specified SongId",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Song ID",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.CommentResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/keep": {
             "get": {
                 "security": [
@@ -159,6 +574,216 @@ const docTemplate = `{
                 }
             }
         },
+        "/member": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "사용자 정보 조회",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "Member의 정보를 가져온다",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.MemberResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/member/login": {
+            "post": {
+                "description": "IdToken을 이용한 회원가입 및 로그인",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Signup and Login"
+                ],
+                "summary": "회원가입 및 로그인",
+                "parameters": [
+                    {
+                        "description": "idToken 및 Provider",
+                        "name": "songs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/member/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "멤버 회원 로그아웃",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "멤버 회원 로그아웃",
+                "parameters": [
+                    {
+                        "description": "refreshToken",
+                        "name": "refreshToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.WithdrawRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/member/reissue": {
+            "post": {
+                "description": "AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reissue"
+                ],
+                "summary": "AccessToken RefreshToken 재발급",
+                "parameters": [
+                    {
+                        "description": "accessToken 및 refreshToken",
+                        "name": "songs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ReissueRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/member/withdraw": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "멤버 회원 탈퇴",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "멤버 회원 탈퇴",
+                "parameters": [
+                    {
+                        "description": "refreshToken",
+                        "name": "refreshToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.WithdrawRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
         "/recommend/home": {
             "post": {
                 "description": "태그에 해당하는 노래를 추천합니다.",
@@ -198,44 +823,6 @@ const docTemplate = `{
                                             "type": "array",
                                             "items": {
                                                 "$ref": "#/definitions/handler.homeResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/recommend/home/songs": {
-            "get": {
-                "description": "앨범 이미지와 함께 노래를 추천",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Recommendation"
-                ],
-                "summary": "노래 추천 5곡",
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.homeSongResponse"
                                             }
                                         }
                                     }
@@ -300,9 +887,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/recommend/songs": {
-            "post": {
-                "description": "노래 번호 목록을 보내면 유사한 노래들을 추천합니다.",
+        "/search/{searchKeyword}": {
+            "get": {
+                "description": "노래 검색 API, 노래 제목 또는 아티스트 이름을 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호를 반환합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -310,18 +897,150 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Recommendation"
+                    "Search"
                 ],
-                "summary": "노래 추천 by 노래 번호 목록",
+                "summary": "노래 검색 API",
                 "parameters": [
                     {
-                        "description": "노래 번호 목록",
-                        "name": "songs",
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "searchKeyword",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.songSearchInfoResponses"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패 - 빈 리스트 반환",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/song-review-options": {
+            "get": {
+                "description": "노래 평가 선택지를 모두 조회합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Song review option CR for admin"
+                ],
+                "summary": "노래 평가 선택지를 모두 조회합니다.",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "노래 평가 선택지를 추가합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Song review option CR for admin"
+                ],
+                "summary": "노래 평가 선택지를 추가합니다.",
+                "parameters": [
+                    {
+                        "description": "평가 선택지",
+                        "name": "songReviewOptionAddRequest",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.songRecommendRequest"
+                            "$ref": "#/definitions/handler.songReviewOptionAddRequest"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    }
+                }
+            }
+        },
+        "/songs/{songId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 상세 정보를 조회합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "노래 상세 정보를 조회합니다",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -338,13 +1057,199 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.songRecommendResponse"
+                                                "$ref": "#/definitions/handler.songInfoResponse"
                                             }
                                         }
                                     }
                                 }
                             ]
                         }
+                    }
+                }
+            }
+        },
+        "/songs/{songId}/related": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "연관된 노래들과 다음 페이지 번호를 함께 조회합니다. 노래 상세 화면에 첫 진입했을 경우 page 번호는 1입니다. 무한스크롤을 진행한다면 응답에 포함되어 오는 nextPage를 다음번에 포함하여 보내면 됩니다. nextPage는 1씩 증가합니다. 더이상 노래가 없을 경우, 응답에는 빈 배열과 함께 nextPage는 1로 반환됩니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "연관된 노래들을 조회합니다",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.relatedSongResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/songs/{songId}/reviews": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 평가를 조회합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "노래 평가를 조회합니다.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.songReviewOptionGetResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 평가를 등록/수정합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "노래 평가를 등록/수정합니다.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "songReviewOptionId",
+                        "name": "songReview",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.songReviewOptionPutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 평가를 삭제합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "노래 평가를 삭제합니다.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
                     }
                 }
             }
@@ -367,98 +1272,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/pkg.BaseResponseStruct"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/login": {
-            "post": {
-                "description": "IdToken을 이용한 회원가입 및 로그인",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Signup and Login"
-                ],
-                "summary": "회원가입 및 로그인",
-                "parameters": [
-                    {
-                        "description": "idToken 및 Provider",
-                        "name": "songs",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.LoginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.LoginResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/user/reissue": {
-            "post": {
-                "description": "AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Reissue"
-                ],
-                "summary": "AccessToken RefreshToken 재발급",
-                "parameters": [
-                    {
-                        "description": "accessToken 및 refreshToken",
-                        "name": "songs",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.ReissueRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.LoginResponse"
-                                        }
-                                    }
-                                }
-                            ]
                         }
                     }
                 }
@@ -551,13 +1364,109 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.ChartResponse": {
+            "type": "object",
+            "properties": {
+                "artistName": {
+                    "type": "string"
+                },
+                "isMr": {
+                    "type": "integer"
+                },
+                "new": {
+                    "type": "string"
+                },
+                "ranking": {
+                    "type": "integer"
+                },
+                "rankingChange": {
+                    "type": "integer"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                },
+                "totalScore": {
+                    "type": "number"
+                }
+            }
+        },
+        "handler.CommentRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                },
+                "songId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CommentResponse": {
+            "type": "object",
+            "properties": {
+                "commentId": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                },
+                "recomments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CommentResponse"
+                    }
+                },
+                "songId": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.LoginRequest": {
             "type": "object",
             "properties": {
-                "IdToken": {
+                "birthYear": {
                     "type": "string"
                 },
-                "Provider": {
+                "gender": {
+                    "type": "string"
+                },
+                "idToken": {
+                    "type": "string"
+                },
+                "provider": {
                     "type": "string"
                 }
             }
@@ -573,10 +1482,27 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.MemberResponse": {
+            "type": "object",
+            "properties": {
+                "birthYear": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.PlaylistAddRequest": {
             "type": "object",
             "properties": {
-                "songNumbers": {
+                "songId": {
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -587,6 +1513,12 @@ const docTemplate = `{
         "handler.PlaylistAddResponse": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -612,10 +1544,108 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.ReportRequest": {
+            "type": "object",
+            "properties": {
+                "commentId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "subjectMemberId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.ReportResponse": {
+            "type": "object",
+            "properties": {
+                "commentId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "reportId": {
+                    "type": "integer"
+                },
+                "reporterId": {
+                    "type": "integer"
+                },
+                "subjectMemberId": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.SongDeleteFromPlaylistRequest": {
             "type": "object",
             "properties": {
-                "songNumbers": {
+                "songIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "handler.TotalChartResponse": {
+            "type": "object",
+            "properties": {
+                "female": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ChartResponse"
+                    }
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "male": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ChartResponse"
+                    }
+                },
+                "time": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.WithdrawRequest": {
+            "type": "object",
+            "properties": {
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.blacklistRequest": {
+            "type": "object",
+            "properties": {
+                "memberId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.blacklistResponse": {
+            "type": "object",
+            "properties": {
+                "blockDate": {
+                    "type": "string"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.deleteBlacklistRequest": {
+            "type": "object",
+            "properties": {
+                "memberIds": {
                     "type": "array",
                     "items": {
                         "type": "integer"
@@ -648,32 +1678,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.homeSongResponse": {
-            "type": "object",
-            "properties": {
-                "album": {
-                    "type": "string"
-                },
-                "singerName": {
-                    "type": "string"
-                },
-                "songId": {
-                    "type": "integer"
-                },
-                "songName": {
-                    "type": "string"
-                },
-                "songNumber": {
-                    "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "handler.latestVersionUpdateRequest": {
             "type": "object",
             "properties": {
@@ -699,7 +1703,13 @@ const docTemplate = `{
         "handler.refreshResponse": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isMr": {
                     "type": "boolean"
                 },
                 "singerName": {
@@ -713,11 +1723,45 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.relatedSong": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
                 },
-                "tags": {
+                "isKeep": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.relatedSongResponse": {
+            "type": "object",
+            "properties": {
+                "nextPage": {
+                    "type": "integer"
+                },
+                "songs": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/handler.relatedSong"
                     }
                 }
             }
@@ -725,6 +1769,50 @@ const docTemplate = `{
         "handler.songHomeResponse": {
             "type": "object",
             "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.songInfoResponse": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "isKeep": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "keepCount": {
+                    "type": "integer"
+                },
+                "octave": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -745,33 +1833,84 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.songRecommendRequest": {
+        "handler.songReviewOptionAddRequest": {
             "type": "object",
             "properties": {
-                "songNumbers": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
+                "enum": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },
-        "handler.songRecommendResponse": {
+        "handler.songReviewOptionGetResponse": {
             "type": "object",
             "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "selected": {
+                    "type": "boolean"
+                },
+                "songReviewOptionId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.songReviewOptionPutRequest": {
+            "type": "object",
+            "properties": {
+                "songReviewOptionId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.songSearchInfoResponse": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
                 "singerName": {
                     "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
                 },
                 "songName": {
                     "type": "string"
                 },
                 "songNumber": {
                     "type": "integer"
-                },
-                "tags": {
+                }
+            }
+        },
+        "handler.songSearchInfoResponses": {
+            "type": "object",
+            "properties": {
+                "artistName": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/handler.songSearchInfoResponse"
+                    }
+                },
+                "songName": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songSearchInfoResponse"
+                    }
+                },
+                "songNumber": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songSearchInfoResponse"
                     }
                 }
             }

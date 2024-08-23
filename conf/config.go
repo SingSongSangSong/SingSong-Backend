@@ -9,7 +9,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"log"
 	"os"
-	"os/exec"
 )
 
 type AuthConfig struct {
@@ -21,8 +20,13 @@ type AuthConfig struct {
 	JWT_REFRESH_VALIDITY_SECONDS string
 }
 
+type VectorDBConfig struct {
+	DIMENSION int
+}
+
 var (
-	AuthConfigInstance *AuthConfig
+	AuthConfigInstance     *AuthConfig
+	VectorDBConfigInstance *VectorDBConfig
 )
 
 func init() {
@@ -38,6 +42,10 @@ func init() {
 		JWT_ACCESS_VALIDITY_SECONDS:  os.Getenv("JWT_ACCESS_VALIDITY_SECONDS"),
 		JWT_REFRESH_VALIDITY_SECONDS: os.Getenv("JWT_REFRESH_VALIDITY_SECONDS"),
 	}
+	VectorDBConfigInstance = &VectorDBConfig{
+		DIMENSION: 548,
+	}
+
 }
 
 func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
@@ -91,13 +99,4 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
 	}
-}
-
-func generateModels() {
-	cmd := "sqlboiler mysql"
-	err := exec.Command("sh", "-c", cmd).Run()
-	if err != nil {
-		log.Fatalf("sqlboiler 실행 실패: %v", err)
-	}
-	log.Println("SQLBoiler 모델 생성 성공")
 }

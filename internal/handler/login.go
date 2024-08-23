@@ -27,7 +27,7 @@ import (
 
 const (
 	REQUEST_URL    = "https://kauth.kakao.com/.well-known/jwks.json"
-	KAKAO_PROVIDER = "KAKAO" // 공개키 목록 조회 URL
+	KAKAO_PROVIDER = "KAKAO_KEY" // 공개키 목록 조회 URL
 )
 
 var (
@@ -56,10 +56,13 @@ type JsonWebKey struct {
 
 // Claims 구조체 정의 (필요에 따라 조정 가능)
 type Claims struct {
-	Email    string `json:"email"`
-	Nickname string `json:"nickname"`
-	Picture  string `json:"picture"`
-	Provider string `json:"provider"`
+	MemberId  int64  `json:"memberId"`
+	Email     string `json:"email"`
+	Nickname  string `json:"nickname"`
+	Gender    string `json:"gender"`
+	BirthYear string `json:"birthYear"`
+	Picture   string `json:"picture"`
+	Provider  string `json:"provider"`
 	jwt.StandardClaims
 }
 
@@ -69,8 +72,10 @@ type KeyContainer struct {
 }
 
 type LoginRequest struct {
-	IdToken  string `json:"IdToken"`
-	Provider string `json:"Provider"`
+	IdToken   string `json:"idToken"`
+	Provider  string `json:"provider"`
+	BirthYear string `json:"birthYear"`
+	Gender    string `json:"gender"`
 }
 
 type LoginResponse struct {
@@ -78,7 +83,7 @@ type LoginResponse struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-// OAuth godoc
+// Login godoc
 // @Summary      회원가입 및 로그인
 // @Description  IdToken을 이용한 회원가입 및 로그인
 // @Tags         Signup and Login
@@ -86,8 +91,8 @@ type LoginResponse struct {
 // @Produce      json
 // @Param        songs   body      LoginRequest  true  "idToken 및 Provider"
 // @Success      200 {object} pkg.BaseResponseStruct{data=LoginResponse} "성공"
-// @Router       /user/login [post]
-func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
+// @Router       /member/login [post]
+func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		loginRequest := &LoginRequest{}
 		if err := c.ShouldBindJSON(&loginRequest); err != nil {
@@ -114,22 +119,33 @@ func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		}
 		nickname := payload.Nickname
 		nullNickname := null.StringFrom(nickname)
+		// Convert the BirthYear to an integer
+		birthYearInt, err := strconv.Atoi(loginRequest.BirthYear)
+		if err != nil {
+			log.Printf("Invalid BirthYear format: %v", err)
+			// Handle the error as needed, e.g., set birthYearInt to a default value or return an error
+			birthYearInt = 0 // Set to 0 or handle appropriately
+		}
+
+		// Initialize the null.Int from the converted integer
+		nullBrithyear := null.IntFrom(birthYearInt)
+		nullGender := null.StringFrom(loginRequest.Gender)
 
 		// email+Provider db에 있는지 확인
-		_, err = mysql.Members(qm.Where("email = ? AND provider = ?", payload.Email, loginRequest.Provider)).One(c, db)
+		member, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c, db)
 		if err != nil {
 			//DB에 없는경우
-			m := mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname}
+			m := mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
 			err := m.Insert(c, db, boil.Infer())
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "Error inserting member", nil)
 				return
 			}
 
-			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.ID)
+			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 		}
 
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload.Email, KAKAO_PROVIDER)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, loginRequest.BirthYear, loginRequest.Gender, member.MemberID, KAKAO_PROVIDER)
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
@@ -146,60 +162,7 @@ func OAuth(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-type ReissueRequest struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
-}
-
-// Reissue godoc
-// @Summary      AccessToken RefreshToken 재발급
-// @Description  AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)
-// @Tags         Reissue
-// @Accept       json
-// @Produce      json
-// @Param        songs   body      ReissueRequest  true  "accessToken 및 refreshToken"
-// @Success      200 {object} pkg.BaseResponseStruct{data=LoginResponse} "성공"
-// @Router       /user/reissue [post]
-func Reissue(redis *redis.Client) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		reissueRequest := &ReissueRequest{}
-		if err := c.ShouldBindJSON(&reissueRequest); err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "JSON BINDING error - "+err.Error(), nil)
-			return
-		}
-		// refreshToken이 redis에 있는지 확인
-		email, err := redis.Get(c, reissueRequest.RefreshToken).Result()
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "Get Redis error - "+err.Error(), nil)
-			return
-		}
-		// refreshToken삭제
-		_, err = redis.Del(c, reissueRequest.RefreshToken).Result()
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "Delete Redis error - "+err.Error(), nil)
-			return
-		}
-
-		// accessToken, refreshToken 생성
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, email, KAKAO_PROVIDER)
-
-		if tokenErr != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
-			return
-		}
-
-		// JSON 응답 생성
-		loginResponse := LoginResponse{
-			AccessToken:  accessTokenString,
-			RefreshToken: refreshTokenString,
-		}
-
-		// accessToken, refreshToken 반환
-		pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
-	}
-}
-
-func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email string, provider string) (string, string, error) {
+func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, payload *Claims, birthYear string, gender string, memberId int64, provider string) (string, string, error) {
 	jwtAccessValidityStr := JWT_ACCESS_VALIDITY_SECONDS
 	if jwtAccessValidityStr == "" {
 		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
@@ -214,8 +177,9 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 
 	accessTokenExpiresAt := time.Now().Add(time.Duration(jwtAccessValidity) * time.Second).Unix()
 	at := Claims{
-		Email:    email,
-		Provider: provider,
+		MemberId:  memberId,
+		Gender:    gender,
+		BirthYear: birthYear,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: accessTokenExpiresAt,
 			Issuer:    JWT_ISSUER,
@@ -227,7 +191,7 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 	jwtRefreshValidityStr := JWT_REFRESH_VALIDITY_SECONDS
 	if jwtRefreshValidityStr == "" {
 		log.Printf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
-		return "", "", fmt.Errorf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
+		return "", "", errors.New("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
 	}
 
 	jwtRefreshValidity, err := strconv.ParseInt(jwtRefreshValidityStr, 10, 64)
@@ -258,7 +222,15 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, email
 		return "", "", err
 	}
 
-	_, err = redis.Set(c, refreshTokenString, email, time.Duration(jwtRefreshValidity)*time.Second).Result()
+	payload.BirthYear = birthYear
+	payload.Gender = gender
+
+	claims, err := json.Marshal(payload)
+	if err != nil {
+		return "", "", err
+	}
+
+	_, err = redis.Set(c, refreshTokenString, claims, time.Duration(jwtRefreshValidity)*time.Second).Result()
 	if err != nil {
 		return "", "", err
 	}
@@ -274,25 +246,28 @@ func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string
 	keys, err := GetPublicKeys(c, provider, redis)
 	if err != nil {
 		log.Printf("오류 발생 From GetPublicKeys: %v", err)
+		return nil, err
 	}
 
 	// idToken을 파싱하여 Header, Payload, Signature로 나누는 로직
 	kid, err := getKidFromToken(idToken)
 	if err != nil {
 		log.Printf("오류 발생 From getKidFromToken: %v", err)
+		return nil, err
 	}
 
 	for _, key := range keys {
 		if kid == key.Kid {
-			// idToken을 파싱하여 Payload 추출
 			publicKey, err := getRSAPublicKey(key)
 			if err != nil {
 				log.Printf("오류 발생 From getPayload: %v", err)
+				return nil, err
 			}
 
 			payload, err := validateSignature(idToken, publicKey, issuer, apiKey)
 			if err != nil {
 				log.Printf("오류 발생 From validateSignature: %v", err)
+				return nil, err
 			}
 
 			return payload, nil
@@ -418,24 +393,24 @@ func base64UrlDecode(data string) ([]byte, error) {
 }
 
 // 카카오 공개키 목록 조회 URL 요청 함수
-func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) {
+func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) error {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(REQUEST_URL)
 	if err != nil {
 		log.Printf("HTTP 요청 오류: %v", err)
-		return
+		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 300 {
 		log.Printf("HTTP 응답 오류: 상태 코드 %d", resp.StatusCode)
-		return
+		return err
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("응답 본문 읽기 오류: %v", err)
-		return
+		return err
 	}
 
 	// PublicKeyDto 구조체 생성
@@ -448,14 +423,15 @@ func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) {
 	jsonData, err := json.Marshal(publicKey)
 	if err != nil {
 		log.Printf("JSON 마샬 오류: %v", err)
-		return
+		return err
 	}
 
 	// Redis에 저장
-	key := redis.Set(c, KAKAO_PROVIDER, jsonData, 0)
+	key := redis.Set(c, KAKAO_PROVIDER, jsonData, 24*time.Hour)
 	log.Println("데이터가 성공적으로 Redis에 저장되었습니다." + key.Val())
 
 	//pkg.BaseResponse(c, http.StatusOK, "공개키 저장 성공", key)
+	return nil
 }
 
 // Redis에서 공개키 가져오기 함수
@@ -465,7 +441,11 @@ func GetPublicKeys(c *gin.Context, provider string, redis *redis.Client) ([]Json
 		log.Printf("오류 발생: %v", err)
 
 		// 공개키 설정 함수 호출
-		GetKakaoPublicKeys(c, redis)
+		err = GetKakaoPublicKeys(c, redis)
+		if err != nil {
+			log.Printf("GetKaKaoPublicKey 오류 발생: %v", err)
+			return nil, err
+		}
 
 		// 다시 시도하여 공개키 가져오기
 		response = redis.Get(c, provider)

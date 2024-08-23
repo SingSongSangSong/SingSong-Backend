@@ -10,20 +10,18 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
-	ddgin "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"net/http"
 )
 
 func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection) *gin.Engine {
 	// Initialize Datadog tracer
-	tracer.Start()
-	defer tracer.Stop()
+	//tracer.Start()
+	//defer tracer.Stop()
 
 	r := gin.Default()
 
 	// Wrap the router with Datadog middleware
-	r.Use(ddgin.Middleware("singsong-service"))
+	//r.Use(ddgin.Middleware("singsong-service"))
 
 	// CORS 설정 추가
 	r.Use(middleware.PlatformMiddleware())
@@ -43,8 +41,6 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	//recommend.Use(middleware.AuthMiddleware()) // 추천 엔드포인트 전체에서 인증을 쓴다면 이렇게도 가능
 	{
 		recommend.POST("/home", handler.HomeRecommendation(db, rdb, idxConnection))
-		recommend.GET("/home/songs", handler.HomeSongRecommendation(db))
-		recommend.POST("/songs", handler.SongRecommendation(db, rdb, idxConnection))
 		recommend.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendation(db, rdb, idxConnection)) //일단 새로고침에만 적용
 	}
 
@@ -54,10 +50,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		tags.GET("", handler.ListTags())
 	}
 
-	user := r.Group("/api/v1/user")
+	member := r.Group("/api/v1/member")
 	{
-		user.POST("/login", handler.OAuth(rdb, db))
-		user.POST("/reissue", handler.Reissue(rdb))
+		member.POST("/login", handler.Login(rdb, db))
+		member.POST("/reissue", handler.Reissue(rdb))
+		member.GET("", middleware.AuthMiddleware(db), handler.GetMemberInfo(db))
+		member.POST("/withdraw", middleware.AuthMiddleware(db), handler.Withdraw(db, rdb))
+		member.POST("/logout", middleware.AuthMiddleware(db), handler.Logout(rdb))
 	}
 
 	// 태그 엔드포인트 설정
@@ -66,6 +65,49 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		keep.GET("", middleware.AuthMiddleware(db), handler.GetSongsFromPlaylist(db))
 		keep.POST("", middleware.AuthMiddleware(db), handler.AddSongsToPlaylist(db))
 		keep.DELETE("", middleware.AuthMiddleware(db), handler.DeleteSongsFromPlaylist(db))
+	}
+
+	// 노래 상세
+	songs := r.Group("/api/v1/songs")
+	{
+		songs.GET("/:songId", middleware.AuthMiddleware(db), handler.GetSongInfo(db))
+		songs.GET("/:songId/reviews", middleware.AuthMiddleware(db), handler.GetSongReview(db))
+		songs.PUT("/:songId/reviews", middleware.AuthMiddleware(db), handler.PutSongReview(db))
+		songs.DELETE("/:songId/reviews", middleware.AuthMiddleware(db), handler.DeleteSongReview(db))
+		songs.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSong(db, idxConnection))
+	}
+
+	// 노래 리뷰 선택지 추가/조회
+	songReviewOptions := r.Group("/api/v1/song-review-options")
+	{
+		songReviewOptions.GET("", handler.ListSongReviewOptions(db))
+		songReviewOptions.POST("", handler.AddSongReviewOption(db))
+	}
+
+	comment := r.Group("/api/v1/comment")
+	{
+		comment.POST("", middleware.AuthMiddleware(db), handler.CommentOnSong(db))
+		comment.GET("/:songId", middleware.AuthMiddleware(db), handler.GetCommentOnSong(db))
+		comment.POST("/report", middleware.AuthMiddleware(db), handler.ReportComment(db))
+		comment.GET("/recomment/:commentId", middleware.AuthMiddleware(db), handler.GetReCommentOnSong(db))
+		comment.POST("/:commentId/like", middleware.AuthMiddleware(db), handler.LikeComment(db))
+	}
+
+	blacklist := r.Group("/api/v1/blacklist")
+	{
+		blacklist.POST("", middleware.AuthMiddleware(db), handler.AddBlacklist(db))
+		blacklist.DELETE("", middleware.AuthMiddleware(db), handler.DeleteBlacklist(db))
+		blacklist.GET("", middleware.AuthMiddleware(db), handler.GetBlacklist(db))
+	}
+
+	chart := r.Group("/api/v1/chart")
+	{
+		chart.GET("", middleware.AuthMiddleware(db), handler.GetChart(rdb))
+	}
+
+	search := r.Group("/api/v1/search")
+	{
+		search.GET("/:searchKeyword", handler.SearchSongs(db))
 	}
 
 	// 스웨거 설정
