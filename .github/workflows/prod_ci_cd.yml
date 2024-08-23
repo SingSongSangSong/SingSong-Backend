@@ -72,7 +72,7 @@ jobs:
             {"name":"DB_USER","value":"${{ vars.RDS_USER }}"},
             {"name":"DB_PASSWORD","value":"${{ vars.RDS_PASSWORD }}"},
             {"name":"REDIS_ADDR","value":"${{ vars.ELASTICACHE_ADDR }}"},
-            {"name":"REDIS_PASSWORD","value":"${{ vars.ELASTICACHE_PASSWORD }}"},
+            {"name":"REDIS_PASSWORD","value":""},
             {"name":"SECRET_KEY","value":"${{ secrets.SECRET_KEY }}"},
             {"name":"KAKAO_REST_API_KEY","value":"${{ secrets.KAKAO_REST_API_KEY }}"},
             {"name":"KAKAO_ISSUER","value":"${{ secrets.KAKAO_ISSUER }}"},
