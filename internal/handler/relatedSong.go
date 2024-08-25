@@ -180,7 +180,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			relatedSongs[i].SingerName = found.ArtistName
 			relatedSongs[i].Album = found.Album.String
 			relatedSongs[i].IsKeep = isKeepMap[song.SongInfoId]
-			relatedSongs[i].SongInfoId = found.SongInfoID
+			relatedSongs[i].SongNumber = found.SongNumber
 			relatedSongs[i].IsMr = found.IsMR.Bool
 		}
 
