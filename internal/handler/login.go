@@ -21,7 +21,6 @@ import (
 	"math/big"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -326,44 +325,53 @@ func parseKeysFromPublicKeyDto(publicKeyDto *PublicKeyDto) ([]JsonWebKey, error)
 
 // JWT 토큰에서 kid 값을 추출하는 함수
 func getKidFromToken(idToken string) (string, error) {
-	header, err := getHeader(idToken)
+	token, _, err := new(jwt.Parser).ParseUnverified(idToken, jwt.MapClaims{})
 	if err != nil {
-		return "getHeader", err
-	}
-
-	decodedHeader, err := base64.RawURLEncoding.DecodeString(header)
-	if err != nil {
-		return "Base64", errors.New("base64 디코딩 오류")
-	}
-
-	var headerJSON map[string]interface{}
-	if err := json.Unmarshal(decodedHeader, &headerJSON); err != nil {
-		return "JSON Parsing", errors.New("JSON 파싱 오류")
-	}
-
-	kid, ok := headerJSON["kid"].(string)
-	if !ok {
-		return "kid", errors.New("kid 값을 찾을 수 없음")
-	}
-
-	return kid, nil
-}
-
-func getHeader(idToken string) (string, error) {
-	dividedToken, err := splitToken(idToken)
-	if err != nil {
+		log.Printf("Error parsing kid from id token: %v\n", err)
 		return "", err
 	}
-	return dividedToken[0], nil
+	kid := token.Header["kid"].(string)
+	return kid, nil
+
+	//todo: 물어보기
+	//header, err := getHeader(idToken)
+	//if err != nil {
+	//	return "getHeader", err
+	//}
+	//
+	//decodedHeader, err := base64.RawURLEncoding.DecodeString(header)
+	//if err != nil {
+	//	return "Base64", errors.New("base64 디코딩 오류")
+	//}
+	//
+	//var headerJSON map[string]interface{}
+	//if err := json.Unmarshal(decodedHeader, &headerJSON); err != nil {
+	//	return "JSON Parsing", errors.New("JSON 파싱 오류")
+	//}
+	//
+	//kid, ok := headerJSON["kid"].(string)
+	//if !ok {
+	//	return "kid", errors.New("kid 값을 찾을 수 없음")
+	//}
+	//
+	//return kid, nil
 }
 
-func splitToken(idToken string) ([]string, error) {
-	dividedToken := strings.Split(idToken, ".")
-	if len(dividedToken) != 3 {
-		return nil, errors.New("JWT 토큰이 유효하지 않음")
-	}
-	return dividedToken, nil
-}
+//func getHeader(idToken string) (string, error) {
+//	dividedToken, err := splitToken(idToken)
+//	if err != nil {
+//		return "", err
+//	}
+//	return dividedToken[0], nil
+//}
+
+//func splitToken(idToken string) ([]string, error) {
+//	dividedToken := strings.Split(idToken, ".")
+//	if len(dividedToken) != 3 {
+//		return nil, errors.New("JWT 토큰이 유효하지 않음")
+//	}
+//	return dividedToken, nil
+//}
 
 // RSA 공개 키 생성 함수
 func getRSAPublicKey(selectedKey JsonWebKey) (*rsa.PublicKey, error) {
