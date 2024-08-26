@@ -121,34 +121,11 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		// email+Provider db에 있는지 확인
 		m, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c, db)
 		if err != nil {
-			//DB에 없는경우
-			// nickname이 없을 경우 에러 반환 //todo: 애플에는 없음
-			if payload.Nickname == "" {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - Nickname is empty", nil)
+			// DB에 없는 경우 - 회원가입
+			m, err = join(c, payload, loginRequest, m, db)
+			if err != nil { // join 내부에서 에러 응답 처리했음
 				return
 			}
-			nickname := payload.Nickname
-			nullNickname := null.StringFrom(nickname)
-
-			// Convert the BirthYear to an integer
-			birthYearInt, err := strconv.Atoi(loginRequest.BirthYear)
-			if err != nil {
-				log.Printf("Invalid BirthYear format: %v", err)
-				// Handle the error as needed, e.g., set birthYearInt to a default value or return an error
-				birthYearInt = 0 // Set to 0 or handle appropriately
-			}
-
-			// Initialize the null.Int from the converted integer
-			nullBrithyear := null.IntFrom(birthYearInt)
-			nullGender := null.StringFrom(loginRequest.Gender)
-
-			m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
-			err = m.Insert(c, db, boil.Infer())
-			if err != nil {
-				pkg.BaseResponse(c, http.StatusInternalServerError, "Error inserting member", nil)
-				return
-			}
-
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 		}
 
@@ -165,6 +142,37 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		// accessToken, refreshToken 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
 	}
+}
+
+func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.Member, db *sql.DB) (*mysql.Member, error) {
+	// nickname이 없을 경우 에러 반환 //todo: 애플에는 없음
+	if payload.Nickname == "" {
+		pkg.BaseResponse(c, http.StatusBadRequest, "error - nickname empty ", nil)
+		return nil, errors.New("Nickname is empty")
+	}
+
+	nickname := payload.Nickname
+	nullNickname := null.StringFrom(nickname)
+
+	// Convert the BirthYear to an integer
+	birthYearInt, err := strconv.Atoi(loginRequest.BirthYear)
+	if err != nil {
+		log.Printf("Invalid BirthYear format: %v", err)
+		// Handle the error as needed, e.g., set birthYearInt to a default value or return an error
+		birthYearInt = 0 // Set to 0 or handle appropriately
+	}
+
+	// Initialize the null.Int from the converted integer
+	nullBrithyear := null.IntFrom(birthYearInt)
+	nullGender := null.StringFrom(loginRequest.Gender)
+
+	m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
+	err = m.Insert(c, db, boil.Infer())
+	if err != nil {
+		pkg.BaseResponse(c, http.StatusBadRequest, "error inserting member - "+err.Error(), nil)
+		return nil, errors.New("Error inserting member")
+	}
+	return m, nil
 }
 
 // GetUserEmailFromIdToken ID 토큰에서 사용자 이메일을 추출하는 함수
