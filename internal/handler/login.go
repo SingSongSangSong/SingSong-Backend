@@ -36,6 +36,8 @@ var (
 	SECRET_KEY                   = conf.AuthConfigInstance.SECRET_KEY
 	KAKAO_REST_API_KEY           = conf.AuthConfigInstance.KAKAO_REST_API_KEY
 	KAKAO_ISSUER                 = conf.AuthConfigInstance.KAKAO_ISSUER
+	APPLE_CLIENT_ID              = conf.AuthConfigInstance.APPLE_CLIENT_ID
+	APPLE_ISSUER                 = conf.AuthConfigInstance.APPLE_ISSUER
 	JWT_ISSUER                   = conf.AuthConfigInstance.JWT_ISSUER
 	JWT_ACCESS_VALIDITY_SECONDS  = conf.AuthConfigInstance.JWT_ACCESS_VALIDITY_SECONDS
 	JWT_REFRESH_VALIDITY_SECONDS = conf.AuthConfigInstance.JWT_REFRESH_VALIDITY_SECONDS
