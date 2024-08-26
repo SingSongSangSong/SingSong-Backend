@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/big"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -123,7 +124,8 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		if err != nil {
 			// DB에 없는 경우 - 회원가입
 			m, err = join(c, payload, loginRequest, m, db)
-			if err != nil { // join 내부에서 에러 응답 처리했음
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 				return
 			}
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
@@ -142,37 +144,6 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		// accessToken, refreshToken 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
 	}
-}
-
-func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.Member, db *sql.DB) (*mysql.Member, error) {
-	// nickname이 없을 경우 에러 반환 //todo: 애플에는 없음
-	if payload.Nickname == "" {
-		pkg.BaseResponse(c, http.StatusBadRequest, "error - nickname empty ", nil)
-		return nil, errors.New("Nickname is empty")
-	}
-
-	nickname := payload.Nickname
-	nullNickname := null.StringFrom(nickname)
-
-	// Convert the BirthYear to an integer
-	birthYearInt, err := strconv.Atoi(loginRequest.BirthYear)
-	if err != nil {
-		log.Printf("Invalid BirthYear format: %v", err)
-		// Handle the error as needed, e.g., set birthYearInt to a default value or return an error
-		birthYearInt = 0 // Set to 0 or handle appropriately
-	}
-
-	// Initialize the null.Int from the converted integer
-	nullBrithyear := null.IntFrom(birthYearInt)
-	nullGender := null.StringFrom(loginRequest.Gender)
-
-	m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
-	err = m.Insert(c, db, boil.Infer())
-	if err != nil {
-		pkg.BaseResponse(c, http.StatusBadRequest, "error inserting member - "+err.Error(), nil)
-		return nil, errors.New("Error inserting member")
-	}
-	return m, nil
 }
 
 // GetUserEmailFromIdToken ID 토큰에서 사용자 이메일을 추출하는 함수
@@ -454,6 +425,47 @@ func validateSignature(idToken string, signingKey *rsa.PublicKey, issuer, audien
 	}
 
 	return nil, errors.New("클레임이 유효하지 않음")
+}
+
+func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.Member, db *sql.DB) (*mysql.Member, error) {
+	// nickname이 없을 경우 -> 랜덤 닉네임 //todo: 애플 확인 필요
+	nickname := payload.Nickname
+	if nickname == "" {
+		nickname = generateRandomNickname()
+	}
+	nullNickname := null.StringFrom(nickname)
+
+	// Convert the BirthYear to an integer
+	birthYearInt, err := strconv.Atoi(loginRequest.BirthYear)
+	if err != nil {
+		log.Printf("Invalid BirthYear format: %v", err)
+		// Handle the error as needed, e.g., set birthYearInt to a default value or return an error
+		birthYearInt = 0 // Set to 0 or handle appropriately
+	}
+
+	// Initialize the null.Int from the converted integer
+	nullBrithyear := null.IntFrom(birthYearInt)
+	nullGender := null.StringFrom(loginRequest.Gender)
+
+	m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
+	err = m.Insert(c, db, boil.Infer())
+	if err != nil {
+		//pkg.BaseResponse(c, http.StatusBadRequest, "error inserting member - "+err.Error(), nil)
+		return nil, errors.New("Error inserting member")
+	}
+	return m, nil
+}
+
+// 랜덤 닉네임 제조기
+var (
+	firstPart  = []string{"귀여운", "멋쟁이", "행복한", "슬픈", "도도한", "스윗한", "차가운"}
+	secondPart = []string{"고양이", "강아지", "토끼", "여우", "곰", "사자", "호랑이", "부엉이", "펭귄", "코끼리"}
+)
+
+func generateRandomNickname() string {
+	first := firstPart[rand.Intn(len(firstPart))]
+	second := secondPart[rand.Intn(len(secondPart))]
+	return first + " " + second
 }
 
 func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, payload *Claims, birthYear string, gender string, memberId int64, provider string) (string, string, error) {
