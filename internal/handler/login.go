@@ -218,11 +218,22 @@ func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string
 // Redis에서 공개키 가져오기 함수
 func GetPublicKeys(c *gin.Context, provider string, redis *redis.Client) ([]JsonWebKey, error) {
 	response := redis.Get(c, provider)
+
+	// redis에 공개키가 없는 경우에 public key url을 통해 가져와 저장한다
 	if err := response.Err(); err != nil {
 		log.Printf("오류 발생: %v", err)
 
+		//provider에 따른 public key url 설정
+		var publicKeyUrl string
+		switch provider {
+		case KAKAO_PROVIDER:
+			publicKeyUrl = KAKAO_PUBLIC_KEY_URL
+		case APPLE_PROVIDER:
+			publicKeyUrl = APPLE_PUBLIC_KEY_URL
+		}
+
 		// 공개키 설정 함수 호출
-		err = GetKakaoPublicKeys(c, redis)
+		err = FetchPublicKeys(c, redis, publicKeyUrl, provider)
 		if err != nil {
 			log.Printf("GetKaKaoPublicKey 오류 발생: %v", err)
 			return nil, err
@@ -235,6 +246,7 @@ func GetPublicKeys(c *gin.Context, provider string, redis *redis.Client) ([]Json
 			return nil, err
 		}
 	}
+
 	publicKeyDto, err := parsePublicKeyDto(response.Val())
 	if err != nil {
 		log.Printf("오류 발생: %v", err)
@@ -251,10 +263,10 @@ func GetPublicKeys(c *gin.Context, provider string, redis *redis.Client) ([]Json
 	return keys, nil
 }
 
-// 카카오 공개키 목록 조회 URL 요청 함수
-func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) error {
+// 외부 api로부터 공개키 목록 조회해서 Redis에 저장
+func FetchPublicKeys(c *gin.Context, redis *redis.Client, publicKeyUrl string, provider string) error {
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(KAKAO_PUBLIC_KEY_URL)
+	resp, err := client.Get(publicKeyUrl)
 	if err != nil {
 		log.Printf("HTTP 요청 오류: %v", err)
 		return err
@@ -274,7 +286,7 @@ func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) error {
 
 	// PublicKeyDto 구조체 생성
 	publicKey := PublicKeyDto{
-		Provider: KAKAO_PROVIDER,
+		Provider: provider,
 		Key:      string(body),
 	}
 
@@ -286,10 +298,9 @@ func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) error {
 	}
 
 	// Redis에 저장
-	key := redis.Set(c, KAKAO_PROVIDER, jsonData, 24*time.Hour)
+	key := redis.Set(c, provider, jsonData, 24*time.Hour)
 	log.Println("데이터가 성공적으로 Redis에 저장되었습니다." + key.Val())
 
-	//pkg.BaseResponse(c, http.StatusOK, "공개키 저장 성공", key)
 	return nil
 }
 
