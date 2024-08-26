@@ -117,31 +117,33 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - Email is empty", nil)
 			return
 		}
-		// nickname이 없을 경우 에러 반환 //todo: 애플에는 없음
-		if payload.Nickname == "" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - Nickname is empty", nil)
-			return
-		}
-		nickname := payload.Nickname
-		nullNickname := null.StringFrom(nickname)
-		// Convert the BirthYear to an integer
-		birthYearInt, err := strconv.Atoi(loginRequest.BirthYear)
-		if err != nil {
-			log.Printf("Invalid BirthYear format: %v", err)
-			// Handle the error as needed, e.g., set birthYearInt to a default value or return an error
-			birthYearInt = 0 // Set to 0 or handle appropriately
-		}
-
-		// Initialize the null.Int from the converted integer
-		nullBrithyear := null.IntFrom(birthYearInt)
-		nullGender := null.StringFrom(loginRequest.Gender)
 
 		// email+Provider db에 있는지 확인
-		member, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c, db)
+		m, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c, db)
 		if err != nil {
 			//DB에 없는경우
-			m := mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
-			err := m.Insert(c, db, boil.Infer())
+			// nickname이 없을 경우 에러 반환 //todo: 애플에는 없음
+			if payload.Nickname == "" {
+				pkg.BaseResponse(c, http.StatusBadRequest, "error - Nickname is empty", nil)
+				return
+			}
+			nickname := payload.Nickname
+			nullNickname := null.StringFrom(nickname)
+
+			// Convert the BirthYear to an integer
+			birthYearInt, err := strconv.Atoi(loginRequest.BirthYear)
+			if err != nil {
+				log.Printf("Invalid BirthYear format: %v", err)
+				// Handle the error as needed, e.g., set birthYearInt to a default value or return an error
+				birthYearInt = 0 // Set to 0 or handle appropriately
+			}
+
+			// Initialize the null.Int from the converted integer
+			nullBrithyear := null.IntFrom(birthYearInt)
+			nullGender := null.StringFrom(loginRequest.Gender)
+
+			m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
+			err = m.Insert(c, db, boil.Infer())
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "Error inserting member", nil)
 				return
@@ -150,8 +152,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 		}
 
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, loginRequest.BirthYear, loginRequest.Gender, member.MemberID, KAKAO_PROVIDER)
-
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID, loginRequest.Provider)
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 			return
@@ -161,7 +162,6 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			AccessToken:  accessTokenString,
 			RefreshToken: refreshTokenString,
 		}
-
 		// accessToken, refreshToken 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
 	}
