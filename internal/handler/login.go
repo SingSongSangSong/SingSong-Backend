@@ -26,8 +26,10 @@ import (
 )
 
 const (
-	REQUEST_URL    = "https://kauth.kakao.com/.well-known/jwks.json"
-	KAKAO_PROVIDER = "KAKAO_KEY" // 공개키 목록 조회 URL
+	KAKAO_PUBLIC_KEY_URL = "https://kauth.kakao.com/.well-known/jwks.json"
+	KAKAO_PROVIDER       = "KAKAO_KEY"
+	APPLE_PUBLIC_KEY_URL = "https://appleid.apple.com/auth/keys"
+	APPLE_PROVIDER       = "APPLE_KEY"
 )
 
 var (
@@ -395,7 +397,7 @@ func base64UrlDecode(data string) ([]byte, error) {
 // 카카오 공개키 목록 조회 URL 요청 함수
 func GetKakaoPublicKeys(c *gin.Context, redis *redis.Client) error {
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(REQUEST_URL)
+	resp, err := client.Get(KAKAO_PUBLIC_KEY_URL)
 	if err != nil {
 		log.Printf("HTTP 요청 오류: %v", err)
 		return err
