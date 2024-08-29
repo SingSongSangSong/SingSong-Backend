@@ -23,6 +23,6 @@ jobs:
         run: go test ./... -v
 
       - name: Build project
-        env:
-          SERVER_MODE: test
-        run: go build -v ./...
+        run: |
+          export SERVER_MODE=test
+          go build -v ./...
