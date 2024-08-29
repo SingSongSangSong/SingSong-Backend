@@ -20,9 +20,11 @@ jobs:
         run: go mod tidy
 
       - name: Run tests
+        env:
+          SERVER_MODE: test
         run: go test ./... -v
 
       - name: Build project
-        run: |
-          export SERVER_MODE=test
-          go build -v ./...
+        env:
+          SERVER_MODE: test
+        run: go build -v ./...
