@@ -42,6 +42,7 @@ jobs:
 
       - name: Trigger Docker update script on Raspberry Pi
         env:
+          SERVER_MODE: test
           PI_HOST: ${{ secrets.PI_HOST }}
           PI_USER: ${{ secrets.PI_USER }}
           PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
@@ -54,6 +55,7 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           REDIS_ADDR: ${{ secrets.REDIS_ADDR }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
@@ -64,6 +66,7 @@ jobs:
         run: |
           sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST << EOF
           echo "Connected to Raspberry Pi"
+          export SERVER_MODE=$SERVER_MODE
           export PINECONE_API_KEY=$PINECONE_API_KEY
           export PINECONE_INDEX=$PINECONE_INDEX
           export DB_HOST=$DB_HOST
@@ -72,6 +75,7 @@ jobs:
           export DB_USER=$DB_USER
           export DB_PASSWORD=$DB_PASSWORD
           export REDIS_ADDR=$REDIS_ADDR
+          export REDIS_PORT=$REDIS_PORT
           export REDIS_PASSWORD=$REDIS_PASSWORD
           export SECRET_KEY=$SECRET_KEY
           export KAKAO_REST_API_KEY=$KAKAO_REST_API_KEY
