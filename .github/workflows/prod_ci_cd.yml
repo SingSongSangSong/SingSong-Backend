@@ -81,7 +81,11 @@ jobs:
             {"name":"JWT_ISSUER","value":"${{ secrets.JWT_ISSUER }}"},
             {"name":"JWT_ACCESS_VALIDITY_SECONDS","value":"${{ secrets.JWT_ACCESS_VALIDITY_SECONDS }}"},
             {"name":"JWT_REFRESH_VALIDITY_SECONDS","value":"${{ secrets.JWT_REFRESH_VALIDITY_SECONDS }}"}
-          ]' task-definition.json | jq '. + {"enableExecuteCommand": true}' > new-task-definition.json
+          ]' task-definition.json > new-task-definition.json
+
+      - name: Enable Execute Command
+        run: |
+          jq '.enableExecuteCommand = true' new-task-definition.json > new-task-definition-with-exec.json
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
