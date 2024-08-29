@@ -15,6 +15,8 @@ type AuthConfig struct {
 	SECRET_KEY                   string
 	KAKAO_REST_API_KEY           string
 	KAKAO_ISSUER                 string
+	APPLE_CLIENT_ID              string
+	APPLE_ISSUER                 string
 	JWT_ISSUER                   string
 	JWT_ACCESS_VALIDITY_SECONDS  string
 	JWT_REFRESH_VALIDITY_SECONDS string
@@ -24,20 +26,40 @@ type VectorDBConfig struct {
 	DIMENSION int
 }
 
+const (
+	DevelopMode    = "dev"
+	ProductionMode = "prod"
+)
+
 var (
 	AuthConfigInstance     *AuthConfig
 	VectorDBConfigInstance *VectorDBConfig
+	Env                    string
 )
 
 func init() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Printf("Error loading .env file during auth configuration. ") //개발환경용
+	Env := os.Getenv("SERVER_MODE")
+	if Env == "" {
+		Env = DevelopMode // default: Develop mode
 	}
+
+	// 만약 dev면 .env 파일 로드 시도
+	if Env == DevelopMode {
+		log.Println("current environment is dev, start to load .env file.")
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatalf("Error loading .env file during auth configuration.")
+		}
+	} else {
+		log.Println("current environment is prod, so no .env load. if you want to load .env, set SERVER_MODE=dev")
+	}
+
 	AuthConfigInstance = &AuthConfig{
 		SECRET_KEY:                   os.Getenv("SECRET_KEY"),
 		KAKAO_REST_API_KEY:           os.Getenv("KAKAO_REST_API_KEY"),
 		KAKAO_ISSUER:                 os.Getenv("KAKAO_ISSUER"),
+		APPLE_CLIENT_ID:              os.Getenv("APPLE_CLIENT_ID"),
+		APPLE_ISSUER:                 os.Getenv("APPLE_ISSUER"),
 		JWT_ISSUER:                   os.Getenv("JWT_ISSUER"),
 		JWT_ACCESS_VALIDITY_SECONDS:  os.Getenv("JWT_ACCESS_VALIDITY_SECONDS"),
 		JWT_REFRESH_VALIDITY_SECONDS: os.Getenv("JWT_REFRESH_VALIDITY_SECONDS"),
@@ -45,16 +67,10 @@ func init() {
 	VectorDBConfigInstance = &VectorDBConfig{
 		DIMENSION: 548,
 	}
-
 }
 
 func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
 	var err error
-	// MySQL 설정
-	//err = godotenv.Load(".env")
-	//if err != nil {
-	//	log.Printf("Error loading .env file") //개발환경용
-	//}
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
@@ -63,7 +79,6 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Mysql 연결 실패: %v", err)
 	}
-
 	if err := (*db).Ping(); err != nil {
 		log.Fatalf("Mysql ping 실패: %v", err)
 	}

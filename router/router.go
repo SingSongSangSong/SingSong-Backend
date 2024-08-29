@@ -1,6 +1,7 @@
 package router
 
 import (
+	"SingSong-Server/conf"
 	"SingSong-Server/internal/handler"
 	"SingSong-Server/middleware"
 	"database/sql"
@@ -10,18 +11,19 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
+	gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
 	"net/http"
 )
 
 func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection) *gin.Engine {
-	// Initialize Datadog tracer
-	//tracer.Start()
-	//defer tracer.Stop()
 
+	//gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	// Wrap the router with Datadog middleware
-	//r.Use(ddgin.Middleware("singsong-service"))
+	// Datadog tracer
+	if conf.Env == conf.ProductionMode {
+		r.Use(gintrace.Middleware("singsong-server"))
+	}
 
 	// CORS 설정 추가
 	r.Use(middleware.PlatformMiddleware())
