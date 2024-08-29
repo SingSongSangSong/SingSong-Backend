@@ -48,7 +48,7 @@ jobs:
 
       - name: Get Git commit SHA
         id: vars
-        run: echo "GIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        run: echo "GIT_SHA=$(git rev-parse --short=7 HEAD)" >> $GITHUB_ENV
 
       - name: Download Task Definition Template
         run: |
