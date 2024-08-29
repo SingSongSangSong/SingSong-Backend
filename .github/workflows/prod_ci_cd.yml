@@ -46,6 +46,10 @@ jobs:
           tags: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
           platforms: linux/amd64,linux/arm64
 
+      - name: Get Git commit SHA
+        id: vars
+        run: echo "GIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
       - name: Download Task Definition Template
         run: |
           aws ecs describe-task-definition \
@@ -65,6 +69,7 @@ jobs:
         run: |
           jq '.containerDefinitions[0].environment += [
             {"name":"SERVER_MODE","value":"prod"},
+            {"name":"GIT_SHA","value":"${{ env.GIT_SHA }}"},
             {"name":"PINECONE_API_KEY","value":"${{ secrets.PINECONE_API_KEY }}"},
             {"name":"PINECONE_INDEX","value":"${{ secrets.PINECONE_INDEX }}"},
             {"name":"DB_HOST","value":"${{ vars.RDS_HOST }}"},

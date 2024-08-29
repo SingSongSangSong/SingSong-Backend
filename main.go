@@ -12,6 +12,8 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 	"log"
+	"os"
+	"time"
 )
 
 // @title           싱송생송 API
@@ -22,13 +24,17 @@ import (
 // @name Authorization
 func main() {
 	if conf.Env == conf.ProductionMode {
+		currentDate := time.Now().Format("2006-01-02")
+		gitCommit := os.Getenv("GIT_SHA")
+		if gitCommit == "" {
+			gitCommit = "unknown" // 기본값 설정, 환경 변수가 없을 경우
+		}
+
 		tracer.Start(
 			tracer.WithRuntimeMetrics(),
 			tracer.WithEnv(conf.Env),
 			tracer.WithService("singsong"),
-			tracer.WithServiceVersion("2024.08.29"), // todo: 버전 수정 자동으로
-			tracer.WithDebugMode(true),
-			tracer.WithAnalytics(true),
+			tracer.WithServiceVersion(currentDate+":"+gitCommit), //배포날짜:커밋해시로 버전 설정
 		)
 		defer tracer.Stop()
 
