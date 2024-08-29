@@ -37,14 +37,14 @@ var (
 )
 
 func init() {
-	Env := os.Getenv("SERVER_MODE")
+	Env = os.Getenv("SERVER_MODE")
 	if Env == "" {
 		Env = LocalMode // default: local mode
 	}
 
 	// 만약 dev면 .env 파일 로드 시도
 	if Env == LocalMode {
-		log.Println("current environment is dev, start to load .env file.")
+		log.Println("current environment is local, start to load .env file.")
 		err := godotenv.Load(".env")
 		if err != nil {
 			log.Fatalf("Error loading .env file during auth configuration.")
