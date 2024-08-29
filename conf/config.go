@@ -27,7 +27,8 @@ type VectorDBConfig struct {
 }
 
 const (
-	DevelopMode    = "dev"
+	LocalMode      = "local"
+	TestMode       = "test"
 	ProductionMode = "prod"
 )
 
@@ -40,11 +41,11 @@ var (
 func init() {
 	Env := os.Getenv("SERVER_MODE")
 	if Env == "" {
-		Env = DevelopMode // default: Develop mode
+		Env = LocalMode // default: local mode
 	}
 
 	// 만약 dev면 .env 파일 로드 시도
-	if Env == DevelopMode {
+	if Env == LocalMode {
 		log.Println("current environment is dev, start to load .env file.")
 		err := godotenv.Load(".env")
 		if err != nil {
