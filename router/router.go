@@ -26,7 +26,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	}
 
 	// CORS 설정 추가
-	r.Use(middleware.PlatformMiddleware())
+	r.Use(middleware.CORSMiddleware())
 
 	// 버전 확인
 	version := r.Group("/api/v1/version")
