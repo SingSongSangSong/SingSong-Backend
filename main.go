@@ -9,6 +9,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
+	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 	"log"
 )
 
@@ -19,6 +21,24 @@ import (
 // @in header
 // @name Authorization
 func main() {
+	if conf.Env == conf.ProductionMode {
+		tracer.Start(
+			tracer.WithEnv(conf.Env),
+			tracer.WithService("singsong-server"),
+			tracer.WithServiceVersion("2024.08.29"), // todo: 버전 수정 자동으로
+		)
+		defer tracer.Stop()
+
+		err := profiler.Start(
+			profiler.WithEnv(conf.Env),
+			profiler.WithService("singsong-server"),
+		)
+		if err != nil {
+			log.Fatal("Failed to start profiler: ", err)
+		}
+		defer profiler.Stop()
+	}
+
 	ctx := context.Background()
 
 	var db *sql.DB

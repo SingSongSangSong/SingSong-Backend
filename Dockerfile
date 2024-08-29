@@ -13,6 +13,9 @@ RUN go mod download
 # Copy the rest of the source code into the container
 COPY . .
 
+# Set environment variable to test mode
+ENV SERVER_MODE=test
+
 # Expose port 8080 to the outside world
 EXPOSE 8080
 

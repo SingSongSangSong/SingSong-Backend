@@ -64,6 +64,7 @@ jobs:
       - name: Add environment variables to the task definition
         run: |
           jq '.containerDefinitions[0].environment += [
+            {"name":"SERVER_MODE","value":"prod"},
             {"name":"PINECONE_API_KEY","value":"${{ secrets.PINECONE_API_KEY }}"},
             {"name":"PINECONE_INDEX","value":"${{ secrets.PINECONE_INDEX }}"},
             {"name":"DB_HOST","value":"${{ vars.RDS_HOST }}"},
