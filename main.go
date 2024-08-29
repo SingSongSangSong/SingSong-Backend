@@ -26,6 +26,8 @@ func main() {
 			tracer.WithEnv(conf.Env),
 			tracer.WithService("singsong-server"),
 			tracer.WithServiceVersion("2024.08.29"), // todo: 버전 수정 자동으로
+			tracer.WithDebugMode(true),
+			tracer.WithAnalytics(true),
 		)
 		defer tracer.Stop()
 
