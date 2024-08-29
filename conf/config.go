@@ -51,8 +51,10 @@ func init() {
 		if err != nil {
 			log.Fatalf("Error loading .env file during auth configuration.")
 		}
+	} else if Env == TestMode {
+		log.Println("Running in test mode, skip .env file loading.")
 	} else {
-		log.Println("current environment is prod, so no .env load. if you want to load .env, set SERVER_MODE=dev")
+		log.Println("Running in production mode, skip .env file loading.")
 	}
 
 	AuthConfigInstance = &AuthConfig{
