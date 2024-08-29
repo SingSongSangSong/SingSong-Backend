@@ -22,7 +22,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 
 	// Datadog tracer
 	if conf.Env == conf.ProductionMode {
-		r.Use(gintrace.Middleware("singsong-server"))
+		r.Use(gintrace.Middleware("singsong"))
 	}
 
 	// CORS 설정 추가

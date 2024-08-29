@@ -23,8 +23,9 @@ import (
 func main() {
 	if conf.Env == conf.ProductionMode {
 		tracer.Start(
+			tracer.WithRuntimeMetrics(),
 			tracer.WithEnv(conf.Env),
-			tracer.WithService("singsong-server"),
+			tracer.WithService("singsong"),
 			tracer.WithServiceVersion("2024.08.29"), // todo: 버전 수정 자동으로
 			tracer.WithDebugMode(true),
 			tracer.WithAnalytics(true),
@@ -33,7 +34,7 @@ func main() {
 
 		err := profiler.Start(
 			profiler.WithEnv(conf.Env),
-			profiler.WithService("singsong-server"),
+			profiler.WithService("singsong"),
 		)
 		if err != nil {
 			log.Fatal("Failed to start profiler: ", err)
