@@ -52,6 +52,9 @@ jobs:
             --task-definition ${{ env.TASK_DEFINITION_NAME }} \
             --query taskDefinition \
             > task-definition.json
+            
+      - name: Check AWS SDK version
+        run: node -e "console.log(require('aws-sdk/package.json').version)"
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
