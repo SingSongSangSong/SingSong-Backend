@@ -103,9 +103,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 					//pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 					// 에러 발생 시 전체 함수를 중단하지 않고 로그를 남기고 전체 에러 상태를 설정
 					log.Printf("QueryPineconeWithTag error for tag %s: %+v", tag, err)
-					mu.Lock()
 					overallErr = err
-					mu.Unlock()
 					return
 				}
 
