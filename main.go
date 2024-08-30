@@ -10,6 +10,8 @@ import (
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 )
 
 // @title           싱송생송 API
@@ -29,6 +31,11 @@ func main() {
 	//boil.DebugMode = true
 
 	r := router.SetupRouter(db, rdb, idxConnection)
+
+	// pprof를 위한 별도의 HTTP 서버 실행
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	// 서버 실행
 	if err := r.Run(); err != nil {
