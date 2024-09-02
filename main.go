@@ -12,6 +12,8 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"time"
 )
@@ -58,6 +60,11 @@ func main() {
 	//boil.DebugMode = true
 
 	r := router.SetupRouter(db, rdb, idxConnection)
+
+	// pprof를 위한 별도의 HTTP 서버 실행
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	// 서버 실행
 	if err := r.Run(); err != nil {
