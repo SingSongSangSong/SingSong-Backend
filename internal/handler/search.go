@@ -202,3 +202,139 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }
+
+// SearchSongsBySongName godoc
+// @Summary      노래 제목으로 노래 검색 API
+// @Description  노래 제목으로 노래 검색 API, 노래 제목을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호를 반환합니다.
+// @Tags         Search
+// @Accept       json
+// @Produce      json
+// @Param        keyword query string true "검색 키워드"
+// @Param        page query int false "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
+// @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
+// @Success      200 {object} pkg.BaseResponseStruct{data=songSearchPageResponse} "성공"
+// @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
+// @Router       /search/song-name [get]
+func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 검색어를 쿼리 파라미터에서 가져오기
+		searchKeyword := c.Query("keyword")
+		if searchKeyword == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find keyword in query", nil)
+			return
+		}
+		pageValue := c.Query("page")
+		if pageValue == "" {
+			pageValue = defaultSearchPage
+		}
+		sizeValue := c.Query("size")
+		if sizeValue == "" {
+			sizeValue = defaultSearchSize
+		}
+
+		//page, size를 숫자로 변환
+		page, err := strconv.Atoi(pageValue)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			return
+		}
+		size, err := strconv.Atoi(sizeValue)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			return
+		}
+
+		// 노래 이름으로 검색
+		offset := (page - 1) * size
+		songsWithName, err := mysql.SongInfos(
+			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
+			qm.Limit(size),
+			qm.Offset(offset),
+		).All(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// 응답 데이터 생성
+		songs := make([]songSearchInfoResponse, 0, len(songsWithName))
+		for _, song := range songsWithName {
+			songs = append(songs, songSearchInfoResponse{
+				SongNumber: song.SongNumber,
+				SongName:   song.SongName,
+				SingerName: song.ArtistName,
+				SongInfoId: song.SongInfoID,
+				Album:      song.Album.String,
+				IsMr:       song.IsMR.Bool,
+			})
+		}
+		response := songSearchPageResponse{
+			Songs:    songs,
+			NextPage: page + 1,
+		}
+		// 응답 반환
+		pkg.BaseResponse(c, http.StatusOK, "ok", response)
+	}
+}
+
+// SearchSongsBySongNumber godoc
+// @Summary      노래 번호로 노래 검색 API
+// @Description  노래 번호로 노래 검색 API, 노래 번호를 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호를 반환합니다.
+// @Tags         Search
+// @Accept       json
+// @Produce      json
+// @Param        keyword query string true "검색 키워드"
+// @Param        page query int false "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회. 현재는 노래 번호가 정확히 일치하는 1개만 반환하기 때문에 무의미"
+// @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회. 현재는 노래 번호가 정확히 일치하는 1개만 반환하기 때문에 무의미"
+// @Success      200 {object} pkg.BaseResponseStruct{data=songSearchPageResponse} "성공"
+// @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
+// @Router       /search/song-number [get]
+func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 검색어를 쿼리 파라미터에서 가져오기
+		searchKeyword := c.Query("keyword")
+		if searchKeyword == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find keyword in query", nil)
+			return
+		}
+		pageValue := c.Query("page")
+		if pageValue == "" {
+			pageValue = defaultSearchPage
+		}
+
+		//page를 숫자로 변환
+		page, err := strconv.Atoi(pageValue)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			return
+		}
+
+		// 노래 번호로 검색
+		songsWithNumber, err := mysql.SongInfos(
+			qm.Where("song_number = ?", searchKeyword),
+		).All(c, db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// 응답 데이터 생성
+		songs := make([]songSearchInfoResponse, 0, len(songsWithNumber))
+		for _, song := range songsWithNumber {
+			songs = append(songs, songSearchInfoResponse{
+				SongNumber: song.SongNumber,
+				SongName:   song.SongName,
+				SingerName: song.ArtistName,
+				SongInfoId: song.SongInfoID,
+				Album:      song.Album.String,
+				IsMr:       song.IsMR.Bool,
+			})
+		}
+		response := songSearchPageResponse{
+			Songs:    songs,
+			NextPage: page + 1,
+		}
+		// 응답 반환
+		pkg.BaseResponse(c, http.StatusOK, "ok", response)
+	}
+}
