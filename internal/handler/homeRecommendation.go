@@ -135,8 +135,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 
 		//tagMap의 value들을 합쳐 db에서 가져옵니다.
 		ids := make([]interface{}, 0, 20*len(tagMap))
-		for tag, idsInTag := range tagMap {
-			log.Printf("tag: %s, idsInTag: %+v", tag, idsInTag)
+		for _, idsInTag := range tagMap {
 			ids = append(ids, idsInTag...)
 		}
 		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", ids...)).All(c, db)
