@@ -111,6 +111,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	search := r.Group("/api/v1/search")
 	{
 		search.GET("/:searchKeyword", handler.SearchSongs(db))
+		search.GET("/artist", handler.SearchSongsByArist(db))
 	}
 
 	// 스웨거 설정
