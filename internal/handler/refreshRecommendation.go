@@ -93,14 +93,14 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		}
 
 		//list
-		one, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).One(c, db)
+		one, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).One(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		// 모든 KeepSongs 가져오기
-		keepSongs, err := mysql.KeepSongs(qm.Where("keep_list_id = ?", one.KeepListID), qm.And("deleted_at IS NULL")).All(c, db)
+		keepSongs, err := mysql.KeepSongs(qm.Where("keep_list_id = ?", one.KeepListID), qm.And("deleted_at IS NULL")).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -123,7 +123,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			songInfoIds = append(songInfoIds, song.SongInfoId)
 		}
 
-		all, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c, db)
+		all, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

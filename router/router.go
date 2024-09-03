@@ -21,7 +21,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	r := gin.Default()
 
 	// Datadog tracer
-	if conf.Env == conf.ProductionMode {
+	if conf.Env == conf.LocalMode {
 		r.Use(gintrace.Middleware("singsong"))
 	}
 

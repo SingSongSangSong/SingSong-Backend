@@ -139,7 +139,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		}
 
 		//isKeep
-		all, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c, db)
+		all, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -148,7 +148,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		for i, keep := range all {
 			keepIds[i] = keep.KeepListID
 		}
-		keepSongs, err := mysql.KeepSongs(qm.WhereIn("keep_list_id in ?", keepIds...), qm.And("deleted_at IS NULL")).All(c, db)
+		keepSongs, err := mysql.KeepSongs(qm.WhereIn("keep_list_id in ?", keepIds...), qm.And("deleted_at IS NULL")).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -163,7 +163,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		for _, song := range relatedSongs {
 			songInfoIds = append(songInfoIds, song.SongInfoId)
 		}
-		slice, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c, db)
+		slice, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

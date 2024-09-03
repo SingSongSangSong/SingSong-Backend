@@ -48,13 +48,13 @@ func VersionCheck(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		requestVersion, err := mysql.AppVersions(qm.Where("platform = ? AND version = ?", platform, request.Version)).One(c, db)
+		requestVersion, err := mysql.AppVersions(qm.Where("platform = ? AND version = ?", platform, request.Version)).One(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot find version data", nil)
 			return
 		}
 
-		latestVersion, err := mysql.AppVersions(qm.Where("platform = ?", platform), qm.OrderBy("created_at DESC")).One(c, db)
+		latestVersion, err := mysql.AppVersions(qm.Where("platform = ?", platform), qm.OrderBy("created_at DESC")).One(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -101,7 +101,7 @@ func LatestVersionUpdate(db *sql.DB) gin.HandlerFunc {
 
 		if request.ForceUpdate == true {
 			// 강제 업데이트가 필요하다면, 이전 버전들을 모두 강제 업데이트로 변경한다
-			_, err := mysql.AppVersions(qm.Where("platform = ? AND version != ?", request.Platform, request.Version)).UpdateAll(c, db, mysql.M{"force_update": true})
+			_, err := mysql.AppVersions(qm.Where("platform = ? AND version != ?", request.Platform, request.Version)).UpdateAll(c.Request.Context(), db, mysql.M{"force_update": true})
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
@@ -128,7 +128,7 @@ type VersionResponse struct {
 // @Router       /version [get]
 func AllVersion(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		all, err := mysql.AppVersions().All(c, db)
+		all, err := mysql.AppVersions().All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

@@ -138,7 +138,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 		for _, idsInTag := range tagMap {
 			ids = append(ids, idsInTag...)
 		}
-		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", ids...)).All(c, db)
+		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", ids...)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

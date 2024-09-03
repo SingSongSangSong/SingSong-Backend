@@ -9,6 +9,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 	"log"
@@ -25,7 +26,7 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	if conf.Env == conf.ProductionMode {
+	if conf.Env == conf.LocalMode {
 		currentDate := time.Now().Format("2006-01-02")
 		gitCommit := os.Getenv("GIT_SHA")
 		if gitCommit == "" {
@@ -55,8 +56,10 @@ func main() {
 	var db *sql.DB
 	var rdb *redis.Client
 	var idxConnection *pinecone.IndexConnection
+
 	conf.SetupConfig(ctx, &db, &rdb, &idxConnection)
-	// SQLBoiler의 디버그 모드 활성화
+
+	boil.SetDB(db)
 	//boil.DebugMode = true
 
 	r := router.SetupRouter(db, rdb, idxConnection)
