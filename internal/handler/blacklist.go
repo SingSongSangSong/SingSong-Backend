@@ -46,7 +46,7 @@ func AddBlacklist(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 이미 차단했는지 확인
-		isBlocked, err := mysql.Blacklists(qm.Where("blocker_member_id = ? AND blocked_member_id = ?", blockerId, request.MemberId)).Exists(c, db)
+		isBlocked, err := mysql.Blacklists(qm.Where("blocker_member_id = ? AND blocked_member_id = ?", blockerId, request.MemberId)).Exists(c.Request.Context(), db)
 		if isBlocked {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - already blocked", nil)
 			return
@@ -57,7 +57,7 @@ func AddBlacklist(db *sql.DB) gin.HandlerFunc {
 		}
 
 		m := mysql.Blacklist{BlockerMemberID: blockerId.(int64), BlockedMemberID: request.MemberId}
-		err = m.Insert(c, db, boil.Infer())
+		err = m.Insert(c.Request.Context(), db, boil.Infer())
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -103,7 +103,7 @@ func DeleteBlacklist(db *sql.DB) gin.HandlerFunc {
 
 		log.Printf("memberIDsInterface: %v", memberIDsInterface)
 
-		_, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId), qm.WhereIn("blocked_member_id IN ?", memberIDsInterface...)).DeleteAll(c, db)
+		_, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId), qm.WhereIn("blocked_member_id IN ?", memberIDsInterface...)).DeleteAll(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -136,7 +136,7 @@ func GetBlacklist(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		all, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c, db)
+		all, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -152,7 +152,7 @@ func GetBlacklist(db *sql.DB) gin.HandlerFunc {
 			blockedIds[i] = entry.BlockedMemberID
 		}
 
-		blockedMembers, err := mysql.Members(qm.WhereIn("member_id in ?", blockedIds...)).All(c, db)
+		blockedMembers, err := mysql.Members(qm.WhereIn("member_id in ?", blockedIds...)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

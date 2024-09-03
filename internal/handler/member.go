@@ -37,7 +37,7 @@ func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Get member info
-		member, err := mysql.Members(qm.Where("member_id = ?", memberId)).One(c, db)
+		member, err := mysql.Members(qm.Where("member_id = ?", memberId)).One(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -90,7 +90,7 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 
 		// Delete member
 		_, err := mysql.Members(qm.Where("member_id = ? AND deleted_at is null", memberId)).
-			UpdateAll(c, db, mysql.M{
+			UpdateAll(c.Request.Context(), db, mysql.M{
 				"deleted_at": time.Now(),
 				"nickname":   "(알수없음)",
 			})

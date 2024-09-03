@@ -51,13 +51,13 @@ func GetSongReview(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		all, err := mysql.SongReviews(qm.Where("song_info_id = ?", songInfoId), qm.And("deleted_at IS NULL")).All(c, db)
+		all, err := mysql.SongReviews(qm.Where("song_info_id = ?", songInfoId), qm.And("deleted_at IS NULL")).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		options, err := mysql.SongReviewOptions().All(c, db)
+		options, err := mysql.SongReviewOptions().All(c.Request.Context(), db)
 
 		response := make([]songReviewOptionGetResponse, 0, len(options))
 		for _, option := range options {
@@ -145,7 +145,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
 		}
-		one, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c, db)
+		one, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -154,7 +154,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 		// soft delete
 		_, err = mysql.SongReviews(
 			qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", one.SongInfoID), qm.And("deleted_at IS NULL"),
-		).UpdateAll(c, db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
+		).UpdateAll(c.Request.Context(), db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -169,13 +169,13 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			Birthyear:          null.IntFrom(birthYear),
 		}
 
-		if err := review.Insert(c, db, boil.Infer()); err != nil {
+		if err := review.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		go func(db *sql.DB, memberId interface{}, songReviewOptionId int64) {
-			option, err2 := mysql.SongReviewOptions(qm.Where("song_review_option_id = ?", songReviewOptionId)).One(c, db)
+			option, err2 := mysql.SongReviewOptions(qm.Where("song_review_option_id = ?", songReviewOptionId)).One(c.Request.Context(), db)
 			if err2 != nil {
 				log.Printf("failed to get song review option: " + err2.Error())
 				return
@@ -220,7 +220,7 @@ func DeleteSongReview(db *sql.DB) gin.HandlerFunc {
 		// soft delete
 		_, err := mysql.SongReviews(
 			qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", songInfoId), qm.And("deleted_at IS NULL"),
-		).UpdateAll(c, db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
+		).UpdateAll(c.Request.Context(), db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

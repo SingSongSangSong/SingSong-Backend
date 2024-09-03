@@ -63,7 +63,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		member, err := mysql.Members(qm.Where("member_id = ?", memberId.(int64))).One(c, db)
+		member, err := mysql.Members(qm.Where("member_id = ?", memberId.(int64))).One(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -74,7 +74,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 		nullParentCommentId := null.Int64From(commentRequest.ParentCommentId)
 		nullContent := null.StringFrom(commentRequest.Content)
 		m := mysql.Comment{MemberID: memberId.(int64), ParentCommentID: nullParentCommentId, SongInfoID: commentRequest.SongInfoId, IsRecomment: nulIsRecomment, Content: nullContent, Likes: null.IntFrom(0)}
-		err = m.Insert(c, db, boil.Infer())
+		err = m.Insert(c.Request.Context(), db, boil.Infer())
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -126,7 +126,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 		log.Println("blockerId: ", blockerId)
 
 		//차단 유저 제외
-		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c, db)
+		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -146,7 +146,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			qm.Where("comment.song_info_id = ?", songId),
 			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.OrderBy("comment.created_at DESC"),
-		).All(c, db)
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -167,7 +167,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 		likes, err := mysql.CommentLikes(
 			qm.WhereIn("comment_id IN ?", commentIDs...),
 			qm.And("member_id = ?", blockerId),
-		).All(c, db)
+		).All(c.Request.Context(), db)
 
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
@@ -268,7 +268,7 @@ func GetReCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c, db)
+		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -287,7 +287,7 @@ func GetReCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			qm.Where("comment.parent_comment_id = ?", commentId),
 			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.OrderBy("comment.created_at ASC"),
-		).All(c, db)
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -358,7 +358,7 @@ func ReportComment(db *sql.DB) gin.HandlerFunc {
 
 		// 댓글 신고하기
 		m := mysql.Report{CommentID: reportRequest.CommentId, ReportReason: nullReason, SubjectMemberID: reportRequest.SubjectMemberId, ReporterMemberID: memberId.(int64)}
-		err := m.Insert(c, db, boil.Infer())
+		err := m.Insert(c.Request.Context(), db, boil.Infer())
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -417,12 +417,12 @@ func LikeComment(db *sql.DB) gin.HandlerFunc {
 		// 이미 좋아요를 눌렀는지 확인
 		commentLikes, err := mysql.CommentLikes(
 			qm.Where("member_id = ? AND comment_id = ? AND deleted_at IS NULL", memberId.(int64), commentId),
-		).One(c, db)
+		).One(c.Request.Context(), db)
 
 		// 이미 좋아요를 누른 상태에서 좋아요 취소 요청
 		if err == nil {
 			commentLikes.DeletedAt = null.TimeFrom(time.Now())
-			if _, err := commentLikes.Update(c, db, boil.Infer()); err != nil {
+			if _, err := commentLikes.Update(c.Request.Context(), db, boil.Infer()); err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -430,7 +430,7 @@ func LikeComment(db *sql.DB) gin.HandlerFunc {
 			// CommentTable에서 해당 CommentId의 LikeCount를 1 감소시킨다
 			comment, err := mysql.Comments(
 				qm.Where("comment_id = ?", commentId),
-			).One(c, db)
+			).One(c.Request.Context(), db)
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
@@ -447,7 +447,7 @@ func LikeComment(db *sql.DB) gin.HandlerFunc {
 
 		// 댓글 좋아요 누르기
 		like := mysql.CommentLike{MemberID: memberId.(int64), CommentID: commentId}
-		if err := like.Insert(c, db, boil.Infer()); err != nil {
+		if err := like.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -455,7 +455,7 @@ func LikeComment(db *sql.DB) gin.HandlerFunc {
 		// CommentTable에서 해당 CommentId의 LikeCount를 1 증가시킨다
 		comment, err := mysql.Comments(
 			qm.Where("comment_id = ?", commentId),
-		).One(c, db)
+		).One(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

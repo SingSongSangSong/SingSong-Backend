@@ -115,7 +115,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		}
 
 		// email+Provider db에 있는지 확인
-		m, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c, db)
+		m, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c.Request.Context(), db)
 		if err != nil {
 			// DB에 없는 경우 - 회원가입
 			m, err = join(c, payload, loginRequest, m, db)
@@ -491,7 +491,7 @@ func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.
 	nullGender := null.StringFrom(loginRequest.Gender)
 
 	m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
-	err = m.Insert(c, db, boil.Infer())
+	err = m.Insert(c.Request.Context(), db, boil.Infer())
 	if err != nil {
 		return nil, errors.New("Error inserting member")
 	}
