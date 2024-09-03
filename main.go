@@ -26,7 +26,7 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	if conf.Env == conf.LocalMode {
+	if conf.Env == conf.ProductionMode {
 		currentDate := time.Now().Format("2006-01-02")
 		gitCommit := os.Getenv("GIT_SHA")
 		if gitCommit == "" {
