@@ -44,7 +44,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 		songsWithName, err := mysql.SongInfos(
 			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
 			qm.Limit(10),
-		).All(c, db)
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -54,7 +54,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 		songsWithArtist, err := mysql.SongInfos(
 			qm.Where("artist_name LIKE ?", "%"+searchKeyword+"%"),
 			qm.Limit(10),
-		).All(c, db)
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -64,7 +64,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 		songsWithNumber, err := mysql.SongInfos(
 			qm.Where("song_number = ?", searchKeyword),
 			qm.Limit(10),
-		).All(c, db)
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -176,7 +176,7 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 			qm.Where("artist_name LIKE ?", "%"+searchKeyword+"%"),
 			qm.Limit(size),
 			qm.Offset(offset),
-		).All(c, db)
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -250,7 +250,7 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
 			qm.Limit(size),
 			qm.Offset(offset),
-		).All(c, db)
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -312,7 +312,7 @@ func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
 		// 노래 번호로 검색
 		songsWithNumber, err := mysql.SongInfos(
 			qm.Where("song_number = ?", searchKeyword),
-		).All(c, db)
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
