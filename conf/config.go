@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
+	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	"log"
 	"os"
 )
@@ -26,16 +28,37 @@ type VectorDBConfig struct {
 	DIMENSION int
 }
 
+const (
+	LocalMode      = "local"
+	TestMode       = "test"
+	ProductionMode = "prod"
+)
+
 var (
 	AuthConfigInstance     *AuthConfig
 	VectorDBConfigInstance *VectorDBConfig
+	Env                    string
 )
 
 func init() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Printf("Error loading .env file during auth configuration. ") //개발환경용
+	Env = os.Getenv("SERVER_MODE")
+	if Env == "" {
+		Env = LocalMode // default: local mode
 	}
+
+	// 만약 dev면 .env 파일 로드 시도
+	if Env == LocalMode {
+		log.Println("current environment is local, start to load .env file.")
+		err := godotenv.Load(".env")
+		if err != nil {
+			log.Fatalf("Error loading .env file during auth configuration.")
+		}
+	} else if Env == TestMode {
+		log.Println("Running in test mode, skip .env file loading.")
+	} else {
+		log.Println("Running in production mode, skip .env file loading.")
+	}
+
 	AuthConfigInstance = &AuthConfig{
 		SECRET_KEY:                   os.Getenv("SECRET_KEY"),
 		KAKAO_REST_API_KEY:           os.Getenv("KAKAO_REST_API_KEY"),
@@ -49,25 +72,19 @@ func init() {
 	VectorDBConfigInstance = &VectorDBConfig{
 		DIMENSION: 548,
 	}
-
 }
 
 func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
 	var err error
-	// MySQL 설정
-	//err = godotenv.Load(".env")
-	//if err != nil {
-	//	log.Printf("Error loading .env file") //개발환경용
-	//}
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
 
-	*db, err = sql.Open("mysql", dsn)
+	sqltrace.Register("mysql", &mysql.MySQLDriver{}, sqltrace.WithServiceName("singsong-mysql"))
+	*db, err = sqltrace.Open("mysql", dsn)
 	if err != nil {
 		log.Fatalf("Mysql 연결 실패: %v", err)
 	}
-
 	if err := (*db).Ping(); err != nil {
 		log.Fatalf("Mysql ping 실패: %v", err)
 	}

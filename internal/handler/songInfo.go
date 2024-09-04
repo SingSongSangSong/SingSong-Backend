@@ -50,14 +50,14 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 		}
 
 		//노래 정보 조회
-		one, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c, db)
+		one, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - no song", nil)
 			return
 		}
 
 		//유저의 keep 여부 조회
-		all, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c, db)
+		all, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -70,19 +70,19 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			qm.WhereIn("keep_list_id in ?", keepListIds...),
 			qm.And("song_info_id = ?", one.SongInfoID),
 			qm.And("deleted_at IS NULL"),
-		).Exists(c, db)
+		).Exists(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		commentCount, err := mysql.Comments(qm.Where("song_info_id = ? AND deleted_at is null", one.SongInfoID)).Count(c, db)
+		commentCount, err := mysql.Comments(qm.Where("song_info_id = ? AND deleted_at is null", one.SongInfoID)).Count(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		keepCount, err := mysql.KeepSongs(qm.Where("song_info_id = ? AND deleted_at is null", one.SongInfoID)).Count(c, db)
+		keepCount, err := mysql.KeepSongs(qm.Where("song_info_id = ? AND deleted_at is null", one.SongInfoID)).Count(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

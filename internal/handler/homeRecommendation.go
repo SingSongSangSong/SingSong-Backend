@@ -61,7 +61,12 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 			return
 		}
 
-		var homeResponses []homeResponse
+		// tagMap
+		tagMap := make(map[string][]interface{})
+		for _, tag := range englishTags {
+			tagMap[tag] = nil
+		}
+
 		var wg sync.WaitGroup
 		var mu sync.Mutex
 		var overallErr error
@@ -80,8 +85,6 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 						"MR":   structpb.NewBoolValue(false),
 					},
 				}
-				// 입력받을 노래들의 리스트를 할당합니다
-				returnSongs := make([]songHomeResponse, 0, len(englishTags))
 
 				// Define a dummy vector (e.g., zero vector) for the query
 				dummyVector := make([]float32, conf.VectorDBConfigInstance.DIMENSION) // Assuming the vector length is 1536, adjust as necessary
@@ -96,41 +99,30 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 					Filter:          filterStruct,
 					SparseValues:    nil,
 					IncludeValues:   false,
-					IncludeMetadata: true,
+					IncludeMetadata: false,
 				})
 
 				if err != nil {
 					//pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 					// 에러 발생 시 전체 함수를 중단하지 않고 로그를 남기고 전체 에러 상태를 설정
 					log.Printf("QueryPineconeWithTag error for tag %s: %+v", tag, err)
-					mu.Lock()
 					overallErr = err
-					mu.Unlock()
 					return
 				}
 
-				// 받아온 입력들의 아이디 및 다른 값들을 할당합니다
+				ids := make([]interface{}, 0, len(values.Matches))
+
 				for _, match := range values.Matches {
 					v := match.Vector
 					songInfoId, err := strconv.Atoi(v.Id)
 					if err != nil {
 						log.Printf("Failed to convert ID to int, error: %+v", err)
 					}
-
-					//todo: 메타데이터 걷어내기
-					returnSongs = append(returnSongs, songHomeResponse{
-						SongInfoId: int64(songInfoId),
-						SongName:   v.Metadata.Fields["song_name"].GetStringValue(),
-						SingerName: v.Metadata.Fields["singer_name"].GetStringValue(),
-					})
+					ids = append(ids, int64(songInfoId))
 				}
 
-				koreanTag, err := MapTagEnglishToKorean(tag)
 				mu.Lock()
-				homeResponses = append(homeResponses, homeResponse{
-					Tag:   koreanTag,
-					Songs: returnSongs,
-				})
+				tagMap[tag] = ids
 				mu.Unlock()
 			}(i, tag)
 		}
@@ -141,40 +133,44 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 			return
 		}
 
-		// 모든 태그의 노래 정보를 한 번에 가져옵니다.
-		var songInfoIds []interface{}
-		for _, homeResponse := range homeResponses {
-			for _, song := range homeResponse.Songs {
-				songInfoIds = append(songInfoIds, song.SongInfoId)
-			}
+		//tagMap의 value들을 합쳐 db에서 가져옵니다.
+		ids := make([]interface{}, 0, 20*len(tagMap))
+		for _, idsInTag := range tagMap {
+			ids = append(ids, idsInTag...)
 		}
-
-		allSongs, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c, db)
+		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", ids...)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		songsMap := make(map[int64]*mysql.SongInfo, len(allSongs))
-		for _, song := range allSongs {
-			songsMap[song.SongInfoID] = song
-		}
+		homeResponses := make([]homeResponse, 0, len(tagMap))
+		for tag, ids := range tagMap {
+			korean, err := MapTagEnglishToKorean(tag)
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+			homeResponse := homeResponse{
+				Tag:   korean,
+				Songs: make([]songHomeResponse, 0, 20),
+			}
 
-		// homeResponses 업데이트
-		for _, homeResponse := range homeResponses {
-			for i := range homeResponse.Songs {
-				songInfoId := homeResponse.Songs[i].SongInfoId
-				if song, ok := songsMap[songInfoId]; ok {
-					homeResponse.Songs[i].SongNumber = song.SongNumber
-					homeResponse.Songs[i].Album = song.Album.String
-					homeResponse.Songs[i].IsMr = song.IsMR.Bool
-				} else {
-					log.Printf("SongInfoId not found from database: %v", songInfoId)
-					homeResponse.Songs[i].SongNumber = 0 // 혹은 디폴트 값 설정
-					homeResponse.Songs[i].Album = ""
-					homeResponse.Songs[i].IsMr = false
+			for _, songInfo := range songInfos {
+				for _, id := range ids {
+					if songInfo.SongInfoID == id.(int64) {
+						homeResponse.Songs = append(homeResponse.Songs, songHomeResponse{
+							SongNumber: songInfo.SongNumber,
+							SongName:   songInfo.SongName,
+							SingerName: songInfo.ArtistName,
+							SongInfoId: songInfo.SongInfoID,
+							Album:      songInfo.Album.String,
+							IsMr:       songInfo.IsMR.Bool,
+						})
+					}
 				}
 			}
+			homeResponses = append(homeResponses, homeResponse)
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "ok", homeResponses)

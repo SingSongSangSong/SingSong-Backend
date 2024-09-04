@@ -22,6 +22,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -120,18 +121,19 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		}
 
 		// email+Provider db에 있는지 확인
-		m, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c, db)
+		m, err := mysql.Members(qm.Where("email = ? AND provider = ? AND deleted_at is null", payload.Email, loginRequest.Provider)).One(c.Request.Context(), db)
 		if err != nil {
 			// DB에 없는 경우 - 회원가입
 			m, err = join(c, payload, loginRequest, m, db)
 			if err != nil {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 		}
 
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID, loginRequest.Provider)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID, KAKAO_PROVIDER)
+
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 			return
@@ -141,6 +143,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			AccessToken:  accessTokenString,
 			RefreshToken: refreshTokenString,
 		}
+
 		// accessToken, refreshToken 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
 	}

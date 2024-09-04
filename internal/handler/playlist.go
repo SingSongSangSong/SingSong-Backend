@@ -64,7 +64,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 
 		// Playlist 정보 가져오기
 		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
-		playlistRow, errors := m.One(c, db)
+		playlistRow, errors := m.One(c.Request.Context(), db)
 		if errors != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 			return
@@ -73,7 +73,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 		// 노래 정보들 가져오기
 		for _, songInfoId := range playlistRequest.SongInfoIds {
 			m := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId))
-			row, errors := m.One(c, db)
+			row, errors := m.One(c.Request.Context(), db)
 			if errors != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
@@ -81,14 +81,14 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 
 			// 기존에 같은 keepId와 songTempId가 있는지 확인
 			existsQuery := mysql.KeepSongs(qm.Where("keep_list_id = ? AND song_info_id = ? AND deleted_at IS NULL", playlistRow.KeepListID, row.SongInfoID))
-			existingRow, err := existsQuery.One(c, db)
+			existingRow, err := existsQuery.One(c.Request.Context(), db)
 			if err == nil && existingRow != nil {
 				// 이미 존재하면 추가하지 않고 계속 진행
 				continue
 			}
 
 			keepSong := mysql.KeepSong{KeepListID: playlistRow.KeepListID, SongInfoID: row.SongInfoID, SongNumber: row.SongNumber}
-			err = keepSong.Insert(c, db, boil.Infer())
+			err = keepSong.Insert(c.Request.Context(), db, boil.Infer())
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 				return
@@ -104,7 +104,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 		}(db, memberId, playlistRequest.SongInfoIds)
 
 		result := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistRow.KeepListID))
-		all, err2 := result.All(c, db)
+		all, err2 := result.All(c.Request.Context(), db)
 		if err2 != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
 			return
@@ -114,7 +114,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 
 		for _, v := range all {
 			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
-			row, errors := tempSong.One(c, db)
+			row, errors := tempSong.One(c.Request.Context(), db)
 			if errors != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
@@ -158,7 +158,7 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 
 		// Playlist정보 가져오기
 		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
-		playlistInfo, errors := m.One(c, db)
+		playlistInfo, errors := m.One(c.Request.Context(), db)
 		if errors != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 			return
@@ -168,14 +168,14 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 		for _, songInfoId := range songDeleteFromPlaylistRequest.SongInfoIds {
 			_, err := mysql.KeepSongs(
 				qm.Where("keep_list_id = ? AND song_info_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID, songInfoId),
-			).UpdateAll(c, db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
+			).UpdateAll(c.Request.Context(), db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			}
 		}
 
 		// 응답에 keep 목록 넣기
-		all, errors := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID)).All(c, db)
+		all, errors := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID)).All(c.Request.Context(), db)
 		if errors != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
@@ -185,7 +185,7 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 
 		for _, v := range all {
 			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
-			row, errors := tempSong.One(c, db)
+			row, errors := tempSong.One(c.Request.Context(), db)
 			if errors != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
@@ -217,14 +217,14 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 
 		// Playlist정보 가져오기
 		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
-		playlistInfo, errors := m.One(c, db)
+		playlistInfo, errors := m.One(c.Request.Context(), db)
 		if errors != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 			return
 		}
 
 		result := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID))
-		all, err2 := result.All(c, db)
+		all, err2 := result.All(c.Request.Context(), db)
 		if err2 != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
 			return
@@ -234,7 +234,7 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 
 		for _, v := range all {
 			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
-			row, errors := tempSong.One(c, db)
+			row, errors := tempSong.One(c.Request.Context(), db)
 			if errors != nil {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
