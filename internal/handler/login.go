@@ -391,7 +391,7 @@ func validateSignature(idToken string, signingKey *rsa.PublicKey, issuer, audien
 }
 
 func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.Member, db *sql.DB) (*mysql.Member, error) {
-	// nickname이 없을 경우 -> 랜덤 닉네임 //todo: 애플 확인 필요
+	// nickname이 없을 경우 -> 랜덤 닉네임
 	nickname := payload.Nickname
 	if nickname == "" {
 		nickname = generateRandomNickname()
@@ -402,7 +402,6 @@ func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.
 	birthYearInt, err := strconv.Atoi(loginRequest.BirthYear)
 	if err != nil {
 		log.Printf("Invalid BirthYear format: %v", err)
-		// Handle the error as needed, e.g., set birthYearInt to a default value or return an error
 		birthYearInt = 0 // Set to 0 or handle appropriately
 	}
 
@@ -411,7 +410,7 @@ func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.
 	nullGender := null.StringFrom(loginRequest.Gender)
 
 	m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
-	err = m.Insert(c, db, boil.Infer())
+	err = m.Insert(c.Request.Context(), db, boil.Infer())
 	if err != nil {
 		//pkg.BaseResponse(c, http.StatusBadRequest, "error inserting member - "+err.Error(), nil)
 		return nil, errors.New("Error inserting member")
