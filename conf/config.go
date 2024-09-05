@@ -17,6 +17,8 @@ type AuthConfig struct {
 	SECRET_KEY                   string
 	KAKAO_REST_API_KEY           string
 	KAKAO_ISSUER                 string
+	APPLE_CLIENT_ID              string
+	APPLE_ISSUER                 string
 	JWT_ISSUER                   string
 	JWT_ACCESS_VALIDITY_SECONDS  string
 	JWT_REFRESH_VALIDITY_SECONDS string
@@ -49,7 +51,7 @@ func init() {
 		log.Println("current environment is local, start to load .env file.")
 		err := godotenv.Load(".env")
 		if err != nil {
-			log.Fatalf("Error loading .env file during auth configuration.")
+			log.Printf("Error loading .env file during auth configuration.")
 		}
 	} else if Env == TestMode {
 		log.Println("Running in test mode, skip .env file loading.")
@@ -61,6 +63,8 @@ func init() {
 		SECRET_KEY:                   os.Getenv("SECRET_KEY"),
 		KAKAO_REST_API_KEY:           os.Getenv("KAKAO_REST_API_KEY"),
 		KAKAO_ISSUER:                 os.Getenv("KAKAO_ISSUER"),
+		APPLE_CLIENT_ID:              os.Getenv("APPLE_CLIENT_ID"),
+		APPLE_ISSUER:                 os.Getenv("APPLE_ISSUER"),
 		JWT_ISSUER:                   os.Getenv("JWT_ISSUER"),
 		JWT_ACCESS_VALIDITY_SECONDS:  os.Getenv("JWT_ACCESS_VALIDITY_SECONDS"),
 		JWT_REFRESH_VALIDITY_SECONDS: os.Getenv("JWT_REFRESH_VALIDITY_SECONDS"),
