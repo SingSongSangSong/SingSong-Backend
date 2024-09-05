@@ -16,6 +16,7 @@ func TestGetSongInfo(t *testing.T) {
 	// 테스트 Context 생성
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/test", nil)
 
 	// 테스트 디비 생성
 	db, mock, err := pkg.NewTestDB()
