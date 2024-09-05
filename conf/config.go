@@ -49,7 +49,7 @@ func init() {
 		log.Println("current environment is local, start to load .env file.")
 		err := godotenv.Load(".env")
 		if err != nil {
-			log.Fatalf("Error loading .env file during auth configuration.")
+			log.Printf("Error loading .env file during auth configuration.")
 		}
 	} else if Env == TestMode {
 		log.Println("Running in test mode, skip .env file loading.")
