@@ -43,6 +43,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 		// 노래 이름으로 검색
 		songsWithName, err := mysql.SongInfos(
 			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
+			qm.OrderBy("CASE WHEN song_name LIKE ? THEN 1 WHEN song_name LIKE ? THEN 2 ELSE 3 END", searchKeyword, searchKeyword+"%"),
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
@@ -53,6 +54,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 		// 아티스트 이름으로 검색
 		songsWithArtist, err := mysql.SongInfos(
 			qm.Where("artist_name LIKE ?", "%"+searchKeyword+"%"),
+			qm.OrderBy("CASE WHEN artist_name LIKE ? THEN 1 WHEN artist_name LIKE ? THEN 2 ELSE 3 END", searchKeyword, searchKeyword+"%"),
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
@@ -139,7 +141,7 @@ type songSearchPageResponse struct {
 // @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=songSearchPageResponse} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
-// @Router       /search/artist [get]
+// @Router       /search/artist-name [get]
 func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 검색어를 쿼리 파라미터에서 가져오기
