@@ -43,7 +43,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 		// 노래 이름으로 검색
 		songsWithName, err := mysql.SongInfos(
 			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
-			qm.OrderBy("CASE WHEN song_name LIKE ? THEN 1 WHEN song_name LIKE ? THEN 2 ELSE 3 END", searchKeyword, searchKeyword+"%"),
+			qm.OrderBy("CASE WHEN song_name LIKE ? THEN 1 WHEN song_name LIKE ? THEN 2 ELSE 3 END, song_info_id", searchKeyword, searchKeyword+"%"),
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
@@ -54,7 +54,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 		// 아티스트 이름으로 검색
 		songsWithArtist, err := mysql.SongInfos(
 			qm.Where("artist_name LIKE ?", "%"+searchKeyword+"%"),
-			qm.OrderBy("CASE WHEN artist_name LIKE ? THEN 1 WHEN artist_name LIKE ? THEN 2 ELSE 3 END", searchKeyword, searchKeyword+"%"),
+			qm.OrderBy("CASE WHEN artist_name LIKE ? THEN 1 WHEN artist_name LIKE ? THEN 2 ELSE 3 END, song_info_id", searchKeyword, searchKeyword+"%"),
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
@@ -176,7 +176,7 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 
 		songsWithArtist, err := mysql.SongInfos(
 			qm.Where("artist_name LIKE ?", "%"+searchKeyword+"%"),
-			qm.OrderBy("CASE WHEN artist_name LIKE ? THEN 1 WHEN artist_name LIKE ? THEN 2 ELSE 3 END", searchKeyword, searchKeyword+"%"),
+			qm.OrderBy("CASE WHEN artist_name LIKE ? THEN 1 WHEN artist_name LIKE ? THEN 2 ELSE 3 END, song_info_id", searchKeyword, searchKeyword+"%"),
 			qm.Limit(size),
 			qm.Offset(offset),
 		).All(c.Request.Context(), db)
@@ -251,7 +251,7 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 		offset := (page - 1) * size
 		songsWithName, err := mysql.SongInfos(
 			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
-			qm.OrderBy("CASE WHEN song_name LIKE ? THEN 1 WHEN song_name LIKE ? THEN 2 ELSE 3 END", searchKeyword, searchKeyword+"%"),
+			qm.OrderBy("CASE WHEN song_name LIKE ? THEN 1 WHEN song_name LIKE ? THEN 2 ELSE 3 END, song_info_id", searchKeyword, searchKeyword+"%"),
 			qm.Limit(size),
 			qm.Offset(offset),
 		).All(c.Request.Context(), db)
