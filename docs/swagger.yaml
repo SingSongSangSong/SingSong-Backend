@@ -924,7 +924,7 @@ paths:
       summary: 노래 검색 API
       tags:
       - Search
-  /search/artist:
+  /search/artist-name:
     get:
       consumes:
       - application/json
