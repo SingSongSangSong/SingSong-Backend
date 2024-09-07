@@ -174,6 +174,7 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 
 		songsWithArtist, err := mysql.SongInfos(
 			qm.Where("artist_name LIKE ?", "%"+searchKeyword+"%"),
+			qm.OrderBy("CASE WHEN artist_name LIKE ? THEN 1 WHEN artist_name LIKE ? THEN 2 ELSE 3 END", searchKeyword, searchKeyword+"%"),
 			qm.Limit(size),
 			qm.Offset(offset),
 		).All(c.Request.Context(), db)
@@ -248,6 +249,7 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 		offset := (page - 1) * size
 		songsWithName, err := mysql.SongInfos(
 			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
+			qm.OrderBy("CASE WHEN song_name LIKE ? THEN 1 WHEN song_name LIKE ? THEN 2 ELSE 3 END", searchKeyword, searchKeyword+"%"),
 			qm.Limit(size),
 			qm.Offset(offset),
 		).All(c.Request.Context(), db)
