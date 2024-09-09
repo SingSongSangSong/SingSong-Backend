@@ -33,7 +33,7 @@ var (
 	maximumSongSize = 100
 )
 
-// GetRelatedSong godoc
+// RelatedSong godoc
 // @Summary      연관된 노래들을 조회합니다
 // @Description  연관된 노래들과 다음 페이지 번호를 함께 조회합니다. 노래 상세 화면에 첫 진입했을 경우 page 번호는 1입니다. 무한스크롤을 진행한다면 응답에 포함되어 오는 nextPage를 다음번에 포함하여 보내면 됩니다. nextPage는 1씩 증가합니다. 더이상 노래가 없을 경우, 응답에는 빈 배열과 함께 nextPage는 1로 반환됩니다.
 // @Tags         Songs

@@ -44,7 +44,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	{
 		recommend.POST("/home", handler.HomeRecommendation(db, rdb, idxConnection))
 		recommend.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendation(db, rdb, idxConnection)) //일단 새로고침에만 적용
-		recommend.GET("/recommendation", middleware.AuthMiddleware(db), handler.GetRecommendation(db, rdb, idxConnection))
+		recommend.GET("/recommendation/:pageId", middleware.AuthMiddleware(db), handler.GetRecommendation())
 	}
 
 	// 태그 엔드포인트 설정

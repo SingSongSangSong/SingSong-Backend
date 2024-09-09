@@ -304,6 +304,21 @@ definitions:
           type: string
         type: array
     type: object
+  handler.songResponse:
+    properties:
+      album:
+        type: string
+      isMr:
+        type: boolean
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
   handler.songReviewOptionAddRequest:
     properties:
       enum:
@@ -364,6 +379,13 @@ definitions:
       songs:
         items:
           $ref: '#/definitions/handler.songSearchInfoResponse'
+        type: array
+    type: object
+  handler.userProfileResponse:
+    properties:
+      songs:
+        items:
+          $ref: '#/definitions/handler.songResponse'
         type: array
     type: object
   handler.versionCheckRequest:
@@ -855,6 +877,34 @@ paths:
                   type: array
               type: object
       summary: 노래 추천 by 태그
+      tags:
+      - Recommendation
+  /recommend/recommendation/{pageId}:
+    get:
+      consumes:
+      - application/json
+      description: 사용자의 프로필을 기반으로 추천된 노래를 반환합니다.
+      parameters:
+      - description: 현재 조회할 노래 목록의 쪽수
+        in: path
+        name: pageId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.userProfileResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: AI가 골랐송
       tags:
       - Recommendation
   /recommend/refresh:

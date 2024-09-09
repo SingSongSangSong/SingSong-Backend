@@ -825,6 +825,55 @@
                 }
             }
         },
+        "/recommend/recommendation/{pageId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "사용자의 프로필을 기반으로 추천된 노래를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "AI가 골랐송",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 노래 목록의 쪽수",
+                        "name": "pageId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.userProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/recommend/refresh": {
             "post": {
                 "security": [
@@ -2047,6 +2096,29 @@
                 }
             }
         },
+        "handler.songResponse": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.songReviewOptionAddRequest": {
             "type": "object",
             "properties": {
@@ -2139,6 +2211,17 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/handler.songSearchInfoResponse"
+                    }
+                }
+            }
+        },
+        "handler.userProfileResponse": {
+            "type": "object",
+            "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songResponse"
                     }
                 }
             }
