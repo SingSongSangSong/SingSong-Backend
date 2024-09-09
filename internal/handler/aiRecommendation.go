@@ -27,7 +27,7 @@ type userProfileResponse struct {
 
 // GetRecommendation godoc
 // @Summary      AI가 골랐송
-// @Description  사용자의 프로필을 기반으로 추천된 노래를 반환합니다.
+// @Description  사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.
 // @Tags         Recommendation
 // @Accept       json
 // @Produce      json
