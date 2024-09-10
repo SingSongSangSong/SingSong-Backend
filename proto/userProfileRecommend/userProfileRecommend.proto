@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package userProfileRecommend;
+
+option go_package = "proto/userProfileRecommend";  // Go 패키지 경로 추가
+
+
+// 요청 메시지: memberId를 받아서 유사한 아이템을 검색
+message ProfileRequest {
+  int64 memberId = 1;
+  int32 page = 2;
+  string gender = 3;
+}
+
+// 각 아이템의 메타데이터 정보를 반환하는 메시지
+message SimilarItem {
+  int64 songInfoId = 1;        // 아이템의 ID
+  string songName = 2;           // 노래 제목
+  string singerName = 3;         // 아티스트 이름
+  bool isMr = 4;                    // MR 여부
+  string ssss = 5;                // 추가 메타데이터 필드 (ssss)
+  string audioFileUrl = 6;      // 오디오 파일 URL
+  string album = 7;     // 앨범 이미지 URL
+  int32 songNumber = 8;
+  float similarityScore = 9;     // 유사도 점수
+}
+
+// 유사한 아이템들의 리스트를 반환하는 응답 메시지
+message ProfileResponse {
+  repeated SimilarItem similarItems = 1; // 유사한 아이템 목록
+}
+
+// UserProfile 서비스
+service UserProfile {
+  rpc CreateUserProfile(ProfileRequest) returns (ProfileResponse) {}
+}
