@@ -14,13 +14,16 @@ import (
 
 // songHomeResponse와 songResponse가 동일한 것으로 가정하고 사용
 type songResponse struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	SongInfoId int64  `json:"songId"`
-	Album      string `json:"album"`
-	IsMr       bool   `json:"isMr"`
-	VideoLink  string `json:"videoLink"`
+	SongNumber   int    `json:"songNumber"`
+	SongName     string `json:"songName"`
+	SingerName   string `json:"singerName"`
+	SongInfoId   int64  `json:"songId"`
+	Album        string `json:"album"`
+	IsMr         bool   `json:"isMr"`
+	VideoLink    string `json:"videoLink"`
+	IsKeep       bool   `json:"isKeep"`
+	KeepCount    int    `json:"keepCount"`
+	CommentCount int    `json:"commentCount"`
 }
 
 type userProfileResponse struct {
