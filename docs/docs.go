@@ -833,6 +833,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/recommend/recommendation/llm": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 5개의 노래를 반환합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "LLM으로 검색하기",
+                "parameters": [
+                    {
+                        "description": "인풋",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LlmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.userProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/recommend/recommendation/{pageId}": {
             "get": {
                 "security": [
@@ -840,7 +891,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "사용자의 프로필을 기반으로 추천된 노래를 반환합니다.",
+                "description": "사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1722,6 +1773,14 @@ const docTemplate = `{
                 },
                 "songId": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.LlmRequest": {
+            "type": "object",
+            "properties": {
+                "userInput": {
+                    "type": "string"
                 }
             }
         },
