@@ -699,6 +699,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/member/nickname": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Nickname 업데이트 한다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "Nickname 업데이트 한다",
+                "parameters": [
+                    {
+                        "description": "닉네임",
+                        "name": "updateNicknameRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateNicknameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.MemberResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/member/reissue": {
             "post": {
                 "description": "AccessToken 재발급 및 RefreshToken 재발급 (RTR Refresh Token Rotation)",
@@ -1942,6 +1993,14 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.UpdateNicknameRequest": {
+            "type": "object",
+            "properties": {
+                "nickname": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.WithdrawRequest": {
             "type": "object",
             "properties": {
@@ -2175,8 +2234,17 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "isKeep": {
+                    "type": "boolean"
+                },
                 "isMr": {
                     "type": "boolean"
+                },
+                "keepCount": {
+                    "type": "integer"
                 },
                 "singerName": {
                     "type": "string"
@@ -2189,9 +2257,6 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
-                },
-                "videoLink": {
-                    "type": "string"
                 }
             }
         },

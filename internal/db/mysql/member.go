@@ -26,7 +26,7 @@ import (
 type Member struct {
 	MemberID    int64       `boil:"member_id" json:"member_id" toml:"member_id" yaml:"member_id"`
 	Nickname    null.String `boil:"nickname" json:"nickname,omitempty" toml:"nickname" yaml:"nickname,omitempty"`
-	Email       string      `boil:"email" json:"email" toml:"email" yaml:"email"`
+	Email       null.String `boil:"email" json:"email,omitempty" toml:"email" yaml:"email,omitempty"`
 	Gender      null.String `boil:"gender" json:"gender,omitempty" toml:"gender" yaml:"gender,omitempty"`
 	Birthyear   null.Int    `boil:"birthyear" json:"birthyear,omitempty" toml:"birthyear" yaml:"birthyear,omitempty"`
 	Provider    string      `boil:"provider" json:"provider" toml:"provider" yaml:"provider"`
@@ -92,7 +92,7 @@ var MemberTableColumns = struct {
 var MemberWhere = struct {
 	MemberID    whereHelperint64
 	Nickname    whereHelpernull_String
-	Email       whereHelperstring
+	Email       whereHelpernull_String
 	Gender      whereHelpernull_String
 	Birthyear   whereHelpernull_Int
 	Provider    whereHelperstring
@@ -103,7 +103,7 @@ var MemberWhere = struct {
 }{
 	MemberID:    whereHelperint64{field: "`member`.`member_id`"},
 	Nickname:    whereHelpernull_String{field: "`member`.`nickname`"},
-	Email:       whereHelperstring{field: "`member`.`email`"},
+	Email:       whereHelpernull_String{field: "`member`.`email`"},
 	Gender:      whereHelpernull_String{field: "`member`.`gender`"},
 	Birthyear:   whereHelpernull_Int{field: "`member`.`birthyear`"},
 	Provider:    whereHelperstring{field: "`member`.`provider`"},

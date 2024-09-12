@@ -25,6 +25,8 @@ CREATE TABLE IF NOT EXISTS member (
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
 
+ALTER TABLE member MODIFY email VARCHAR(150);
+
 -- keepList 테이블 생성
 CREATE TABLE IF NOT EXISTS keep_list (
     keep_list_id BIGINT AUTO_INCREMENT PRIMARY KEY,
