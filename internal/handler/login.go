@@ -106,6 +106,32 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		// provider가 Anonymous인 경우
+		if loginRequest.Provider == "Anonymous" {
+			// DB에 없는 경우 - 회원가입
+			m, err := joinForAnonymous(c, &Claims{Email: "Anonymous@anonymous.com"}, 0, "Unknown", loginRequest.Provider, db)
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
+
+			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID, "Anonymous")
+			if tokenErr != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
+				return
+			}
+
+			loginResponse := LoginResponse{
+				AccessToken:  accessTokenString,
+				RefreshToken: refreshTokenString,
+			}
+
+			// accessToken, refreshToken 반환
+			pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
+			return
+		}
+
 		// email 및 nickname 추출
 		payload, err := GetUserEmailFromIdToken(c, redis, loginRequest.IdToken, loginRequest.Provider)
 		if err != nil {
@@ -390,12 +416,18 @@ func validateSignature(idToken string, signingKey *rsa.PublicKey, issuer, audien
 	return nil, errors.New("클레임이 유효하지 않음")
 }
 
-func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.Member, db *sql.DB) (*mysql.Member, error) {
-	// nickname이 없을 경우 -> 랜덤 닉네임
-	nickname := payload.Nickname
-	if nickname == "" {
-		nickname = generateRandomNickname()
+func joinForAnonymous(c *gin.Context, payload *Claims, year int, gender string, provider string, db *sql.DB) (*mysql.Member, error) {
+	m := &mysql.Member{Provider: provider, Email: payload.Email, Nickname: null.StringFrom("Anonymous"), Birthyear: null.IntFrom(year), Gender: null.StringFrom(gender)}
+	err := m.Insert(c.Request.Context(), db, boil.Infer())
+	if err != nil {
+		return nil, errors.New("error inserting member - " + err.Error())
 	}
+	return m, nil
+}
+
+func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.Member, db *sql.DB) (*mysql.Member, error) {
+	// 랜덤 닉네임
+	nickname := generateRandomNickname()
 	nullNickname := null.StringFrom(nickname)
 
 	// Convert the BirthYear to an integer

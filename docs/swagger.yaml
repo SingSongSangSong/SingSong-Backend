@@ -166,6 +166,11 @@ definitions:
       time:
         type: string
     type: object
+  handler.UpdateNicknameRequest:
+    properties:
+      nickname:
+        type: string
+    type: object
   handler.WithdrawRequest:
     properties:
       refreshToken:
@@ -808,6 +813,35 @@ paths:
       security:
       - BearerAuth: []
       summary: 멤버 회원 로그아웃
+      tags:
+      - Member
+  /member/nickname:
+    patch:
+      consumes:
+      - application/json
+      description: Nickname 업데이트 한다
+      parameters:
+      - description: 닉네임
+        in: body
+        name: updateNicknameRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateNicknameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.MemberResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Nickname 업데이트 한다
       tags:
       - Member
   /member/reissue:
