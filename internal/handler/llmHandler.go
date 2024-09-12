@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	pb "SingSong-Server/proto/langchainRecommend"
 	"context"
+	"database/sql"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"log"
@@ -24,7 +25,7 @@ type LlmRequest struct {
 // @Success      200 {object} pkg.BaseResponseStruct{data=userProfileResponse} "성공"
 // @Router       /v1/recommend/recommendation/llm [post]
 // @Security BearerAuth
-func LlmHandler() gin.HandlerFunc {
+func LlmHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get memberId from the middleware (assumed that the middleware sets the memberId)
 		memberId, exists := c.Get("memberId")

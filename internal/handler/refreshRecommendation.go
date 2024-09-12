@@ -23,13 +23,15 @@ type refreshRequest struct {
 }
 
 type refreshResponse struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	Album      string `json:"album"`
-	IsKeep     bool   `json:"isKeep"`
-	SongInfoId int64  `json:"songId"`
-	IsMr       bool   `json:"isMr"`
+	SongNumber   int    `json:"songNumber"`
+	SongName     string `json:"songName"`
+	SingerName   string `json:"singerName"`
+	Album        string `json:"album"`
+	IsKeep       bool   `json:"isKeep"`
+	SongInfoId   int64  `json:"songId"`
+	IsMr         bool   `json:"isMr"`
+	KeepCount    int    `json:"keepCount"`
+	CommentCount int    `json:"commentCount"`
 }
 
 var (
@@ -73,7 +75,6 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		}
 
 		historySongs := getRefreshHistory(c, redisClient, memberId, englishTag)
-
 		vectorQuerySize := pageSize + len(historySongs)
 		values, err := queryVectorByTag(c, englishTag, idxConnection, vectorQuerySize)
 		if err != nil {
@@ -92,56 +93,85 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			historySongs = []int64{}
 		}
 
-		//list
+		// KeepLists에서 member_id에 해당하는 KeepList 가져오기
 		one, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).One(c.Request.Context(), db)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error keep list - "+err.Error(), nil)
 			return
 		}
 
 		// 모든 KeepSongs 가져오기
 		keepSongs, err := mysql.KeepSongs(qm.Where("keep_list_id = ?", one.KeepListID), qm.And("deleted_at IS NULL")).All(c.Request.Context(), db)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error keep song id- "+err.Error(), nil)
 			return
 		}
 
-		// Map으로 KeepSongs를 구성하여 존재 여부를 빠르게 확인
+		// SongInfoId 리스트 생성
+		songInfoIds := make([]interface{}, len(refreshedSongs))
+		for i, song := range refreshedSongs {
+			songInfoIds[i] = song.SongInfoId
+		}
+
+		// SongInfos 조회
+		all, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error song info- "+err.Error(), nil)
+			return
+		}
+
+		// Comments 수 조회
+		commentsCounts, err := mysql.Comments(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error comments - "+err.Error(), nil)
+			return
+		}
+
+		// Keep 수 조회
+		keepCounts, err := mysql.KeepSongs(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error keepsongs- "+err.Error(), nil)
+			return
+		}
+
+		// SongInfo, CommentCount, KeepCount, KeepSongs를 위한 맵 생성
+		songInfoMap := make(map[int64]*mysql.SongInfo)
+		commentsMap := make(map[int64]int)
+		keepMap := make(map[int64]int)
 		isKeepMap := make(map[int64]bool)
+
 		for _, keepSong := range keepSongs {
 			isKeepMap[keepSong.SongInfoID] = true
 		}
 
-		// refreshSongs에 isKeep 여부 추가
-		for i, song := range refreshedSongs {
-			refreshedSongs[i].IsKeep = isKeepMap[song.SongInfoId]
-		}
-
-		// SongInfo 가져오기
-		songInfoIds := make([]interface{}, 0, len(refreshedSongs))
-		for _, song := range refreshedSongs {
-			songInfoIds = append(songInfoIds, song.SongInfoId)
-		}
-
-		all, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-			return
-		}
-
-		songInfoMap := make(map[int64]*mysql.SongInfo)
 		for _, song := range all {
 			songInfoMap[song.SongInfoID] = song
 		}
 
-		// refreshSongs에 songTempId 추가
+		for _, comment := range commentsCounts {
+			commentsMap[comment.SongInfoID]++
+		}
+
+		for _, keep := range keepCounts {
+			keepMap[keep.SongInfoID]++
+		}
+
+		// refreshSongs에 song 정보 및 댓글 수, Keep 수 추가
 		for i, song := range refreshedSongs {
-			found := songInfoMap[song.SongInfoId]
-			refreshedSongs[i].SongNumber = found.SongNumber
-			refreshedSongs[i].Album = found.Album.String
-			refreshedSongs[i].IsMr = found.IsMR.Bool
-			refreshedSongs[i].SongName = found.SongName
-			refreshedSongs[i].SingerName = found.ArtistName
+			foundSong := songInfoMap[song.SongInfoId]
+
+			if foundSong != nil {
+				refreshedSongs[i].SongNumber = foundSong.SongNumber
+				refreshedSongs[i].Album = foundSong.Album.String
+				refreshedSongs[i].IsMr = foundSong.IsMR.Bool
+				refreshedSongs[i].SongName = foundSong.SongName
+				refreshedSongs[i].SingerName = foundSong.ArtistName
+			}
+
+			// 댓글 수 및 Keep 수 추가
+			refreshedSongs[i].CommentCount = commentsMap[song.SongInfoId]
+			refreshedSongs[i].KeepCount = keepMap[song.SongInfoId]
+			refreshedSongs[i].IsKeep = isKeepMap[song.SongInfoId]
 		}
 
 		// history 갱신
