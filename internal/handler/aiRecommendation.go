@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	pb "SingSong-Server/proto/userProfileRecommend"
 	"context"
+	"database/sql"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 	"log"
@@ -19,6 +20,7 @@ type songResponse struct {
 	SongInfoId int64  `json:"songId"`
 	Album      string `json:"album"`
 	IsMr       bool   `json:"isMr"`
+	VideoLink  string `json:"videoLink"`
 }
 
 type userProfileResponse struct {
@@ -35,7 +37,7 @@ type userProfileResponse struct {
 // @Success      200 {object} pkg.BaseResponseStruct{data=userProfileResponse} "성공"
 // @Router       /recommend/recommendation/{pageId} [get]
 // @Security BearerAuth
-func GetRecommendation() gin.HandlerFunc {
+func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Extract pageId from the path
 		page := c.Param("pageId")
@@ -60,8 +62,7 @@ func GetRecommendation() gin.HandlerFunc {
 
 		gender, exists := c.Get("gender")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not found", nil)
-			return
+			log.Println("Gender not found in context - defaulting")
 		}
 
 		// Ensure memberId is cast to int64
@@ -102,6 +103,7 @@ func GetRecommendation() gin.HandlerFunc {
 
 		// Loop through the gRPC response to populate songResponse
 		for _, item := range response.SimilarItems {
+
 			userProfileRes.Songs = append(userProfileRes.Songs, songResponse{
 				SongNumber: int(item.SongNumber),
 				SongName:   item.SongName,
