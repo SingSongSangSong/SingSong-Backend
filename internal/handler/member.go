@@ -45,16 +45,12 @@ func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		nullNickname := member.Nickname.String
-		nullBirthyear := member.Birthyear.Int
-		nullGender := member.Gender.String
-
 		// JSON response
 		memberResponse := MemberResponse{
-			Email:     member.Email,
-			Nickname:  nullNickname,
-			Birthyear: nullBirthyear,
-			Gender:    nullGender,
+			Email:     member.Email.String,
+			Nickname:  member.Nickname.String,
+			Birthyear: member.Birthyear.Int,
+			Gender:    member.Gender.String,
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "success", memberResponse)
@@ -102,7 +98,7 @@ func UpdateNickname(db *sql.DB) gin.HandlerFunc {
 
 		// JSON response
 		memberResponse := MemberResponse{
-			Email:     member.Email,
+			Email:     member.Email.String,
 			Nickname:  member.Nickname.String,
 			Birthyear: member.Birthyear.Int,
 			Gender:    member.Gender.String,

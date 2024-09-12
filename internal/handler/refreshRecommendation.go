@@ -107,17 +107,6 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			return
 		}
 
-		// Map으로 KeepSongs를 구성하여 빠른 조회
-		isKeepMap := make(map[int64]bool)
-		for _, keepSong := range keepSongs {
-			isKeepMap[keepSong.SongInfoID] = true
-		}
-
-		// refreshSongs에 IsKeep 여부 추가
-		for i, song := range refreshedSongs {
-			refreshedSongs[i].IsKeep = isKeepMap[song.SongInfoId]
-		}
-
 		// SongInfoId 리스트 생성
 		songInfoIds := make([]interface{}, len(refreshedSongs))
 		for i, song := range refreshedSongs {
@@ -145,10 +134,15 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			return
 		}
 
-		// SongInfo, CommentCount, KeepCount를 위한 맵 생성
+		// SongInfo, CommentCount, KeepCount, KeepSongs를 위한 맵 생성
 		songInfoMap := make(map[int64]*mysql.SongInfo)
 		commentsMap := make(map[int64]int)
 		keepMap := make(map[int64]int)
+		isKeepMap := make(map[int64]bool)
+
+		for _, keepSong := range keepSongs {
+			isKeepMap[keepSong.SongInfoID] = true
+		}
 
 		for _, song := range all {
 			songInfoMap[song.SongInfoID] = song
@@ -177,10 +171,8 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			// 댓글 수 및 Keep 수 추가
 			refreshedSongs[i].CommentCount = commentsMap[song.SongInfoId]
 			refreshedSongs[i].KeepCount = keepMap[song.SongInfoId]
+			refreshedSongs[i].IsKeep = isKeepMap[song.SongInfoId]
 		}
-
-		// 결과 출력
-		log.Printf("refreshedSongs: %v", refreshedSongs)
 
 		// history 갱신
 		for _, song := range refreshedSongs {
