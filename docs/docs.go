@@ -2234,8 +2234,17 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "isKeep": {
+                    "type": "boolean"
+                },
                 "isMr": {
                     "type": "boolean"
+                },
+                "keepCount": {
+                    "type": "integer"
                 },
                 "singerName": {
                     "type": "string"
@@ -2248,9 +2257,6 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
-                },
-                "videoLink": {
-                    "type": "string"
                 }
             }
         },

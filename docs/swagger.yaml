@@ -322,8 +322,14 @@ definitions:
     properties:
       album:
         type: string
+      commentCount:
+        type: integer
+      isKeep:
+        type: boolean
       isMr:
         type: boolean
+      keepCount:
+        type: integer
       singerName:
         type: string
       songId:
@@ -332,8 +338,6 @@ definitions:
         type: string
       songNumber:
         type: integer
-      videoLink:
-        type: string
     type: object
   handler.songReviewOptionAddRequest:
     properties:
