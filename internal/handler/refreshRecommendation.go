@@ -44,7 +44,7 @@ var (
 // @Produce      json
 // @Param        songs   body      refreshRequest  true  "태그"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]refreshResponse} "성공"
-// @Router       /recommend/refresh [post]
+// @Router       /v1/recommend/refresh [post]
 // @Security BearerAuth
 func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {

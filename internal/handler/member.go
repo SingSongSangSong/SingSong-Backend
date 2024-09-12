@@ -25,7 +25,7 @@ type MemberResponse struct {
 // @Accept       json
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct{data=MemberResponse} "성공"
-// @Router       /member [get]
+// @Router       /v1/member [get]
 // @Security BearerAuth
 func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -71,7 +71,7 @@ type WithdrawRequest struct {
 // @Produce      json
 // @Param        refreshToken   body      WithdrawRequest  true  "refreshToken"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
-// @Router       /member/withdraw [post]
+// @Router       /v1/member/withdraw [post]
 // @Security BearerAuth
 func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -118,7 +118,7 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 // @Produce      json
 // @Param        refreshToken   body      WithdrawRequest  true  "refreshToken"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
-// @Router       /member/logout [post]
+// @Router       /v1/member/logout [post]
 // @Security BearerAuth
 func Logout(redis *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {

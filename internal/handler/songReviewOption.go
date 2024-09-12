@@ -23,7 +23,7 @@ type songReviewOptionAddRequest struct {
 // @Produce      json
 // @Param        songReviewOptionAddRequest body songReviewOptionAddRequest true "평가 선택지"
 // @Success      200 "성공"
-// @Router       /song-review-options [post]
+// @Router       /v1/song-review-options [post]
 func AddSongReviewOption(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		request := &songReviewOptionAddRequest{}
@@ -53,7 +53,7 @@ func AddSongReviewOption(db *sql.DB) gin.HandlerFunc {
 // @Accept       json
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]string} "성공"
-// @Router       /song-review-options [get]
+// @Router       /v1/song-review-options [get]
 func ListSongReviewOptions(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		all, err := mysql.SongReviewOptions().All(c.Request.Context(), db)

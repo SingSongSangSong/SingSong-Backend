@@ -22,7 +22,7 @@ type LlmRequest struct {
 // @Produce      json
 // @Param        input   body      LlmRequest  true  "인풋"
 // @Success      200 {object} pkg.BaseResponseStruct{data=userProfileResponse} "성공"
-// @Router       /recommend/recommendation/llm [post]
+// @Router       /v1/recommend/recommendation/llm [post]
 // @Security BearerAuth
 func LlmHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {

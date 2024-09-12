@@ -33,7 +33,7 @@ type userProfileResponse struct {
 // @Produce      json
 // @Param        pageId path int true "현재 조회할 노래 목록의 쪽수"
 // @Success      200 {object} pkg.BaseResponseStruct{data=userProfileResponse} "성공"
-// @Router       /recommend/recommendation/{pageId} [get]
+// @Router       /v1/recommend/recommendation/{pageId} [get]
 // @Security BearerAuth
 func GetRecommendation() gin.HandlerFunc {
 	return func(c *gin.Context) {

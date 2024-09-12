@@ -24,7 +24,7 @@ type blacklistRequest struct {
 // @Produce      json
 // @Param        blacklistRequest   body      blacklistRequest  true  "blacklistRequest"
 // @Success      200 "성공"
-// @Router       /blacklist [post]
+// @Router       /v1/blacklist [post]
 // @Security BearerAuth
 func AddBlacklist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -79,7 +79,7 @@ type deleteBlacklistRequest struct {
 // @Produce      json
 // @Param        deleteBlacklistRequest   body      deleteBlacklistRequest  true  "deleteBlacklistRequest"
 // @Success      200 "성공"
-// @Router       /blacklist [delete]
+// @Router       /v1/blacklist [delete]
 // @Security BearerAuth
 func DeleteBlacklist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -126,7 +126,7 @@ type blacklistResponse struct {
 // @Accept       json
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]blacklistResponse} "성공"
-// @Router       /blacklist [get]
+// @Router       /v1/blacklist [get]
 // @Security BearerAuth
 func GetBlacklist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {

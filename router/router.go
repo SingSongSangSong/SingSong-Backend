@@ -104,9 +104,14 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		blacklist.GET("", middleware.AuthMiddleware(db), handler.GetBlacklist(db))
 	}
 
-	chart := r.Group("/api/v1/chart")
+	chartV1 := r.Group("/api/v1/chart")
 	{
-		chart.GET("", middleware.AuthMiddleware(db), handler.GetChart(rdb))
+		chartV1.GET("", middleware.AuthMiddleware(db), handler.GetChart(rdb))
+	}
+
+	chartV2 := r.Group("/api/v2/chart")
+	{
+		chartV2.GET("", middleware.AuthMiddleware(db), handler.GetChartV2(rdb))
 	}
 
 	search := r.Group("/api/v1/search")

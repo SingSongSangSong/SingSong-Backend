@@ -33,7 +33,7 @@ type songInfoResponse struct {
 // @Produce      json
 // @Param        songId path string true "songId"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]songInfoResponse} "성공"
-// @Router       /songs/{songId} [get]
+// @Router       /v1/songs/{songId} [get]
 // @Security BearerAuth
 func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
