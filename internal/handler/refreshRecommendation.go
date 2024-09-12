@@ -23,13 +23,15 @@ type refreshRequest struct {
 }
 
 type refreshResponse struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	Album      string `json:"album"`
-	IsKeep     bool   `json:"isKeep"`
-	SongInfoId int64  `json:"songId"`
-	IsMr       bool   `json:"isMr"`
+	SongNumber   int    `json:"songNumber"`
+	SongName     string `json:"songName"`
+	SingerName   string `json:"singerName"`
+	Album        string `json:"album"`
+	IsKeep       bool   `json:"isKeep"`
+	SongInfoId   int64  `json:"songId"`
+	IsMr         bool   `json:"isMr"`
+	KeepCount    int    `json:"keepCount"`
+	CommentCount int    `json:"commentCount"`
 }
 
 var (
@@ -129,6 +131,20 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			return
 		}
 
+		commentsCounts, err := mysql.Comments(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		log.Printf("commentsCounts: %v", commentsCounts)
+
+		keepCounts, err := mysql.KeepSongs(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		log.Printf("keepCounts: %v", keepCounts)
+
 		songInfoMap := make(map[int64]*mysql.SongInfo)
 		for _, song := range all {
 			songInfoMap[song.SongInfoID] = song
@@ -142,6 +158,24 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 			refreshedSongs[i].IsMr = found.IsMR.Bool
 			refreshedSongs[i].SongName = found.SongName
 			refreshedSongs[i].SingerName = found.ArtistName
+		}
+		log.Printf("refreshedSongs: %v", refreshedSongs)
+
+		// 추가로 commentsCounts와 keepCounts 데이터를 refreshedSongs에 매핑하는 작업을 수행
+		commentsMap := make(map[int64]int)
+		for _, comment := range commentsCounts {
+			commentsMap[comment.SongInfoID]++
+		}
+
+		keepMap := make(map[int64]int)
+		for _, keep := range keepCounts {
+			keepMap[keep.SongInfoID]++
+		}
+
+		// refreshedSongs 리스트에 commentsCounts와 keepCounts 데이터 추가
+		for i, song := range refreshedSongs {
+			refreshedSongs[i].CommentCount = commentsMap[song.SongInfoId]
+			refreshedSongs[i].KeepCount = keepMap[song.SongInfoId]
 		}
 
 		// history 갱신

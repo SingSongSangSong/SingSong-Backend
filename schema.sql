@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS song_info (
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
 
+ALTER TABLE song_info ADD COLUMN video_link TEXT
+
 -- keepSong 테이블 생성
 CREATE TABLE IF NOT EXISTS keep_song (
     keep_song_id BIGINT AUTO_INCREMENT PRIMARY KEY,
