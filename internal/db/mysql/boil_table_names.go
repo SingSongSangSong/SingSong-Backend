@@ -18,7 +18,6 @@ var TableNames = struct {
 	SongInfo         string
 	SongReview       string
 	SongReviewOption string
-	UserProfile      string
 }{
 	AppVersion:       "app_version",
 	Artist:           "artist",
@@ -34,5 +33,4 @@ var TableNames = struct {
 	SongInfo:         "song_info",
 	SongReview:       "song_review",
 	SongReviewOption: "song_review_option",
-	UserProfile:      "user_profile",
 }
