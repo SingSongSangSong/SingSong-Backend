@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -89,6 +90,16 @@ type LoginResponse struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
+// 고유한 이메일 생성 함수
+func generateUniqueEmail() string {
+	newUUID, err := uuid.NewRandom()
+	if err != nil {
+		log.Fatalf("Failed to generate UUID: %v", err)
+	}
+	// UUID를 기반으로 이메일 생성
+	return fmt.Sprintf("Anonymous+%s@anonymous.com", newUUID.String())
+}
+
 // Login godoc
 // @Summary      회원가입 및 로그인
 // @Description  IdToken을 이용한 회원가입 및 로그인
@@ -109,7 +120,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		// provider가 Anonymous인 경우
 		if loginRequest.Provider == "Anonymous" {
 			// DB에 없는 경우 - 회원가입
-			m, err := joinForAnonymous(c, &Claims{Email: "Anonymous@anonymous.com"}, 0, "Unknown", loginRequest.Provider, db)
+			m, err := joinForAnonymous(c, &Claims{Email: generateUniqueEmail()}, 0, "Unknown", loginRequest.Provider, db)
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
