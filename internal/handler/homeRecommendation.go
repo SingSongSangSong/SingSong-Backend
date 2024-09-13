@@ -45,7 +45,7 @@ type homeResponse struct {
 // @Produce      json
 // @Param        songs   body      homeRequest  true  "태그 목록"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]homeResponse} "성공"
-// @Router       /recommend/home [post]
+// @Router       /v1/recommend/home [post]
 func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pinecone.IndexConnection) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		request := &homeRequest{}

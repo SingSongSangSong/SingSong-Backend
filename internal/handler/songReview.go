@@ -29,7 +29,7 @@ type songReviewOptionGetResponse struct {
 // @Produce      json
 // @Param        songId path string true "songId"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]songReviewOptionGetResponse} "성공"
-// @Router       /songs/{songId}/reviews [get]
+// @Router       /v1/songs/{songId}/reviews [get]
 // @Security BearerAuth
 func GetSongReview(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -99,7 +99,7 @@ type songReviewOptionPutRequest struct {
 // @Param        songId path string true "songId"
 // @Param		 songReview body songReviewOptionPutRequest true "songReviewOptionId"
 // @Success      200 "성공"
-// @Router       /songs/{songId}/reviews [put]
+// @Router       /v1/songs/{songId}/reviews [put]
 // @Security BearerAuth
 func PutSongReview(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -195,7 +195,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 // @Produce      json
 // @Param        songId path string true "songId"
 // @Success      200 "성공"
-// @Router       /songs/{songId}/reviews [delete]
+// @Router       /v1/songs/{songId}/reviews [delete]
 // @Security BearerAuth
 func DeleteSongReview(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {

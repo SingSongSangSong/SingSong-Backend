@@ -1,4 +1,4 @@
-basePath: /api/v1
+basePath: /api
 definitions:
   handler.ChartResponse:
     properties:
@@ -169,6 +169,55 @@ definitions:
   handler.UpdateNicknameRequest:
     properties:
       nickname:
+        type: string
+    type: object
+  handler.V2ChartOfKey:
+    properties:
+      chartKey:
+        type: string
+      songs:
+        items:
+          $ref: '#/definitions/handler.V2ChartSong'
+        type: array
+    type: object
+  handler.V2ChartSong:
+    properties:
+      album:
+        type: string
+      artistName:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      isNew:
+        type: boolean
+      ranking:
+        type: integer
+      rankingChange:
+        type: integer
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+      totalScore:
+        type: number
+    type: object
+  handler.V2TotalChartResponse:
+    properties:
+      ageGroup:
+        type: string
+      charts:
+        items:
+          $ref: '#/definitions/handler.V2ChartOfKey'
+        type: array
+      gender:
+        type: string
+      time:
+        type: string
+      userKey:
         type: string
     type: object
   handler.WithdrawRequest:
@@ -424,7 +473,36 @@ info:
   title: 싱송생송 API
   version: "1.0"
 paths:
-  /blacklist:
+  /member/nickname:
+    patch:
+      consumes:
+      - application/json
+      description: Nickname 업데이트 한다
+      parameters:
+      - description: 닉네임
+        in: body
+        name: updateNicknameRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateNicknameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.MemberResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Nickname 업데이트 한다
+      tags:
+      - Member
+  /v1/blacklist:
     delete:
       consumes:
       - application/json
@@ -490,7 +568,7 @@ paths:
       summary: memberId를 통해 차단하기
       tags:
       - Blacklist
-  /chart:
+  /v1/chart:
     get:
       consumes:
       - application/json
@@ -523,7 +601,7 @@ paths:
       summary: 인기차트 조회
       tags:
       - Chart
-  /comment:
+  /v1/comment:
     post:
       consumes:
       - application/json
@@ -552,7 +630,7 @@ paths:
       summary: SongId에 댓글 달기
       tags:
       - Comment
-  /comment/{commentId}/like:
+  /v1/comment/{commentId}/like:
     post:
       consumes:
       - application/json
@@ -575,7 +653,7 @@ paths:
       summary: 해당하는 댓글에 좋아요 누르기
       tags:
       - Comment
-  /comment/{songId}:
+  /v1/comment/{songId}:
     get:
       consumes:
       - application/json
@@ -605,7 +683,7 @@ paths:
       summary: Retrieve comments for the specified SongId
       tags:
       - Comment
-  /comment/recomment/{commentId}:
+  /v1/comment/recomment/{commentId}:
     get:
       consumes:
       - application/json
@@ -635,7 +713,7 @@ paths:
       summary: Retrieve reComments for the specified CommentId
       tags:
       - Comment
-  /comment/report:
+  /v1/comment/report:
     post:
       consumes:
       - application/json
@@ -664,7 +742,7 @@ paths:
       summary: 해당하는 댓글ID를 통해 신고하기
       tags:
       - Comment
-  /keep:
+  /v1/keep:
     delete:
       consumes:
       - application/json
@@ -746,7 +824,7 @@ paths:
       summary: 플레이리스트에 노래를 추가한다
       tags:
       - Playlist
-  /member:
+  /v1/member:
     get:
       consumes:
       - application/json
@@ -768,7 +846,7 @@ paths:
       summary: Member의 정보를 가져온다
       tags:
       - Member
-  /member/login:
+  /v1/member/login:
     post:
       consumes:
       - application/json
@@ -795,7 +873,7 @@ paths:
       summary: 회원가입 및 로그인
       tags:
       - Signup and Login
-  /member/logout:
+  /v1/member/logout:
     post:
       consumes:
       - application/json
@@ -819,36 +897,7 @@ paths:
       summary: 멤버 회원 로그아웃
       tags:
       - Member
-  /member/nickname:
-    patch:
-      consumes:
-      - application/json
-      description: Nickname 업데이트 한다
-      parameters:
-      - description: 닉네임
-        in: body
-        name: updateNicknameRequest
-        required: true
-        schema:
-          $ref: '#/definitions/handler.UpdateNicknameRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-          schema:
-            allOf:
-            - $ref: '#/definitions/pkg.BaseResponseStruct'
-            - properties:
-                data:
-                  $ref: '#/definitions/handler.MemberResponse'
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Nickname 업데이트 한다
-      tags:
-      - Member
-  /member/reissue:
+  /v1/member/reissue:
     post:
       consumes:
       - application/json
@@ -875,7 +924,7 @@ paths:
       summary: AccessToken RefreshToken 재발급
       tags:
       - Reissue
-  /member/withdraw:
+  /v1/member/withdraw:
     post:
       consumes:
       - application/json
@@ -899,7 +948,7 @@ paths:
       summary: 멤버 회원 탈퇴
       tags:
       - Member
-  /recommend/home:
+  /v1/recommend/home:
     post:
       consumes:
       - application/json
@@ -928,7 +977,7 @@ paths:
       summary: 노래 추천 by 태그
       tags:
       - Recommendation
-  /recommend/recommendation/{pageId}:
+  /v1/recommend/recommendation/{pageId}:
     get:
       consumes:
       - application/json
@@ -956,7 +1005,7 @@ paths:
       summary: AI가 골랐송
       tags:
       - Recommendation
-  /recommend/recommendation/llm:
+  /v1/recommend/recommendation/llm:
     post:
       consumes:
       - application/json
@@ -985,7 +1034,7 @@ paths:
       summary: LLM으로 검색하기
       tags:
       - Recommendation
-  /recommend/refresh:
+  /v1/recommend/refresh:
     post:
       consumes:
       - application/json
@@ -1016,7 +1065,7 @@ paths:
       summary: 새로고침 노래 추천
       tags:
       - Recommendation
-  /search/{searchKeyword}:
+  /v1/search/{searchKeyword}:
     get:
       consumes:
       - application/json
@@ -1052,7 +1101,7 @@ paths:
       summary: 노래 검색 API
       tags:
       - Search
-  /search/artist-name:
+  /v1/search/artist-name:
     get:
       consumes:
       - application/json
@@ -1096,7 +1145,7 @@ paths:
       summary: 가수로 노래 검색 API
       tags:
       - Search
-  /search/song-name:
+  /v1/search/song-name:
     get:
       consumes:
       - application/json
@@ -1140,7 +1189,7 @@ paths:
       summary: 노래 제목으로 노래 검색 API
       tags:
       - Search
-  /search/song-number:
+  /v1/search/song-number:
     get:
       consumes:
       - application/json
@@ -1186,7 +1235,7 @@ paths:
       summary: 노래 번호로 노래 검색 API
       tags:
       - Search
-  /song-review-options:
+  /v1/song-review-options:
     get:
       consumes:
       - application/json
@@ -1227,7 +1276,7 @@ paths:
       summary: 노래 평가 선택지를 추가합니다.
       tags:
       - Song review option CR for admin
-  /songs/{songId}:
+  /v1/songs/{songId}:
     get:
       consumes:
       - application/json
@@ -1257,7 +1306,7 @@ paths:
       summary: 노래 상세 정보를 조회합니다
       tags:
       - Songs
-  /songs/{songId}/related:
+  /v1/songs/{songId}/related:
     get:
       consumes:
       - application/json
@@ -1295,7 +1344,7 @@ paths:
       summary: 연관된 노래들을 조회합니다
       tags:
       - Songs
-  /songs/{songId}/reviews:
+  /v1/songs/{songId}/reviews:
     delete:
       consumes:
       - application/json
@@ -1371,7 +1420,7 @@ paths:
       summary: 노래 평가를 등록/수정합니다.
       tags:
       - Songs
-  /tags:
+  /v1/tags:
     get:
       consumes:
       - application/json
@@ -1386,7 +1435,7 @@ paths:
       summary: ssss 태그 목록 가져오기
       tags:
       - Tags
-  /version:
+  /v1/version:
     get:
       consumes:
       - application/json
@@ -1400,7 +1449,7 @@ paths:
       summary: 모든 버전 확인
       tags:
       - App Version
-  /version/check:
+  /v1/version/check:
     post:
       consumes:
       - application/json
@@ -1423,7 +1472,7 @@ paths:
       summary: 버전 확인
       tags:
       - App Version
-  /version/update:
+  /v1/version/update:
     post:
       consumes:
       - application/json
@@ -1444,6 +1493,39 @@ paths:
       summary: 버전 추가
       tags:
       - App Version
+  /v2/chart:
+    get:
+      consumes:
+      - application/json
+      description: 인기차트 조회(Version2)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.V2TotalChartResponse'
+                  type: array
+              type: object
+        "400":
+          description: 실패
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 인기차트 조회(Version2)
+      tags:
+      - Chart
 securityDefinitions:
   BearerAuth:
     in: header

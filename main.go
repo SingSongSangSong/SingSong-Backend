@@ -21,7 +21,7 @@ import (
 
 // @title           싱송생송 API
 // @version         1.0
-// @BasePath  /api/v1
+// @BasePath  /api
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization

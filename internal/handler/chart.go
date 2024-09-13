@@ -70,7 +70,7 @@ type TotalChartResponse struct {
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]TotalChartResponse} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
-// @Router       /chart [get]
+// @Router       /v1/chart [get]
 // @Security BearerAuth
 func GetChart(rdb *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {

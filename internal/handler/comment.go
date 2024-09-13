@@ -45,7 +45,7 @@ type CommentResponse struct {
 // @Produce      json
 // @Param        CommentRequest   body      CommentRequest  true  "commentRequest"
 // @Success      200 {object} pkg.BaseResponseStruct{data=CommentResponse} "성공"
-// @Router       /comment [post]
+// @Router       /v1/comment [post]
 // @Security BearerAuth
 func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -106,7 +106,7 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 // @Produce      json
 // @Param        songId   path      int  true  "Song ID"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]CommentResponse} "Success"
-// @Router       /comment/{songId} [get]
+// @Router       /v1/comment/{songId} [get]
 // @Security BearerAuth
 func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -249,7 +249,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 // @Produce      json
 // @Param        commentId   path      int  true  "Comment ID"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]CommentResponse} "Success"
-// @Router       /comment/recomment/{commentId} [get]
+// @Router       /v1/comment/recomment/{commentId} [get]
 // @Security BearerAuth
 func GetReCommentOnSong(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -337,7 +337,7 @@ type ReportResponse struct {
 // @Produce      json
 // @Param        ReportRequest   body      ReportRequest  true  "ReportRequest"
 // @Success      200 {object} pkg.BaseResponseStruct{data=ReportResponse} "성공"
-// @Router       /comment/report [post]
+// @Router       /v1/comment/report [post]
 // @Security BearerAuth
 func ReportComment(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -384,7 +384,7 @@ func ReportComment(db *sql.DB) gin.HandlerFunc {
 // @Produce      json
 // @Param        commentId   path  int  true  "Comment ID"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
-// @Router       /comment/{commentId}/like [post]
+// @Router       /v1/comment/{commentId}/like [post]
 // @Security BearerAuth
 func LikeComment(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {

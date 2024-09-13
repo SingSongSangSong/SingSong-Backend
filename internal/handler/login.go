@@ -108,7 +108,7 @@ func generateUniqueEmail() string {
 // @Produce      json
 // @Param        songs   body      LoginRequest  true  "idToken 및 Provider"
 // @Success      200 {object} pkg.BaseResponseStruct{data=LoginResponse} "성공"
-// @Router       /member/login [post]
+// @Router       /v1/member/login [post]
 func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		loginRequest := &LoginRequest{}
