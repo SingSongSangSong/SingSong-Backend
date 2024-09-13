@@ -190,6 +190,10 @@ func createUserKey(gender any, birthYear any) (string, string) {
 		return "ALL", fmt.Sprintf("%s_ALL", genderStr)
 	}
 
+	if birthYearInt == 0 {
+		return "ALL", fmt.Sprintf("%s_ALL", genderStr)
+	}
+
 	currentYear := time.Now().Year()
 	age := currentYear - birthYearInt + 1
 
