@@ -166,7 +166,7 @@ func GetChartV2(rdb *redis.Client) gin.HandlerFunc {
 			Charts:   wholeCharts,
 		}
 
-		pkg.BaseResponse(c, http.StatusBadRequest, "ok", response)
+		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }
 
