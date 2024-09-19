@@ -57,24 +57,22 @@ jobs:
             --query taskDefinition \
             > task-definition.json
 
+      - name: Clean task definition
+        run: |
+          jq 'del(.compatibilities, .taskDefinitionArn, .requiresAttributes, .revision, .status, .registeredAt, .registeredBy)' task-definition.json > cleaned-task-definition.json
+
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: cleaned-task-definition.json
           container-name: ${{ env.ECS_CONTAINER_NAME }}
           image: ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
-      - name: Add environment variables to the task definition
+      - name: Add GIT_SHA environment variable to the task definition
         run: |
           jq '.containerDefinitions[0].environment += [
-            {"name":"SERVER_MODE","value":"prod"},
-            {"name":"GIT_SHA","value":"${{ env.GIT_SHA }}"},
-            {"name":"APPLE_CLIENT_ID","value":"${{ secrets.APPLE_CLIENT_ID }}"},
-            {"name":"APPLE_ISSUER","value":"${{ secrets.APPLE_ISSUER }}"},
-            {"name":"JWT_ISSUER","value":"${{ secrets.JWT_ISSUER }}"},
-            {"name":"JWT_ACCESS_VALIDITY_SECONDS","value":"${{ secrets.JWT_ACCESS_VALIDITY_SECONDS }}"},
-            {"name":"JWT_REFRESH_VALIDITY_SECONDS","value":"${{ secrets.JWT_REFRESH_VALIDITY_SECONDS }}"}
+            {"name":"GIT_SHA","value":"'${{ env.GIT_SHA }}'"}
           ]' task-definition.json > new-task-definition.json
 
       - name: Deploy Amazon ECS task definition
