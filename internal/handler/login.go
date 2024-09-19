@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -89,6 +90,16 @@ type LoginResponse struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
+// 고유한 이메일 생성 함수
+func generateUniqueEmail() string {
+	newUUID, err := uuid.NewRandom()
+	if err != nil {
+		log.Fatalf("Failed to generate UUID: %v", err)
+	}
+	// UUID를 기반으로 이메일 생성
+	return fmt.Sprintf("Anonymous+%s@anonymous.com", newUUID.String())
+}
+
 // Login godoc
 // @Summary      회원가입 및 로그인
 // @Description  IdToken을 이용한 회원가입 및 로그인
@@ -97,12 +108,38 @@ type LoginResponse struct {
 // @Produce      json
 // @Param        songs   body      LoginRequest  true  "idToken 및 Provider"
 // @Success      200 {object} pkg.BaseResponseStruct{data=LoginResponse} "성공"
-// @Router       /member/login [post]
+// @Router       /v1/member/login [post]
 func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		loginRequest := &LoginRequest{}
 		if err := c.ShouldBindJSON(&loginRequest); err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
+
+		// provider가 Anonymous인 경우
+		if loginRequest.Provider == "Anonymous" {
+			// DB에 없는 경우 - 회원가입
+			m, err := joinForAnonymous(c, &Claims{Email: generateUniqueEmail()}, 0, "Unknown", loginRequest.Provider, db)
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
+
+			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID, "Anonymous")
+			if tokenErr != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
+				return
+			}
+
+			loginResponse := LoginResponse{
+				AccessToken:  accessTokenString,
+				RefreshToken: refreshTokenString,
+			}
+
+			// accessToken, refreshToken 반환
+			pkg.BaseResponse(c, http.StatusOK, "success", loginResponse)
 			return
 		}
 
@@ -390,12 +427,18 @@ func validateSignature(idToken string, signingKey *rsa.PublicKey, issuer, audien
 	return nil, errors.New("클레임이 유효하지 않음")
 }
 
-func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.Member, db *sql.DB) (*mysql.Member, error) {
-	// nickname이 없을 경우 -> 랜덤 닉네임
-	nickname := payload.Nickname
-	if nickname == "" {
-		nickname = generateRandomNickname()
+func joinForAnonymous(c *gin.Context, payload *Claims, year int, gender string, provider string, db *sql.DB) (*mysql.Member, error) {
+	m := &mysql.Member{Provider: provider, Email: null.StringFrom(payload.Email), Nickname: null.StringFrom("Anonymous"), Birthyear: null.IntFrom(year), Gender: null.StringFrom(gender)}
+	err := m.Insert(c.Request.Context(), db, boil.Infer())
+	if err != nil {
+		return nil, errors.New("error inserting member - " + err.Error())
 	}
+	return m, nil
+}
+
+func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.Member, db *sql.DB) (*mysql.Member, error) {
+	// 랜덤 닉네임
+	nickname := generateRandomNickname()
 	nullNickname := null.StringFrom(nickname)
 
 	// Convert the BirthYear to an integer
@@ -409,7 +452,7 @@ func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.
 	nullBrithyear := null.IntFrom(birthYearInt)
 	nullGender := null.StringFrom(loginRequest.Gender)
 
-	m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
+	m = &mysql.Member{Provider: loginRequest.Provider, Email: null.StringFrom(payload.Email), Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
 	err = m.Insert(c.Request.Context(), db, boil.Infer())
 	if err != nil {
 		//pkg.BaseResponse(c, http.StatusBadRequest, "error inserting member - "+err.Error(), nil)

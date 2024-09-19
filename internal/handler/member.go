@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"time"
@@ -25,7 +27,7 @@ type MemberResponse struct {
 // @Accept       json
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct{data=MemberResponse} "성공"
-// @Router       /member [get]
+// @Router       /v1/member [get]
 // @Security BearerAuth
 func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -43,16 +45,63 @@ func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		nullNickname := member.Nickname.String
-		nullBirthyear := member.Birthyear.Int
-		nullGender := member.Gender.String
+		// JSON response
+		memberResponse := MemberResponse{
+			Email:     member.Email.String,
+			Nickname:  member.Nickname.String,
+			Birthyear: member.Birthyear.Int,
+			Gender:    member.Gender.String,
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "success", memberResponse)
+	}
+}
+
+// UpdateNicknameRequest Get nickname from request body
+type UpdateNicknameRequest struct {
+	Nickname string `json:"nickname"`
+}
+
+// UpdateNickname godoc
+// @Summary      Nickname 업데이트 한다
+// @Description  Nickname 업데이트 한다
+// @Tags         Member
+// @Accept       json
+// @Produce      json
+// @Param 	  	updateNicknameRequest   body      UpdateNicknameRequest  true  "닉네임"
+// @Success      200 {object} pkg.BaseResponseStruct{data=MemberResponse} "성공"
+// @Router       /member/nickname [patch]
+// @Security BearerAuth
+func UpdateNickname(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get memberId from context
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
+
+		updateNicknameRequest := UpdateNicknameRequest{}
+		if err := c.ShouldBindJSON(&updateNicknameRequest); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
+
+		// Find a pilot and update his name
+		member, _ := mysql.FindMember(c.Request.Context(), db, memberId.(int64))
+		member.Nickname = null.StringFrom(updateNicknameRequest.Nickname)
+		_, err := member.Update(c.Request.Context(), db, boil.Infer())
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
 
 		// JSON response
 		memberResponse := MemberResponse{
-			Email:     member.Email,
-			Nickname:  nullNickname,
-			Birthyear: nullBirthyear,
-			Gender:    nullGender,
+			Email:     member.Email.String,
+			Nickname:  member.Nickname.String,
+			Birthyear: member.Birthyear.Int,
+			Gender:    member.Gender.String,
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "success", memberResponse)
@@ -71,7 +120,7 @@ type WithdrawRequest struct {
 // @Produce      json
 // @Param        refreshToken   body      WithdrawRequest  true  "refreshToken"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
-// @Router       /member/withdraw [post]
+// @Router       /v1/member/withdraw [post]
 // @Security BearerAuth
 func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -118,7 +167,7 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 // @Produce      json
 // @Param        refreshToken   body      WithdrawRequest  true  "refreshToken"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
-// @Router       /member/logout [post]
+// @Router       /v1/member/logout [post]
 // @Security BearerAuth
 func Logout(redis *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {

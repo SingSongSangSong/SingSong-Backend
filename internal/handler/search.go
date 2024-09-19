@@ -34,7 +34,7 @@ type songSearchInfoResponses struct {
 // @Param        searchKeyword path string true "검색 키워드"
 // @Success      200 {object} pkg.BaseResponseStruct{data=songSearchInfoResponses} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패 - 빈 리스트 반환"
-// @Router       /search/{searchKeyword} [get]
+// @Router       /v1/search/{searchKeyword} [get]
 func SearchSongs(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 검색어를 URL 파라미터에서 가져오기
@@ -141,7 +141,7 @@ type songSearchPageResponse struct {
 // @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=songSearchPageResponse} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
-// @Router       /search/artist-name [get]
+// @Router       /v1/search/artist-name [get]
 func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 검색어를 쿼리 파라미터에서 가져오기
@@ -217,7 +217,7 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 // @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=songSearchPageResponse} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
-// @Router       /search/song-name [get]
+// @Router       /v1/search/song-name [get]
 func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 검색어를 쿼리 파라미터에서 가져오기
@@ -292,7 +292,7 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 // @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회. 현재는 노래 번호가 정확히 일치하는 1개만 반환하기 때문에 무의미"
 // @Success      200 {object} pkg.BaseResponseStruct{data=songSearchPageResponse} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
-// @Router       /search/song-number [get]
+// @Router       /v1/search/song-number [get]
 func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 검색어를 쿼리 파라미터에서 가져오기

@@ -21,7 +21,7 @@ type ReissueRequest struct {
 // @Produce      json
 // @Param        songs   body      ReissueRequest  true  "accessToken 및 refreshToken"
 // @Success      200 {object} pkg.BaseResponseStruct{data=LoginResponse} "성공"
-// @Router       /member/reissue [post]
+// @Router       /v1/member/reissue [post]
 func Reissue(redis *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		reissueRequest := &ReissueRequest{}

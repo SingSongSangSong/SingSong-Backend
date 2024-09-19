@@ -61,7 +61,7 @@ var defaultOrder = []string{
 // @Accept       json
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct(data=[]string) "성공"
-// @Router       /tags [get]
+// @Router       /v1/tags [get]
 func ListTags() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tags := make([]string, 0, len(defaultOrder))

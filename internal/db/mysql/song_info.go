@@ -41,6 +41,7 @@ type SongInfo struct {
 	CreatedAt      null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 	UpdatedAt      null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 	DeletedAt      null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	VideoLink      null.String `boil:"video_link" json:"video_link,omitempty" toml:"video_link" yaml:"video_link,omitempty"`
 
 	R *songInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L songInfoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -64,6 +65,7 @@ var SongInfoColumns = struct {
 	CreatedAt      string
 	UpdatedAt      string
 	DeletedAt      string
+	VideoLink      string
 }{
 	SongInfoID:     "song_info_id",
 	SongName:       "song_name",
@@ -82,6 +84,7 @@ var SongInfoColumns = struct {
 	CreatedAt:      "created_at",
 	UpdatedAt:      "updated_at",
 	DeletedAt:      "deleted_at",
+	VideoLink:      "video_link",
 }
 
 var SongInfoTableColumns = struct {
@@ -102,6 +105,7 @@ var SongInfoTableColumns = struct {
 	CreatedAt      string
 	UpdatedAt      string
 	DeletedAt      string
+	VideoLink      string
 }{
 	SongInfoID:     "song_info.song_info_id",
 	SongName:       "song_info.song_name",
@@ -120,6 +124,7 @@ var SongInfoTableColumns = struct {
 	CreatedAt:      "song_info.created_at",
 	UpdatedAt:      "song_info.updated_at",
 	DeletedAt:      "song_info.deleted_at",
+	VideoLink:      "song_info.video_link",
 }
 
 // Generated where
@@ -142,6 +147,7 @@ var SongInfoWhere = struct {
 	CreatedAt      whereHelpernull_Time
 	UpdatedAt      whereHelpernull_Time
 	DeletedAt      whereHelpernull_Time
+	VideoLink      whereHelpernull_String
 }{
 	SongInfoID:     whereHelperint64{field: "`song_info`.`song_info_id`"},
 	SongName:       whereHelperstring{field: "`song_info`.`song_name`"},
@@ -160,6 +166,7 @@ var SongInfoWhere = struct {
 	CreatedAt:      whereHelpernull_Time{field: "`song_info`.`created_at`"},
 	UpdatedAt:      whereHelpernull_Time{field: "`song_info`.`updated_at`"},
 	DeletedAt:      whereHelpernull_Time{field: "`song_info`.`deleted_at`"},
+	VideoLink:      whereHelpernull_String{field: "`song_info`.`video_link`"},
 }
 
 // SongInfoRels is where relationship names are stored.
@@ -179,8 +186,8 @@ func (*songInfoR) NewStruct() *songInfoR {
 type songInfoL struct{}
 
 var (
-	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at"}
-	songInfoColumnsWithoutDefault = []string{"song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "deleted_at"}
+	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at", "video_link"}
+	songInfoColumnsWithoutDefault = []string{"song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "deleted_at", "video_link"}
 	songInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at"}
 	songInfoPrimaryKeyColumns     = []string{"song_info_id"}
 	songInfoGeneratedColumns      = []string{}

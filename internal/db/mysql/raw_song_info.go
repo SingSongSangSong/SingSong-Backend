@@ -24,156 +24,191 @@ import (
 
 // RawSongInfo is an object representing the database table.
 type RawSongInfo struct {
-	RawSongInfoID   int64       `boil:"raw_song_info_id" json:"raw_song_info_id" toml:"raw_song_info_id" yaml:"raw_song_info_id"`
-	SongNumber      int         `boil:"song_number" json:"song_number" toml:"song_number" yaml:"song_number"`
-	SongName        string      `boil:"song_name" json:"song_name" toml:"song_name" yaml:"song_name"`
-	ArtistName      string      `boil:"artist_name" json:"artist_name" toml:"artist_name" yaml:"artist_name"`
-	MelonSongID     null.String `boil:"melon_song_id" json:"melon_song_id,omitempty" toml:"melon_song_id" yaml:"melon_song_id,omitempty"`
-	MelonArtistID   null.String `boil:"melon_artist_id" json:"melon_artist_id,omitempty" toml:"melon_artist_id" yaml:"melon_artist_id,omitempty"`
-	MelonArtistName null.String `boil:"melon_artist_name" json:"melon_artist_name,omitempty" toml:"melon_artist_name" yaml:"melon_artist_name,omitempty"`
-	Album           null.String `boil:"album" json:"album,omitempty" toml:"album" yaml:"album,omitempty"`
-	Genre           null.String `boil:"genre" json:"genre,omitempty" toml:"genre" yaml:"genre,omitempty"`
-	Lyrics          null.String `boil:"lyrics" json:"lyrics,omitempty" toml:"lyrics" yaml:"lyrics,omitempty"`
-	LyricsSummary   null.String `boil:"lyrics_summary" json:"lyrics_summary,omitempty" toml:"lyrics_summary" yaml:"lyrics_summary,omitempty"`
-	LyricsTags      null.String `boil:"lyrics_tags" json:"lyrics_tags,omitempty" toml:"lyrics_tags" yaml:"lyrics_tags,omitempty"`
-	Year            null.String `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
-	Country         null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
-	SingerType      null.String `boil:"singer_type" json:"singer_type,omitempty" toml:"singer_type" yaml:"singer_type,omitempty"`
-	RelatedArtists  null.String `boil:"related_artists" json:"related_artists,omitempty" toml:"related_artists" yaml:"related_artists,omitempty"`
-	CreatedAt       null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt       null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
-	DeletedAt       null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	RawSongInfoID     int64       `boil:"raw_song_info_id" json:"raw_song_info_id" toml:"raw_song_info_id" yaml:"raw_song_info_id"`
+	SongNumber        int         `boil:"song_number" json:"song_number" toml:"song_number" yaml:"song_number"`
+	SongName          string      `boil:"song_name" json:"song_name" toml:"song_name" yaml:"song_name"`
+	ArtistName        string      `boil:"artist_name" json:"artist_name" toml:"artist_name" yaml:"artist_name"`
+	MelonSongID       null.String `boil:"melon_song_id" json:"melon_song_id,omitempty" toml:"melon_song_id" yaml:"melon_song_id,omitempty"`
+	MelonArtistID     null.String `boil:"melon_artist_id" json:"melon_artist_id,omitempty" toml:"melon_artist_id" yaml:"melon_artist_id,omitempty"`
+	MelonArtistName   null.String `boil:"melon_artist_name" json:"melon_artist_name,omitempty" toml:"melon_artist_name" yaml:"melon_artist_name,omitempty"`
+	Album             null.String `boil:"album" json:"album,omitempty" toml:"album" yaml:"album,omitempty"`
+	Genre             null.String `boil:"genre" json:"genre,omitempty" toml:"genre" yaml:"genre,omitempty"`
+	Lyrics            null.String `boil:"lyrics" json:"lyrics,omitempty" toml:"lyrics" yaml:"lyrics,omitempty"`
+	LyricsSummary     null.String `boil:"lyrics_summary" json:"lyrics_summary,omitempty" toml:"lyrics_summary" yaml:"lyrics_summary,omitempty"`
+	LyricsTags        null.String `boil:"lyrics_tags" json:"lyrics_tags,omitempty" toml:"lyrics_tags" yaml:"lyrics_tags,omitempty"`
+	Year              null.String `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
+	Country           null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
+	SingerType        null.String `boil:"singer_type" json:"singer_type,omitempty" toml:"singer_type" yaml:"singer_type,omitempty"`
+	RelatedArtists    null.String `boil:"related_artists" json:"related_artists,omitempty" toml:"related_artists" yaml:"related_artists,omitempty"`
+	CreatedAt         null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
+	UpdatedAt         null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
+	DeletedAt         null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	SongInfoID        null.Int64  `boil:"song_info_id" json:"song_info_id,omitempty" toml:"song_info_id" yaml:"song_info_id,omitempty"`
+	ArtistDebut       null.String `boil:"artist_debut" json:"artist_debut,omitempty" toml:"artist_debut" yaml:"artist_debut,omitempty"`
+	ActiveYears       null.String `boil:"active_years" json:"active_years,omitempty" toml:"active_years" yaml:"active_years,omitempty"`
+	CollaborationInfo null.String `boil:"collaboration_info" json:"collaboration_info,omitempty" toml:"collaboration_info" yaml:"collaboration_info,omitempty"`
+	Airflowed         null.Bool   `boil:"airflowed" json:"airflowed,omitempty" toml:"airflowed" yaml:"airflowed,omitempty"`
 
 	R *rawSongInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L rawSongInfoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var RawSongInfoColumns = struct {
-	RawSongInfoID   string
-	SongNumber      string
-	SongName        string
-	ArtistName      string
-	MelonSongID     string
-	MelonArtistID   string
-	MelonArtistName string
-	Album           string
-	Genre           string
-	Lyrics          string
-	LyricsSummary   string
-	LyricsTags      string
-	Year            string
-	Country         string
-	SingerType      string
-	RelatedArtists  string
-	CreatedAt       string
-	UpdatedAt       string
-	DeletedAt       string
+	RawSongInfoID     string
+	SongNumber        string
+	SongName          string
+	ArtistName        string
+	MelonSongID       string
+	MelonArtistID     string
+	MelonArtistName   string
+	Album             string
+	Genre             string
+	Lyrics            string
+	LyricsSummary     string
+	LyricsTags        string
+	Year              string
+	Country           string
+	SingerType        string
+	RelatedArtists    string
+	CreatedAt         string
+	UpdatedAt         string
+	DeletedAt         string
+	SongInfoID        string
+	ArtistDebut       string
+	ActiveYears       string
+	CollaborationInfo string
+	Airflowed         string
 }{
-	RawSongInfoID:   "raw_song_info_id",
-	SongNumber:      "song_number",
-	SongName:        "song_name",
-	ArtistName:      "artist_name",
-	MelonSongID:     "melon_song_id",
-	MelonArtistID:   "melon_artist_id",
-	MelonArtistName: "melon_artist_name",
-	Album:           "album",
-	Genre:           "genre",
-	Lyrics:          "lyrics",
-	LyricsSummary:   "lyrics_summary",
-	LyricsTags:      "lyrics_tags",
-	Year:            "year",
-	Country:         "country",
-	SingerType:      "singer_type",
-	RelatedArtists:  "related_artists",
-	CreatedAt:       "created_at",
-	UpdatedAt:       "updated_at",
-	DeletedAt:       "deleted_at",
+	RawSongInfoID:     "raw_song_info_id",
+	SongNumber:        "song_number",
+	SongName:          "song_name",
+	ArtistName:        "artist_name",
+	MelonSongID:       "melon_song_id",
+	MelonArtistID:     "melon_artist_id",
+	MelonArtistName:   "melon_artist_name",
+	Album:             "album",
+	Genre:             "genre",
+	Lyrics:            "lyrics",
+	LyricsSummary:     "lyrics_summary",
+	LyricsTags:        "lyrics_tags",
+	Year:              "year",
+	Country:           "country",
+	SingerType:        "singer_type",
+	RelatedArtists:    "related_artists",
+	CreatedAt:         "created_at",
+	UpdatedAt:         "updated_at",
+	DeletedAt:         "deleted_at",
+	SongInfoID:        "song_info_id",
+	ArtistDebut:       "artist_debut",
+	ActiveYears:       "active_years",
+	CollaborationInfo: "collaboration_info",
+	Airflowed:         "airflowed",
 }
 
 var RawSongInfoTableColumns = struct {
-	RawSongInfoID   string
-	SongNumber      string
-	SongName        string
-	ArtistName      string
-	MelonSongID     string
-	MelonArtistID   string
-	MelonArtistName string
-	Album           string
-	Genre           string
-	Lyrics          string
-	LyricsSummary   string
-	LyricsTags      string
-	Year            string
-	Country         string
-	SingerType      string
-	RelatedArtists  string
-	CreatedAt       string
-	UpdatedAt       string
-	DeletedAt       string
+	RawSongInfoID     string
+	SongNumber        string
+	SongName          string
+	ArtistName        string
+	MelonSongID       string
+	MelonArtistID     string
+	MelonArtistName   string
+	Album             string
+	Genre             string
+	Lyrics            string
+	LyricsSummary     string
+	LyricsTags        string
+	Year              string
+	Country           string
+	SingerType        string
+	RelatedArtists    string
+	CreatedAt         string
+	UpdatedAt         string
+	DeletedAt         string
+	SongInfoID        string
+	ArtistDebut       string
+	ActiveYears       string
+	CollaborationInfo string
+	Airflowed         string
 }{
-	RawSongInfoID:   "raw_song_info.raw_song_info_id",
-	SongNumber:      "raw_song_info.song_number",
-	SongName:        "raw_song_info.song_name",
-	ArtistName:      "raw_song_info.artist_name",
-	MelonSongID:     "raw_song_info.melon_song_id",
-	MelonArtistID:   "raw_song_info.melon_artist_id",
-	MelonArtistName: "raw_song_info.melon_artist_name",
-	Album:           "raw_song_info.album",
-	Genre:           "raw_song_info.genre",
-	Lyrics:          "raw_song_info.lyrics",
-	LyricsSummary:   "raw_song_info.lyrics_summary",
-	LyricsTags:      "raw_song_info.lyrics_tags",
-	Year:            "raw_song_info.year",
-	Country:         "raw_song_info.country",
-	SingerType:      "raw_song_info.singer_type",
-	RelatedArtists:  "raw_song_info.related_artists",
-	CreatedAt:       "raw_song_info.created_at",
-	UpdatedAt:       "raw_song_info.updated_at",
-	DeletedAt:       "raw_song_info.deleted_at",
+	RawSongInfoID:     "raw_song_info.raw_song_info_id",
+	SongNumber:        "raw_song_info.song_number",
+	SongName:          "raw_song_info.song_name",
+	ArtistName:        "raw_song_info.artist_name",
+	MelonSongID:       "raw_song_info.melon_song_id",
+	MelonArtistID:     "raw_song_info.melon_artist_id",
+	MelonArtistName:   "raw_song_info.melon_artist_name",
+	Album:             "raw_song_info.album",
+	Genre:             "raw_song_info.genre",
+	Lyrics:            "raw_song_info.lyrics",
+	LyricsSummary:     "raw_song_info.lyrics_summary",
+	LyricsTags:        "raw_song_info.lyrics_tags",
+	Year:              "raw_song_info.year",
+	Country:           "raw_song_info.country",
+	SingerType:        "raw_song_info.singer_type",
+	RelatedArtists:    "raw_song_info.related_artists",
+	CreatedAt:         "raw_song_info.created_at",
+	UpdatedAt:         "raw_song_info.updated_at",
+	DeletedAt:         "raw_song_info.deleted_at",
+	SongInfoID:        "raw_song_info.song_info_id",
+	ArtistDebut:       "raw_song_info.artist_debut",
+	ActiveYears:       "raw_song_info.active_years",
+	CollaborationInfo: "raw_song_info.collaboration_info",
+	Airflowed:         "raw_song_info.airflowed",
 }
 
 // Generated where
 
 var RawSongInfoWhere = struct {
-	RawSongInfoID   whereHelperint64
-	SongNumber      whereHelperint
-	SongName        whereHelperstring
-	ArtistName      whereHelperstring
-	MelonSongID     whereHelpernull_String
-	MelonArtistID   whereHelpernull_String
-	MelonArtistName whereHelpernull_String
-	Album           whereHelpernull_String
-	Genre           whereHelpernull_String
-	Lyrics          whereHelpernull_String
-	LyricsSummary   whereHelpernull_String
-	LyricsTags      whereHelpernull_String
-	Year            whereHelpernull_String
-	Country         whereHelpernull_String
-	SingerType      whereHelpernull_String
-	RelatedArtists  whereHelpernull_String
-	CreatedAt       whereHelpernull_Time
-	UpdatedAt       whereHelpernull_Time
-	DeletedAt       whereHelpernull_Time
+	RawSongInfoID     whereHelperint64
+	SongNumber        whereHelperint
+	SongName          whereHelperstring
+	ArtistName        whereHelperstring
+	MelonSongID       whereHelpernull_String
+	MelonArtistID     whereHelpernull_String
+	MelonArtistName   whereHelpernull_String
+	Album             whereHelpernull_String
+	Genre             whereHelpernull_String
+	Lyrics            whereHelpernull_String
+	LyricsSummary     whereHelpernull_String
+	LyricsTags        whereHelpernull_String
+	Year              whereHelpernull_String
+	Country           whereHelpernull_String
+	SingerType        whereHelpernull_String
+	RelatedArtists    whereHelpernull_String
+	CreatedAt         whereHelpernull_Time
+	UpdatedAt         whereHelpernull_Time
+	DeletedAt         whereHelpernull_Time
+	SongInfoID        whereHelpernull_Int64
+	ArtistDebut       whereHelpernull_String
+	ActiveYears       whereHelpernull_String
+	CollaborationInfo whereHelpernull_String
+	Airflowed         whereHelpernull_Bool
 }{
-	RawSongInfoID:   whereHelperint64{field: "`raw_song_info`.`raw_song_info_id`"},
-	SongNumber:      whereHelperint{field: "`raw_song_info`.`song_number`"},
-	SongName:        whereHelperstring{field: "`raw_song_info`.`song_name`"},
-	ArtistName:      whereHelperstring{field: "`raw_song_info`.`artist_name`"},
-	MelonSongID:     whereHelpernull_String{field: "`raw_song_info`.`melon_song_id`"},
-	MelonArtistID:   whereHelpernull_String{field: "`raw_song_info`.`melon_artist_id`"},
-	MelonArtistName: whereHelpernull_String{field: "`raw_song_info`.`melon_artist_name`"},
-	Album:           whereHelpernull_String{field: "`raw_song_info`.`album`"},
-	Genre:           whereHelpernull_String{field: "`raw_song_info`.`genre`"},
-	Lyrics:          whereHelpernull_String{field: "`raw_song_info`.`lyrics`"},
-	LyricsSummary:   whereHelpernull_String{field: "`raw_song_info`.`lyrics_summary`"},
-	LyricsTags:      whereHelpernull_String{field: "`raw_song_info`.`lyrics_tags`"},
-	Year:            whereHelpernull_String{field: "`raw_song_info`.`year`"},
-	Country:         whereHelpernull_String{field: "`raw_song_info`.`country`"},
-	SingerType:      whereHelpernull_String{field: "`raw_song_info`.`singer_type`"},
-	RelatedArtists:  whereHelpernull_String{field: "`raw_song_info`.`related_artists`"},
-	CreatedAt:       whereHelpernull_Time{field: "`raw_song_info`.`created_at`"},
-	UpdatedAt:       whereHelpernull_Time{field: "`raw_song_info`.`updated_at`"},
-	DeletedAt:       whereHelpernull_Time{field: "`raw_song_info`.`deleted_at`"},
+	RawSongInfoID:     whereHelperint64{field: "`raw_song_info`.`raw_song_info_id`"},
+	SongNumber:        whereHelperint{field: "`raw_song_info`.`song_number`"},
+	SongName:          whereHelperstring{field: "`raw_song_info`.`song_name`"},
+	ArtistName:        whereHelperstring{field: "`raw_song_info`.`artist_name`"},
+	MelonSongID:       whereHelpernull_String{field: "`raw_song_info`.`melon_song_id`"},
+	MelonArtistID:     whereHelpernull_String{field: "`raw_song_info`.`melon_artist_id`"},
+	MelonArtistName:   whereHelpernull_String{field: "`raw_song_info`.`melon_artist_name`"},
+	Album:             whereHelpernull_String{field: "`raw_song_info`.`album`"},
+	Genre:             whereHelpernull_String{field: "`raw_song_info`.`genre`"},
+	Lyrics:            whereHelpernull_String{field: "`raw_song_info`.`lyrics`"},
+	LyricsSummary:     whereHelpernull_String{field: "`raw_song_info`.`lyrics_summary`"},
+	LyricsTags:        whereHelpernull_String{field: "`raw_song_info`.`lyrics_tags`"},
+	Year:              whereHelpernull_String{field: "`raw_song_info`.`year`"},
+	Country:           whereHelpernull_String{field: "`raw_song_info`.`country`"},
+	SingerType:        whereHelpernull_String{field: "`raw_song_info`.`singer_type`"},
+	RelatedArtists:    whereHelpernull_String{field: "`raw_song_info`.`related_artists`"},
+	CreatedAt:         whereHelpernull_Time{field: "`raw_song_info`.`created_at`"},
+	UpdatedAt:         whereHelpernull_Time{field: "`raw_song_info`.`updated_at`"},
+	DeletedAt:         whereHelpernull_Time{field: "`raw_song_info`.`deleted_at`"},
+	SongInfoID:        whereHelpernull_Int64{field: "`raw_song_info`.`song_info_id`"},
+	ArtistDebut:       whereHelpernull_String{field: "`raw_song_info`.`artist_debut`"},
+	ActiveYears:       whereHelpernull_String{field: "`raw_song_info`.`active_years`"},
+	CollaborationInfo: whereHelpernull_String{field: "`raw_song_info`.`collaboration_info`"},
+	Airflowed:         whereHelpernull_Bool{field: "`raw_song_info`.`airflowed`"},
 }
 
 // RawSongInfoRels is where relationship names are stored.
@@ -193,9 +228,9 @@ func (*rawSongInfoR) NewStruct() *rawSongInfoR {
 type rawSongInfoL struct{}
 
 var (
-	rawSongInfoAllColumns            = []string{"raw_song_info_id", "song_number", "song_name", "artist_name", "melon_song_id", "melon_artist_id", "melon_artist_name", "album", "genre", "lyrics", "lyrics_summary", "lyrics_tags", "year", "country", "singer_type", "related_artists", "created_at", "updated_at", "deleted_at"}
-	rawSongInfoColumnsWithoutDefault = []string{"song_number", "song_name", "artist_name", "melon_song_id", "melon_artist_id", "melon_artist_name", "album", "genre", "lyrics", "lyrics_summary", "lyrics_tags", "year", "country", "singer_type", "related_artists", "deleted_at"}
-	rawSongInfoColumnsWithDefault    = []string{"raw_song_info_id", "created_at", "updated_at"}
+	rawSongInfoAllColumns            = []string{"raw_song_info_id", "song_number", "song_name", "artist_name", "melon_song_id", "melon_artist_id", "melon_artist_name", "album", "genre", "lyrics", "lyrics_summary", "lyrics_tags", "year", "country", "singer_type", "related_artists", "created_at", "updated_at", "deleted_at", "song_info_id", "artist_debut", "active_years", "collaboration_info", "airflowed"}
+	rawSongInfoColumnsWithoutDefault = []string{"song_number", "song_name", "artist_name", "melon_song_id", "melon_artist_id", "melon_artist_name", "album", "genre", "lyrics", "lyrics_summary", "lyrics_tags", "year", "country", "singer_type", "related_artists", "deleted_at", "song_info_id", "artist_debut", "active_years", "collaboration_info"}
+	rawSongInfoColumnsWithDefault    = []string{"raw_song_info_id", "created_at", "updated_at", "airflowed"}
 	rawSongInfoPrimaryKeyColumns     = []string{"raw_song_info_id"}
 	rawSongInfoGeneratedColumns      = []string{}
 )

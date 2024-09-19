@@ -68,26 +68,7 @@ jobs:
       - name: Add environment variables to the task definition
         run: |
           jq '.containerDefinitions[0].environment += [
-            {"name":"SERVER_MODE","value":"prod"},
             {"name":"GIT_SHA","value":"${{ env.GIT_SHA }}"},
-            {"name":"PINECONE_API_KEY","value":"${{ secrets.PINECONE_API_KEY }}"},
-            {"name":"PINECONE_INDEX","value":"${{ secrets.PINECONE_INDEX }}"},
-            {"name":"DB_HOST","value":"${{ vars.RDS_HOST }}"},
-            {"name":"DB_PORT","value":"${{ vars.RDS_PORT }}"},
-            {"name":"DB_NAME","value":"${{ secrets.DB_NAME }}"},
-            {"name":"DB_USER","value":"${{ vars.RDS_USER }}"},
-            {"name":"DB_PASSWORD","value":"${{ vars.RDS_PASSWORD }}"},
-            {"name":"REDIS_ADDR","value":"${{ vars.ELASTICACHE_ADDR }}"},
-            {"name":"REDIS_PORT","value":"${{ vars.ELASTICACHE_PORT }}"},
-            {"name":"REDIS_PASSWORD","value":""},
-            {"name":"SECRET_KEY","value":"${{ secrets.SECRET_KEY }}"},
-            {"name":"KAKAO_REST_API_KEY","value":"${{ secrets.KAKAO_PROD_API_KEY }}"},
-            {"name":"KAKAO_ISSUER","value":"${{ secrets.KAKAO_ISSUER }}"},
-            {"name":"APPLE_CLIENT_ID","value":"${{ secrets.APPLE_CLIENT_ID }}"},
-            {"name":"APPLE_ISSUER","value":"${{ secrets.APPLE_ISSUER }}"},
-            {"name":"JWT_ISSUER","value":"${{ secrets.JWT_ISSUER }}"},
-            {"name":"JWT_ACCESS_VALIDITY_SECONDS","value":"${{ secrets.JWT_ACCESS_VALIDITY_SECONDS }}"},
-            {"name":"JWT_REFRESH_VALIDITY_SECONDS","value":"${{ secrets.JWT_REFRESH_VALIDITY_SECONDS }}"}
           ]' task-definition.json > new-task-definition.json
 
       - name: Deploy Amazon ECS task definition

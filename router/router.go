@@ -44,7 +44,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	{
 		recommend.POST("/home", handler.HomeRecommendation(db, rdb, idxConnection))
 		recommend.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendation(db, rdb, idxConnection)) //일단 새로고침에만 적용
-		recommend.GET("/recommendation", middleware.AuthMiddleware(db), handler.GetRecommendation(db, rdb, idxConnection))
+		recommend.GET("/recommendation/:pageId", middleware.AuthMiddleware(db), handler.GetRecommendation(db))
+		recommend.POST("/recommendation/llm", middleware.AuthMiddleware(db), handler.LlmHandler(db))
 	}
 
 	// 태그 엔드포인트 설정
@@ -60,6 +61,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		member.GET("", middleware.AuthMiddleware(db), handler.GetMemberInfo(db))
 		member.POST("/withdraw", middleware.AuthMiddleware(db), handler.Withdraw(db, rdb))
 		member.POST("/logout", middleware.AuthMiddleware(db), handler.Logout(rdb))
+		member.PATCH("/nickname", middleware.AuthMiddleware(db), handler.UpdateNickname(db))
 	}
 
 	// 태그 엔드포인트 설정
@@ -103,9 +105,14 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		blacklist.GET("", middleware.AuthMiddleware(db), handler.GetBlacklist(db))
 	}
 
-	chart := r.Group("/api/v1/chart")
+	chartV1 := r.Group("/api/v1/chart")
 	{
-		chart.GET("", middleware.AuthMiddleware(db), handler.GetChart(rdb))
+		chartV1.GET("", middleware.AuthMiddleware(db), handler.GetChart(rdb))
+	}
+
+	chartV2 := r.Group("/api/v2/chart")
+	{
+		chartV2.GET("", middleware.AuthMiddleware(db), handler.GetChartV2(rdb))
 	}
 
 	search := r.Group("/api/v1/search")

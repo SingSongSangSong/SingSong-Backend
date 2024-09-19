@@ -27,7 +27,7 @@ type versionCheckResponse struct {
 // @Produce      json
 // @Param        version  body      versionCheckRequest  true  "현재 앱 버전 정보"
 // @Success      200 {object} pkg.BaseResponseStruct(data=versionCheckResponse) "성공"
-// @Router       /version/check [post]
+// @Router       /v1/version/check [post]
 func VersionCheck(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		value, exists := c.Get("platform")
@@ -83,7 +83,7 @@ type latestVersionUpdateRequest struct {
 // @Produce      json
 // @Param 		version body      latestVersionUpdateRequest  true  "등록 버전 정보"
 // @Success      200 "성공"
-// @Router       /version/update [post]
+// @Router       /v1/version/update [post]
 func LatestVersionUpdate(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		request := &latestVersionUpdateRequest{}
@@ -125,7 +125,7 @@ type VersionResponse struct {
 // @Accept       json
 // @Produce      json
 // @Success      200 "성공" {object} pkg.BaseResponseStruct{data=[]versionResponse} "성공"
-// @Router       /version [get]
+// @Router       /v1/version [get]
 func AllVersion(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		all, err := mysql.AppVersions().All(c.Request.Context(), db)

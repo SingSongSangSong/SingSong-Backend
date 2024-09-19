@@ -13,6 +13,10 @@ import (
 	"os"
 )
 
+type GrpcConfig struct {
+	Addr string
+}
+
 type AuthConfig struct {
 	SECRET_KEY                   string
 	KAKAO_REST_API_KEY           string
@@ -37,6 +41,7 @@ const (
 var (
 	AuthConfigInstance     *AuthConfig
 	VectorDBConfigInstance *VectorDBConfig
+	GrpcConfigInstance     *GrpcConfig
 	Env                    string
 )
 
@@ -71,6 +76,14 @@ func init() {
 	}
 	VectorDBConfigInstance = &VectorDBConfig{
 		DIMENSION: 548,
+	}
+	GrpcConfigInstance = &GrpcConfig{
+		Addr: func() string {
+			if addr := os.Getenv("GRPC_ADDR"); addr != "" {
+				return addr
+			}
+			return "python-gRPC" // 기본값
+		}(),
 	}
 }
 
