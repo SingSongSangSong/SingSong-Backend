@@ -78,7 +78,12 @@ func init() {
 		DIMENSION: 548,
 	}
 	GrpcConfigInstance = &GrpcConfig{
-		Addr: os.Getenv("GRPC_ADDR"),
+		Addr: func() string {
+			if addr := os.Getenv("GRPC_ADDR"); addr != "" {
+				return addr
+			}
+			return "python-gRPC" // 기본값
+		}(),
 	}
 }
 
