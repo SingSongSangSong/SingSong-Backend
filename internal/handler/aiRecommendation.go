@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"SingSong-Server/conf"
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	pb "SingSong-Server/proto/userProfileRecommend"
@@ -30,6 +31,10 @@ type songResponse struct {
 type userProfileResponse struct {
 	Songs []songResponse `json:"songs"`
 }
+
+var (
+	GrpcAddr = conf.GrpcConfigInstance.Addr
+)
 
 // GetRecommendation godoc
 // @Summary      AI가 골랐송
@@ -77,7 +82,7 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// gRPC 서버에 연결
-		conn, err := grpc.Dial("python-grpc:50051", grpc.WithInsecure())
+		conn, err := grpc.Dial(GrpcAddr+":50051", grpc.WithInsecure())
 		if err != nil {
 			log.Fatalf("Did not connect: %v", err)
 		}
