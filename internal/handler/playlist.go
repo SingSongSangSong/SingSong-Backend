@@ -219,14 +219,14 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
 		playlistInfo, errors := m.One(c.Request.Context(), db)
 		if errors != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
 		}
 
 		result := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID))
 		all, err2 := result.All(c.Request.Context(), db)
 		if err2 != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err2.Error(), nil)
 			return
 		}
 
@@ -236,7 +236,7 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
 			row, errors := tempSong.One(c.Request.Context(), db)
 			if errors != nil {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
 			}
 			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String, IsMr: row.IsMR.Bool}
