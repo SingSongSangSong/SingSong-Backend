@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -58,6 +59,8 @@ func AuthMiddleware(db *sql.DB) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		log.Printf("memberId: " + fmt.Sprintf("%d", memberId))
 
 		c.Set("memberId", memberId)
 		c.Set("gender", gender)

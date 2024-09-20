@@ -8,7 +8,6 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"log"
 	"net/http"
 )
 
@@ -100,8 +99,6 @@ func DeleteBlacklist(db *sql.DB) gin.HandlerFunc {
 		for i, id := range request.MemberIds {
 			memberIDsInterface[i] = id
 		}
-
-		log.Printf("memberIDsInterface: %v", memberIDsInterface)
 
 		_, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId), qm.WhereIn("blocked_member_id IN ?", memberIDsInterface...)).DeleteAll(c.Request.Context(), db)
 		if err != nil {
