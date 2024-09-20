@@ -127,7 +127,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			}
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 
-			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID, "Anonymous")
+			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID)
 			if tokenErr != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 				return
@@ -168,7 +168,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 		}
 
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID, KAKAO_PROVIDER)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
@@ -473,7 +473,7 @@ func generateRandomNickname() string {
 	return first + " " + second
 }
 
-func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, payload *Claims, birthYear string, gender string, memberId int64, provider string) (string, string, error) {
+func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, payload *Claims, birthYear string, gender string, memberId int64) (string, string, error) {
 	jwtAccessValidityStr := JWT_ACCESS_VALIDITY_SECONDS
 	if jwtAccessValidityStr == "" {
 		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")

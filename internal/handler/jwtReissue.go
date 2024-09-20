@@ -50,7 +50,7 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 		}
 
 		// accessToken, refreshToken 생성
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, claims, claims.BirthYear, claims.Gender, claims.MemberId, KAKAO_PROVIDER)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, claims, claims.BirthYear, claims.Gender, claims.MemberId)
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
