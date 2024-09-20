@@ -2,8 +2,8 @@ package handler
 
 import (
 	"SingSong-Server/internal/pkg"
-	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/redis/go-redis/v9"
 	"net/http"
 )
@@ -30,22 +30,22 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 			return
 		}
 		// refreshToken이 redis에 있는지 확인
-		payload, err := redis.Get(c, reissueRequest.RefreshToken).Result()
+		_, err := redis.Get(c, reissueRequest.RefreshToken).Result()
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "Get Redis error - "+err.Error(), nil)
-			return
-		}
-		// refreshToken삭제
-		_, err = redis.Del(c, reissueRequest.RefreshToken).Result()
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "Delete Redis error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "No Refresh token in server - "+err.Error(), nil)
 			return
 		}
 
-		// payload를 Claims 구조체로 변환
-		var claims *Claims
-		if err := json.Unmarshal([]byte(payload), &claims); err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "JSON Unmarshal error - "+err.Error(), nil)
+		// 만료된 accessToken에서 memberId를 추출 (서명 검증을 건너뛰고 페이로드만 파싱)
+		token, _, err := new(jwt.Parser).ParseUnverified(reissueRequest.AccessToken, &Claims{})
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "Token parsing error - "+err.Error(), nil)
+			return
+		}
+
+		claims, ok := token.Claims.(*Claims)
+		if !ok {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "Invalid token claims", nil)
 			return
 		}
 
@@ -54,6 +54,13 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
+			return
+		}
+
+		// 기존 refreshToken삭제
+		_, err = redis.Del(c, reissueRequest.RefreshToken).Result()
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "Delete Redis error - "+err.Error(), nil)
 			return
 		}
 
