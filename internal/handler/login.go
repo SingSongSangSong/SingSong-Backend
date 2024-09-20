@@ -535,6 +535,7 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, paylo
 
 	payload.BirthYear = birthYear
 	payload.Gender = gender
+	payload.MemberId = memberId
 
 	claims, err := json.Marshal(payload)
 	if err != nil {
