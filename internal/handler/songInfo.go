@@ -122,3 +122,31 @@ func parseTags(tagString string) []string {
 	}
 	return tags
 }
+
+// GetLinkBySongId godoc
+// @Summary      songId로 link를 조회합니다.
+// @Description  songId로 link를 조회합니다.
+// @Tags         Link
+// @Accept       json
+// @Produce      json
+// @Param        songId path string true "songId"
+// @Success      200 {object} pkg.BaseResponseStruct(data=string) "성공"
+// @Router       /v1/songs/{songId}/link [get]
+func GetLinkBySongInfoId(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		songInfoId := c.Param("songId")
+		if songInfoId == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songId in path variable", nil)
+			return
+		}
+
+		info := mysql.RawSongInfos(qm.Where("song_info_id = ?", songInfoId))
+		one, err := info.One(c.Request.Context(), db)
+		if err != nil || one.MelonSongID.Valid == false {
+			pkg.BaseResponse(c, http.StatusOK, "ok", "https://www.melon.com/")
+			return
+		}
+		link := "https://www.melon.com/song/detail.htm?songId=" + one.MelonSongID.String
+		pkg.BaseResponse(c, http.StatusOK, "ok", link)
+	}
+}
