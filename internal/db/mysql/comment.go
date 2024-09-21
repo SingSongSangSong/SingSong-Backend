@@ -1217,7 +1217,7 @@ func (o *Comment) Upsert(ctx context.Context, exec boil.ContextExecutor, updateC
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			commentAllColumns,
 			commentColumnsWithDefault,
 			commentColumnsWithoutDefault,
@@ -1233,8 +1233,7 @@ func (o *Comment) Upsert(ctx context.Context, exec boil.ContextExecutor, updateC
 			return errors.New("mysql: unable to upsert comment, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(commentAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`comment`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `comment` WHERE %s",

@@ -200,3 +200,8 @@ CREATE TABLE IF NOT EXISTS blacklist (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
+
+ALTER TABLE song_info ADD COLUMN melon_song_id VARCHAR(255);
+UPDATE song_info SI
+    JOIN raw_song_info RSI ON SI.song_info_id = RSI.song_info_id
+    SET SI.melon_song_id = RSI.melon_song_id;
