@@ -1306,6 +1306,27 @@ paths:
       summary: 노래 상세 정보를 조회합니다
       tags:
       - Songs
+  /v1/songs/{songId}/link:
+    get:
+      consumes:
+      - application/json
+      description: songId로 link를 조회합니다.
+      parameters:
+      - description: songId
+        in: path
+        name: songId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: songId로 link를 조회합니다.
+      tags:
+      - Link
   /v1/songs/{songId}/related:
     get:
       consumes:
