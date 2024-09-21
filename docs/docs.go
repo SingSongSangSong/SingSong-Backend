@@ -1993,6 +1993,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "melonLink": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -2125,6 +2128,9 @@ const docTemplate = `{
                 },
                 "isNew": {
                     "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "ranking": {
                     "type": "integer"
@@ -2275,6 +2281,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "melonLink": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -2300,6 +2309,9 @@ const docTemplate = `{
                 },
                 "isMr": {
                     "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "singerName": {
                     "type": "string"
@@ -2338,6 +2350,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "melonLink": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -2372,6 +2387,9 @@ const docTemplate = `{
                 },
                 "keepCount": {
                     "type": "integer"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "octave": {
                     "type": "string"
@@ -2413,6 +2431,9 @@ const docTemplate = `{
                 },
                 "keepCount": {
                     "type": "integer"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "singerName": {
                     "type": "string"
@@ -2472,6 +2493,9 @@ const docTemplate = `{
                 },
                 "isMr": {
                     "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "singerName": {
                     "type": "string"

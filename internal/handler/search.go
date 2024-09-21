@@ -17,6 +17,7 @@ type songSearchInfoResponse struct {
 	SongInfoId int64  `json:"songId"`
 	Album      string `json:"album"`
 	IsMr       bool   `json:"isMr"`
+	MelonLink  string `json:"melonLink"`
 }
 
 type songSearchInfoResponses struct {
@@ -88,6 +89,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				SongInfoId: song.SongInfoID,
 				Album:      song.Album.String,
 				IsMr:       song.IsMR.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
 			})
 		}
 
@@ -100,6 +102,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				SongInfoId: song.SongInfoID,
 				Album:      song.Album.String,
 				IsMr:       song.IsMR.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
 			})
 		}
 
@@ -112,6 +115,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				SongInfoId: song.SongInfoID,
 				Album:      song.Album.String,
 				IsMr:       song.IsMR.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
 			})
 		}
 
@@ -195,6 +199,7 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 				SongInfoId: song.SongInfoID,
 				Album:      song.Album.String,
 				IsMr:       song.IsMR.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
 			})
 		}
 		response := songSearchPageResponse{
@@ -270,6 +275,7 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 				SongInfoId: song.SongInfoID,
 				Album:      song.Album.String,
 				IsMr:       song.IsMR.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
 			})
 		}
 		response := songSearchPageResponse{
@@ -332,6 +338,7 @@ func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
 				SongInfoId: song.SongInfoID,
 				Album:      song.Album.String,
 				IsMr:       song.IsMR.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
 			})
 		}
 		response := songSearchPageResponse{

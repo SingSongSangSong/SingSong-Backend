@@ -26,6 +26,7 @@ type PlaylistAddResponse struct {
 	SongInfoId int64  `json:"songId"`
 	Album      string `json:"album"`
 	IsMr       bool   `json:"isMr"`
+	MelonLink  string `json:"melonLink"`
 }
 
 // GoRoutine으로 회원가입시에 플레이리스트를 생성한다 (context따로 가져와야함)
@@ -239,7 +240,15 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String, IsMr: row.IsMR.Bool}
+			response := PlaylistAddResponse{
+				SongName:   row.SongName,
+				SingerName: row.ArtistName,
+				SongNumber: row.SongNumber,
+				SongInfoId: row.SongInfoID,
+				Album:      row.Album.String,
+				IsMr:       row.IsMR.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(row.MelonSongID),
+			}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
 

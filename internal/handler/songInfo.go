@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strings"
@@ -102,7 +103,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			CommentCount: commentCount,
 			KeepCount:    keepCount,
 			IsMr:         one.IsMR.Bool,
-			MelonLink:    GetMelonLink(c, songInfoId, db),
+			MelonLink:    CreateMelonLinkByMelonSongId(one.MelonSongID),
 		}
 
 		// 비동기적으로 member_action 저장
@@ -110,6 +111,13 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
+}
+
+func CreateMelonLinkByMelonSongId(melonSongId null.String) string {
+	if melonSongId.Valid {
+		return "https://www.melon.com/song/detail.htm?songId=" + melonSongId.String
+	}
+	return "https://www.melon.com/"
 }
 
 func parseTags(tagString string) []string {
