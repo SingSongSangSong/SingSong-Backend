@@ -932,7 +932,7 @@ func (o *Member) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			memberAllColumns,
 			memberColumnsWithDefault,
 			memberColumnsWithoutDefault,
@@ -951,8 +951,7 @@ func (o *Member) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 			return errors.New("mysql: unable to upsert member, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(memberAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`member`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `member` WHERE %s",

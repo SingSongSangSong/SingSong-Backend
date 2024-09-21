@@ -8,6 +8,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/grpc"
 	"log"
@@ -26,6 +27,7 @@ type songResponse struct {
 	IsKeep       bool   `json:"isKeep"`
 	KeepCount    int    `json:"keepCount"`
 	CommentCount int    `json:"commentCount"`
+	MelonLink    string `json:"melonLink"`
 }
 
 type userProfileResponse struct {
@@ -145,6 +147,13 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		// MelonSongId 가져오기
+		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
 		// Keep 여부를 저장하는 맵 생성
 		keepSongsMap := make(map[int64]bool)
 		for _, keep := range keepSongs {
@@ -161,6 +170,12 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 		keepCountsMap := make(map[int64]int)
 		for _, keep := range keepCounts {
 			keepCountsMap[keep.SongInfoID]++
+		}
+
+		// MelonSongId를 저장하는 맵 생성
+		melonSongIdsMap := make(map[int64]null.String)
+		for _, songInfo := range songInfos {
+			melonSongIdsMap[songInfo.SongInfoID] = songInfo.MelonSongID
 		}
 
 		// gRPC response에서 가져온 SongInfoId를 기반으로 songInfoMap, keepSongsMap, commentsCountsMap, keepCountsMap을 활용
@@ -191,6 +206,7 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 				IsKeep:       isKeep,       // Keep 여부 추가
 				CommentCount: commentCount, // 댓글 수 추가
 				KeepCount:    keepCount,    // Keep 수 추가
+				MelonLink:    CreateMelonLinkByMelonSongId(melonSongIdsMap[item.SongInfoId]),
 			})
 		}
 

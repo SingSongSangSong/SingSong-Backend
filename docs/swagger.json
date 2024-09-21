@@ -1985,6 +1985,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "melonLink": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -2117,6 +2120,9 @@
                 },
                 "isNew": {
                     "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "ranking": {
                     "type": "integer"
@@ -2267,6 +2273,9 @@
                 "keepCount": {
                     "type": "integer"
                 },
+                "melonLink": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -2292,6 +2301,9 @@
                 },
                 "isMr": {
                     "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "singerName": {
                     "type": "string"
@@ -2330,6 +2342,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "melonLink": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -2364,6 +2379,9 @@
                 },
                 "keepCount": {
                     "type": "integer"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "octave": {
                     "type": "string"
@@ -2405,6 +2423,9 @@
                 },
                 "keepCount": {
                     "type": "integer"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "singerName": {
                     "type": "string"
@@ -2464,6 +2485,9 @@
                 },
                 "isMr": {
                     "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "singerName": {
                     "type": "string"

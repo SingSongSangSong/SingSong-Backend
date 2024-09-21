@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strings"
@@ -23,6 +24,7 @@ type songInfoResponse struct {
 	KeepCount    int64    `json:"keepCount"`
 	CommentCount int64    `json:"commentCount"`
 	IsMr         bool     `json:"isMr"`
+	MelonLink    string   `json:"melonLink"`
 }
 
 // GetSongInfo godoc
@@ -101,6 +103,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			CommentCount: commentCount,
 			KeepCount:    keepCount,
 			IsMr:         one.IsMR.Bool,
+			MelonLink:    CreateMelonLinkByMelonSongId(one.MelonSongID),
 		}
 
 		// 비동기적으로 member_action 저장
@@ -108,6 +111,13 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
+}
+
+func CreateMelonLinkByMelonSongId(melonSongId null.String) string {
+	if melonSongId.Valid {
+		return "https://www.melon.com/song/detail.htm?songId=" + melonSongId.String
+	}
+	return "https://www.melon.com/"
 }
 
 func parseTags(tagString string) []string {
@@ -140,13 +150,18 @@ func GetLinkBySongInfoId(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		info := mysql.RawSongInfos(qm.Where("song_info_id = ?", songInfoId))
-		one, err := info.One(c.Request.Context(), db)
-		if err != nil || one.MelonSongID.Valid == false {
-			pkg.BaseResponse(c, http.StatusOK, "ok", "https://www.melon.com/")
-			return
-		}
-		link := "https://www.melon.com/song/detail.htm?songId=" + one.MelonSongID.String
+		link := GetMelonLink(c, songInfoId, db)
+
 		pkg.BaseResponse(c, http.StatusOK, "ok", link)
 	}
+}
+
+func GetMelonLink(c *gin.Context, songInfoId string, db *sql.DB) string {
+	link := "https://www.melon.com/"
+	info := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId))
+	one, err := info.One(c.Request.Context(), db)
+	if err == nil && one.MelonSongID.Valid == true {
+		link = "https://www.melon.com/song/detail.htm?songId=" + one.MelonSongID.String
+	}
+	return link
 }
