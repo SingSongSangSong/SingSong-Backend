@@ -42,6 +42,7 @@ type SongInfo struct {
 	UpdatedAt      null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 	DeletedAt      null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 	VideoLink      null.String `boil:"video_link" json:"video_link,omitempty" toml:"video_link" yaml:"video_link,omitempty"`
+	MelonSongID    null.String `boil:"melon_song_id" json:"melon_song_id,omitempty" toml:"melon_song_id" yaml:"melon_song_id,omitempty"`
 
 	R *songInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L songInfoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -66,6 +67,7 @@ var SongInfoColumns = struct {
 	UpdatedAt      string
 	DeletedAt      string
 	VideoLink      string
+	MelonSongID    string
 }{
 	SongInfoID:     "song_info_id",
 	SongName:       "song_name",
@@ -85,6 +87,7 @@ var SongInfoColumns = struct {
 	UpdatedAt:      "updated_at",
 	DeletedAt:      "deleted_at",
 	VideoLink:      "video_link",
+	MelonSongID:    "melon_song_id",
 }
 
 var SongInfoTableColumns = struct {
@@ -106,6 +109,7 @@ var SongInfoTableColumns = struct {
 	UpdatedAt      string
 	DeletedAt      string
 	VideoLink      string
+	MelonSongID    string
 }{
 	SongInfoID:     "song_info.song_info_id",
 	SongName:       "song_info.song_name",
@@ -125,6 +129,7 @@ var SongInfoTableColumns = struct {
 	UpdatedAt:      "song_info.updated_at",
 	DeletedAt:      "song_info.deleted_at",
 	VideoLink:      "song_info.video_link",
+	MelonSongID:    "song_info.melon_song_id",
 }
 
 // Generated where
@@ -148,6 +153,7 @@ var SongInfoWhere = struct {
 	UpdatedAt      whereHelpernull_Time
 	DeletedAt      whereHelpernull_Time
 	VideoLink      whereHelpernull_String
+	MelonSongID    whereHelpernull_String
 }{
 	SongInfoID:     whereHelperint64{field: "`song_info`.`song_info_id`"},
 	SongName:       whereHelperstring{field: "`song_info`.`song_name`"},
@@ -167,6 +173,7 @@ var SongInfoWhere = struct {
 	UpdatedAt:      whereHelpernull_Time{field: "`song_info`.`updated_at`"},
 	DeletedAt:      whereHelpernull_Time{field: "`song_info`.`deleted_at`"},
 	VideoLink:      whereHelpernull_String{field: "`song_info`.`video_link`"},
+	MelonSongID:    whereHelpernull_String{field: "`song_info`.`melon_song_id`"},
 }
 
 // SongInfoRels is where relationship names are stored.
@@ -186,8 +193,8 @@ func (*songInfoR) NewStruct() *songInfoR {
 type songInfoL struct{}
 
 var (
-	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at", "video_link"}
-	songInfoColumnsWithoutDefault = []string{"song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "deleted_at", "video_link"}
+	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at", "video_link", "melon_song_id"}
+	songInfoColumnsWithoutDefault = []string{"song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "deleted_at", "video_link", "melon_song_id"}
 	songInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at"}
 	songInfoPrimaryKeyColumns     = []string{"song_info_id"}
 	songInfoGeneratedColumns      = []string{}
@@ -793,7 +800,7 @@ func (o *SongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			songInfoAllColumns,
 			songInfoColumnsWithDefault,
 			songInfoColumnsWithoutDefault,
@@ -809,8 +816,7 @@ func (o *SongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 			return errors.New("mysql: unable to upsert song_info, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(songInfoAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`song_info`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `song_info` WHERE %s",

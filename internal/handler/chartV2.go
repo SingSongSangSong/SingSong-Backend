@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"github.com/volatiletech/null/v8"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,19 +14,20 @@ import (
 )
 
 type V2RedisChartResponse struct {
-	Ranking       int     `json:"ranking"`
-	SongInfoId    int     `json:"song_info_id"`
-	TotalScore    float32 `json:"total_score"`
-	New           int     `json:"new"`
-	RankingChange int     `json:"ranking_change"`
-	ArtistName    string  `json:"artist_name"`
-	SongName      string  `json:"song_name"`
-	SongNumber    int     `json:"song_number"`
-	IsMR          int     `json:"is_mr"`
-	ISLive        int     `json:"is_live"`
-	Album         string  `json:"album"`
-	Gender        string  `json:"gender"`
-	AgeGroup      string  `json:"age_group"`
+	Ranking       int         `json:"ranking"`
+	SongInfoId    int         `json:"song_info_id"`
+	TotalScore    float32     `json:"total_score"`
+	New           int         `json:"new"`
+	RankingChange int         `json:"ranking_change"`
+	ArtistName    string      `json:"artist_name"`
+	SongName      string      `json:"song_name"`
+	SongNumber    int         `json:"song_number"`
+	IsMR          int         `json:"is_mr"`
+	ISLive        int         `json:"is_live"`
+	Album         string      `json:"album"`
+	Gender        string      `json:"gender"`
+	AgeGroup      string      `json:"age_group"`
+	MelonSongId   null.String `json:"melon_song_id"`
 }
 
 // ChartResponse 카멜케이스 구조체
@@ -41,6 +43,7 @@ type V2ChartSong struct {
 	IsMR          bool    `json:"isMr"`
 	IsLive        bool    `json:"isLive"`
 	Album         string  `json:"album"`
+	MelonLink     string  `json:"melonLink"`
 }
 
 type V2ChartOfKey struct {
@@ -63,6 +66,7 @@ func convertOldToNewV2(old []V2RedisChartResponse) []V2ChartSong {
 			IsMR:          o.IsMR == 1,   // 1, 0 -> true/false로 변환
 			IsLive:        o.ISLive == 1, // 1, 0 -> true/false로 변환
 			Album:         o.Album,
+			MelonLink:     CreateMelonLinkByMelonSongId(o.MelonSongId),
 		})
 	}
 	return newCharts
