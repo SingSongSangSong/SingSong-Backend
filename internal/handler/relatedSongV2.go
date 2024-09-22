@@ -85,6 +85,10 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
+		if len(songVector) == 0 {
+			pkg.BaseResponse(c, http.StatusNotFound, "error - song vector not found", []relatedSongResponse{})
+			return
+		}
 
 		// 5. 벡터 데이터 추출
 		var vectorData entity.FloatVector
@@ -93,7 +97,8 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 				fieldData := column.FieldData()
 
 				if fieldData == nil || fieldData.GetVectors() == nil {
-					log.Fatalf("벡터 데이터를 찾을 수 없습니다.")
+					pkg.BaseResponse(c, http.StatusNotFound, "error - 벡터 데이터를 찾을 수 없습니다.", []relatedSongResponse{})
+					return
 				}
 
 				// 벡터 데이터를 FloatVector로 변환
@@ -120,6 +125,10 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 		)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		if len(sr) == 0 {
+			pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{[]relatedSong{}, 1})
 			return
 		}
 
@@ -164,6 +173,10 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 
 			// 실제 song_info_id 값을 추출
 			longData := fieldData.GetScalars().GetLongData().GetData()
+			if len(longData) == 0 {
+				log.Printf("song_info_id의 데이터를 찾을 수 없습니다. song: %v", fieldData)
+				continue // 에러 발생 시 다음 song으로 건
+			}
 			for _, val := range longData {
 				songInfoIds = append(songInfoIds, val)
 			}
@@ -198,6 +211,7 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 				IsKeep:     isKeepMap[found.SongInfoID],
 				SongNumber: found.SongNumber,
 				IsMr:       found.IsMR.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(found.MelonSongID),
 			})
 		}
 		nextPage := pageInt + 1
