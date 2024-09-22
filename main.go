@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -56,13 +57,14 @@ func main() {
 	var db *sql.DB
 	var rdb *redis.Client
 	var idxConnection *pinecone.IndexConnection
+	var milvusClient client.Client
 
-	conf.SetupConfig(ctx, &db, &rdb, &idxConnection)
+	conf.SetupConfig(ctx, &db, &rdb, &idxConnection, &milvusClient)
 
 	boil.SetDB(db)
 	//boil.DebugMode = true
 
-	r := router.SetupRouter(db, rdb, idxConnection)
+	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient)
 
 	// pprof를 위한 별도의 HTTP 서버 실행
 	go func() {

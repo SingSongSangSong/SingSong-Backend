@@ -6,6 +6,7 @@ import (
 	"SingSong-Server/middleware"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
@@ -15,7 +16,7 @@ import (
 	"net/http"
 )
 
-func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection) *gin.Engine {
+func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, milvusClient *client.Client) *gin.Engine {
 
 	//gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
@@ -80,6 +81,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		songs.PUT("/:songId/reviews", middleware.AuthMiddleware(db), handler.PutSongReview(db))
 		songs.DELETE("/:songId/reviews", middleware.AuthMiddleware(db), handler.DeleteSongReview(db))
 		songs.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSong(db, idxConnection))
+	}
+
+	songsV2 := r.Group("/api/v2/songs")
+	{
+		songsV2.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSongV2(db, milvusClient))
 	}
 
 	// 노래 리뷰 선택지 추가/조회
