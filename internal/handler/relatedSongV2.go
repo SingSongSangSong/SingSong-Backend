@@ -73,6 +73,18 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 			return
 		}
 
+		// 다음과 같이 Get함수를 사용하여 song_info_id를 가져오는 방법은 사용하지 않습니다.
+		// 그 이유는 TopK, Offset, Limit등 다양한 설정이 불가하기 때문입니다.
+		//// 1. song_info_id 값을 담는 ColumnString 생성
+		//songInfoIdForGet := []string{songInfoId} // 실제 song_info_id 리스트로 변경
+		//columnString := entity.NewColumnString("song_info_id", songInfoIdForGet)
+		//
+		//// Milvus에서 Get 함수 호출
+		//resultSet, err := (*milvusClient).Get(c, conf.VectorDBConfigInstance.COLLECTION_NAME, columnString)
+		//if err != nil {
+		//	log.Fatalf("Milvus에서 데이터를 가져오는 데 실패했습니다: %v", err)
+		//}
+
 		// 4. 벡터 디비에서 조회
 		songVector, err := (*milvusClient).Query(
 			c,
@@ -85,28 +97,13 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		if len(songVector) == 0 {
-			pkg.BaseResponse(c, http.StatusNotFound, "error - song vector not found", []relatedSongResponse{})
+
+		floatValues := songVector.GetColumn("vector").FieldData().GetVectors().GetFloatVector().GetData()
+		if len(floatValues) == 0 {
+			pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{[]relatedSong{}, 1})
 			return
 		}
-
-		// 5. 벡터 데이터 추출
-		var vectorData entity.FloatVector
-		for _, column := range songVector {
-			if column.Name() == "vector" {
-				fieldData := column.FieldData()
-
-				if fieldData == nil || fieldData.GetVectors() == nil {
-					pkg.BaseResponse(c, http.StatusNotFound, "error - 벡터 데이터를 찾을 수 없습니다.", []relatedSongResponse{})
-					return
-				}
-
-				// 벡터 데이터를 FloatVector로 변환
-				floatValues := fieldData.GetVectors().GetFloatVector().GetData()
-				vectorData = entity.FloatVector(floatValues)
-				break
-			}
-		}
+		vectorData := entity.FloatVector(floatValues)
 
 		// 6. 벡터 기반으로 연관 노래 검색
 		sp, _ := entity.NewIndexFlatSearchParam()
