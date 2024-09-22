@@ -65,14 +65,12 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 		// 3. 벡터 크기 및 마지막 페이지 여부 설정
 		vectorSize := sizeInt * pageInt
 		isLastPage := false
-		if vectorSize > maximumSongSize {
-			if vectorSize-sizeInt < maximumSongSize {
-				vectorSize = maximumSongSize
-				isLastPage = true
-			} else {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - related song data limit is 100", nil)
-				return
-			}
+		if vectorSize > maximumSongSize && vectorSize-sizeInt < maximumSongSize {
+			vectorSize = maximumSongSize
+			isLastPage = true
+		} else if vectorSize > maximumSongSize && vectorSize-sizeInt >= maximumSongSize {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - related song data limit is 100", nil)
+			return
 		}
 
 		// 4. 벡터 디비에서 조회
@@ -111,15 +109,14 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 			c,
 			conf.VectorDBConfigInstance.COLLECTION_NAME,
 			[]string{},
-			"song_info_id != "+songInfoId,
-			[]string{"song_name", "artist_name", "album", "song_number", "MR"},
+			"song_info_id != "+songInfoId+" && MR == false",
+			[]string{"song_name", "artist_name", "album", "song_number", "MR", "song_info_id"},
 			[]entity.Vector{vectorData},
 			"vector",
 			entity.COSINE,
-			20,
+			sizeInt,
 			sp,
 			client.WithOffset(int64(pageInt)),
-			client.WithLimit(int64(vectorSize)),
 		)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
@@ -151,7 +148,31 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 		// 8. songInfoId로 노래 정보 가져오기
 		var songInfoIds []interface{}
 		for _, song := range sr {
-			songInfoIds = append(songInfoIds, song.Fields.GetColumn("song_info_id").FieldData())
+			// song.Fields.GetColumn("song_info_id")가 nil인지 확인
+			column := song.Fields.GetColumn("song_info_id")
+			if column == nil {
+				log.Printf("song_info_id 컬럼을 찾을 수 없습니다. song: %v", song.Fields)
+				continue // 에러 발생 시 다음 song으로 건너뜁니다.
+			}
+
+			// FieldData가 nil인지 확인
+			fieldData := column.FieldData()
+			if fieldData == nil {
+				log.Printf("song_info_id의 FieldData를 찾을 수 없습니다. song: %v", song)
+				continue // 에러 발생 시 다음 song으로 건너뜁니다.
+			}
+
+			// 실제 song_info_id 값을 추출
+			longData := fieldData.GetScalars().GetLongData().GetData()
+			for _, val := range longData {
+				songInfoIds = append(songInfoIds, val)
+			}
+		}
+
+		// songInfoIds에 값이 있는지 확인
+		if len(songInfoIds) == 0 {
+			pkg.BaseResponse(c, http.StatusNotFound, "관련된 노래 정보를 찾을 수 없습니다.", nil)
+			return
 		}
 
 		slice, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
@@ -179,5 +200,10 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 				IsMr:       found.IsMR.Bool,
 			})
 		}
+		nextPage := pageInt + 1
+		if isLastPage {
+			nextPage = 1
+		}
+		pkg.BaseResponse(c, http.StatusOK, "ok", relatedSongResponse{relatedSongs, nextPage})
 	}
 }
