@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strings"
@@ -23,6 +24,7 @@ type songInfoResponse struct {
 	KeepCount    int64    `json:"keepCount"`
 	CommentCount int64    `json:"commentCount"`
 	IsMr         bool     `json:"isMr"`
+	MelonLink    string   `json:"melonLink"`
 }
 
 // GetSongInfo godoc
@@ -101,6 +103,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			CommentCount: commentCount,
 			KeepCount:    keepCount,
 			IsMr:         one.IsMR.Bool,
+			MelonLink:    CreateMelonLinkByMelonSongId(one.MelonSongID),
 		}
 
 		// 비동기적으로 member_action 저장
@@ -108,6 +111,13 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
+}
+
+func CreateMelonLinkByMelonSongId(melonSongId null.String) string {
+	if melonSongId.Valid {
+		return "https://www.melon.com/song/detail.htm?songId=" + melonSongId.String
+	}
+	return "https://www.melon.com/"
 }
 
 func parseTags(tagString string) []string {
@@ -121,4 +131,37 @@ func parseTags(tagString string) []string {
 		}
 	}
 	return tags
+}
+
+// GetLinkBySongId godoc
+// @Summary      songId로 link를 조회합니다.
+// @Description  songId로 link를 조회합니다.
+// @Tags         Link
+// @Accept       json
+// @Produce      json
+// @Param        songId path string true "songId"
+// @Success      200 {object} pkg.BaseResponseStruct(data=string) "성공"
+// @Router       /v1/songs/{songId}/link [get]
+func GetLinkBySongInfoId(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		songInfoId := c.Param("songId")
+		if songInfoId == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songId in path variable", nil)
+			return
+		}
+
+		link := GetMelonLink(c, songInfoId, db)
+
+		pkg.BaseResponse(c, http.StatusOK, "ok", link)
+	}
+}
+
+func GetMelonLink(c *gin.Context, songInfoId string, db *sql.DB) string {
+	link := "https://www.melon.com/"
+	info := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId))
+	one, err := info.One(c.Request.Context(), db)
+	if err == nil && one.MelonSongID.Valid == true {
+		link = "https://www.melon.com/song/detail.htm?songId=" + one.MelonSongID.String
+	}
+	return link
 }

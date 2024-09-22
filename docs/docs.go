@@ -1441,6 +1441,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/songs/{songId}/link": {
+            "get": {
+                "description": "songId로 link를 조회합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Link"
+                ],
+                "summary": "songId로 link를 조회합니다.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/songs/{songId}/related": {
             "get": {
                 "security": [
@@ -2022,6 +2054,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "melonLink": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -2154,6 +2189,9 @@ const docTemplate = `{
                 },
                 "isNew": {
                     "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "ranking": {
                     "type": "integer"
@@ -2304,6 +2342,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "melonLink": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -2329,6 +2370,9 @@ const docTemplate = `{
                 },
                 "isMr": {
                     "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "singerName": {
                     "type": "string"
@@ -2367,6 +2411,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "melonLink": {
+                    "type": "string"
+                },
                 "singerName": {
                     "type": "string"
                 },
@@ -2401,6 +2448,9 @@ const docTemplate = `{
                 },
                 "keepCount": {
                     "type": "integer"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "octave": {
                     "type": "string"
@@ -2442,6 +2492,9 @@ const docTemplate = `{
                 },
                 "keepCount": {
                     "type": "integer"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "singerName": {
                     "type": "string"
@@ -2501,6 +2554,9 @@ const docTemplate = `{
                 },
                 "isMr": {
                     "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
                 },
                 "singerName": {
                     "type": "string"

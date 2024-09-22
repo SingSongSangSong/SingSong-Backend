@@ -37,14 +37,14 @@ func main() {
 		tracer.Start(
 			tracer.WithRuntimeMetrics(),
 			tracer.WithEnv(conf.Env),
-			tracer.WithService("singsong"),
+			tracer.WithService(conf.DatadogServiceName),
 			tracer.WithServiceVersion(currentDate+":"+gitCommit), //배포날짜:커밋해시로 버전 설정
 		)
 		defer tracer.Stop()
 
 		err := profiler.Start(
 			profiler.WithEnv(conf.Env),
-			profiler.WithService("singsong"),
+			profiler.WithService(conf.DatadogServiceName),
 		)
 		if err != nil {
 			log.Fatal("Failed to start profiler: ", err)

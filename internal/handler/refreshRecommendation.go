@@ -32,6 +32,7 @@ type refreshResponse struct {
 	IsMr         bool   `json:"isMr"`
 	KeepCount    int    `json:"keepCount"`
 	CommentCount int    `json:"commentCount"`
+	MelonLink    string `json:"melonLink"`
 }
 
 var (
@@ -166,6 +167,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 				refreshedSongs[i].IsMr = foundSong.IsMR.Bool
 				refreshedSongs[i].SongName = foundSong.SongName
 				refreshedSongs[i].SingerName = foundSong.ArtistName
+				refreshedSongs[i].MelonLink = CreateMelonLinkByMelonSongId(foundSong.MelonSongID)
 			}
 
 			// 댓글 수 및 Keep 수 추가

@@ -23,7 +23,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 
 	// Datadog tracer
 	if conf.Env == conf.ProductionMode {
-		r.Use(gintrace.Middleware("singsong"))
+		r.Use(gintrace.Middleware(conf.DatadogServiceName))
 	}
 
 	// CORS 설정 추가
@@ -81,6 +81,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		songs.PUT("/:songId/reviews", middleware.AuthMiddleware(db), handler.PutSongReview(db))
 		songs.DELETE("/:songId/reviews", middleware.AuthMiddleware(db), handler.DeleteSongReview(db))
 		songs.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSong(db, idxConnection))
+		songs.GET("/:songId/link", handler.GetLinkBySongInfoId(db))
 	}
 
 	songsV2 := r.Group("/api/v2/songs")

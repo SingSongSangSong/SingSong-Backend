@@ -38,9 +38,10 @@ type VectorDBConfig struct {
 }
 
 const (
-	LocalMode      = "local"
-	TestMode       = "test"
-	ProductionMode = "prod"
+	LocalMode          = "local"
+	TestMode           = "test"
+	ProductionMode     = "prod"
+	DatadogServiceName = "singsong-golang"
 )
 
 var (

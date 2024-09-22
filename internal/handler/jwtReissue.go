@@ -32,13 +32,7 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 		// refreshToken이 redis에 있는지 확인
 		payload, err := redis.Get(c, reissueRequest.RefreshToken).Result()
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "Get Redis error - "+err.Error(), nil)
-			return
-		}
-		// refreshToken삭제
-		_, err = redis.Del(c, reissueRequest.RefreshToken).Result()
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "Delete Redis error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "No Refresh token in server - "+err.Error(), nil)
 			return
 		}
 
@@ -46,14 +40,20 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 		var claims *Claims
 		if err := json.Unmarshal([]byte(payload), &claims); err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "JSON Unmarshal error - "+err.Error(), nil)
-			return
 		}
 
 		// accessToken, refreshToken 생성
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, claims, claims.BirthYear, claims.Gender, claims.MemberId, KAKAO_PROVIDER)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, claims, claims.BirthYear, claims.Gender, claims.MemberId)
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
+			return
+		}
+
+		// 기존 refreshToken삭제
+		_, err = redis.Del(c, reissueRequest.RefreshToken).Result()
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "Delete Redis error - "+err.Error(), nil)
 			return
 		}
 

@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	pb "SingSong-Server/proto/langchainRecommend"
 	"context"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/null/v8"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/grpc"
 	"log"
 	"net/http"
@@ -76,6 +79,33 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 			Songs: []songResponse{},
 		}
 
+		// SongInfoId 리스트를 담을 빈 리스트 생성
+		var songInfoIds []int64
+
+		// gRPC response에서 SongInfoId만 추출
+		for _, item := range response.SimilarItems {
+			songInfoIds = append(songInfoIds, item.SongInfoId)
+		}
+
+		// []int64를 []interface{}로 변환
+		songInfoInterface := make([]interface{}, len(songInfoIds))
+		for i, v := range songInfoIds {
+			songInfoInterface[i] = v
+		}
+
+		// MelonSongId 가져오기
+		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// MelonSongId를 저장하는 맵 생성
+		melonSongIdsMap := make(map[int64]null.String)
+		for _, songInfo := range songInfos {
+			melonSongIdsMap[songInfo.SongInfoID] = songInfo.MelonSongID
+		}
+
 		// Loop through the gRPC response to populate songResponse
 		for _, item := range response.SimilarItems {
 			userProfileRes.Songs = append(userProfileRes.Songs, songResponse{
@@ -85,6 +115,7 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 				SongInfoId: item.SongInfoId,
 				Album:      item.Album,
 				IsMr:       item.IsMr,
+				MelonLink:  CreateMelonLinkByMelonSongId(melonSongIdsMap[item.SongInfoId]),
 			})
 		}
 
