@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
 	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	"log"
 	"os"
+	"strconv"
 )
 
 type GrpcConfig struct {
@@ -29,7 +31,10 @@ type AuthConfig struct {
 }
 
 type VectorDBConfig struct {
-	DIMENSION int
+	MILVUS_HOST     string
+	MILVUS_PORT     string
+	DIMENSION       int
+	COLLECTION_NAME string
 }
 
 const (
@@ -75,9 +80,21 @@ func init() {
 		JWT_ACCESS_VALIDITY_SECONDS:  os.Getenv("JWT_ACCESS_VALIDITY_SECONDS"),
 		JWT_REFRESH_VALIDITY_SECONDS: os.Getenv("JWT_REFRESH_VALIDITY_SECONDS"),
 	}
-	VectorDBConfigInstance = &VectorDBConfig{
-		DIMENSION: 548,
+
+	dimensionStr := os.Getenv("MILVUS_DIMENSION")
+	log.Printf("MILVUS_DIMENSION: %s", dimensionStr)
+	dimension, err := strconv.Atoi(dimensionStr)
+	if err != nil {
+		log.Fatalf("Failed to convert DIMENSION to int: %v", err)
 	}
+
+	VectorDBConfigInstance = &VectorDBConfig{
+		MILVUS_HOST:     os.Getenv("MILVUS_HOST"),
+		MILVUS_PORT:     os.Getenv("MILVUS_PORT"),
+		DIMENSION:       dimension,
+		COLLECTION_NAME: os.Getenv("MILVUS_COLLECTION_NAME"),
+	}
+
 	GrpcConfigInstance = &GrpcConfig{
 		Addr: func() string {
 			if addr := os.Getenv("GRPC_ADDR"); addr != "" {
@@ -88,9 +105,10 @@ func init() {
 	}
 }
 
-func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection) {
+func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection, milvusClient *client.Client) {
 	var err error
 
+	// MySQL 연결 설정
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
 
@@ -112,6 +130,12 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	_, err = (*rdb).Ping(ctx).Result()
 	if err != nil {
 		log.Fatalf("Redis 연결 실패: %v", err)
+	}
+
+	// Milvus 연결
+	*milvusClient, err = client.NewClient(ctx, client.Config{Address: os.Getenv("MILVUS_HOST") + ":" + os.Getenv("MILVUS_PORT")})
+	if err != nil {
+		log.Fatalf("Milvus 연결 실패: %v", err)
 	}
 
 	// Pinecone 연결
