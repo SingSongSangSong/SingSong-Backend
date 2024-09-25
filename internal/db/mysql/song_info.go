@@ -43,6 +43,7 @@ type SongInfo struct {
 	DeletedAt      null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 	VideoLink      null.String `boil:"video_link" json:"video_link,omitempty" toml:"video_link" yaml:"video_link,omitempty"`
 	MelonSongID    null.String `boil:"melon_song_id" json:"melon_song_id,omitempty" toml:"melon_song_id" yaml:"melon_song_id,omitempty"`
+	IsLive         null.Bool   `boil:"is_live" json:"is_live,omitempty" toml:"is_live" yaml:"is_live,omitempty"`
 
 	R *songInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L songInfoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -68,6 +69,7 @@ var SongInfoColumns = struct {
 	DeletedAt      string
 	VideoLink      string
 	MelonSongID    string
+	IsLive         string
 }{
 	SongInfoID:     "song_info_id",
 	SongName:       "song_name",
@@ -88,6 +90,7 @@ var SongInfoColumns = struct {
 	DeletedAt:      "deleted_at",
 	VideoLink:      "video_link",
 	MelonSongID:    "melon_song_id",
+	IsLive:         "is_live",
 }
 
 var SongInfoTableColumns = struct {
@@ -110,6 +113,7 @@ var SongInfoTableColumns = struct {
 	DeletedAt      string
 	VideoLink      string
 	MelonSongID    string
+	IsLive         string
 }{
 	SongInfoID:     "song_info.song_info_id",
 	SongName:       "song_info.song_name",
@@ -130,6 +134,7 @@ var SongInfoTableColumns = struct {
 	DeletedAt:      "song_info.deleted_at",
 	VideoLink:      "song_info.video_link",
 	MelonSongID:    "song_info.melon_song_id",
+	IsLive:         "song_info.is_live",
 }
 
 // Generated where
@@ -154,6 +159,7 @@ var SongInfoWhere = struct {
 	DeletedAt      whereHelpernull_Time
 	VideoLink      whereHelpernull_String
 	MelonSongID    whereHelpernull_String
+	IsLive         whereHelpernull_Bool
 }{
 	SongInfoID:     whereHelperint64{field: "`song_info`.`song_info_id`"},
 	SongName:       whereHelperstring{field: "`song_info`.`song_name`"},
@@ -174,6 +180,7 @@ var SongInfoWhere = struct {
 	DeletedAt:      whereHelpernull_Time{field: "`song_info`.`deleted_at`"},
 	VideoLink:      whereHelpernull_String{field: "`song_info`.`video_link`"},
 	MelonSongID:    whereHelpernull_String{field: "`song_info`.`melon_song_id`"},
+	IsLive:         whereHelpernull_Bool{field: "`song_info`.`is_live`"},
 }
 
 // SongInfoRels is where relationship names are stored.
@@ -193,9 +200,9 @@ func (*songInfoR) NewStruct() *songInfoR {
 type songInfoL struct{}
 
 var (
-	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at", "video_link", "melon_song_id"}
+	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at", "video_link", "melon_song_id", "is_live"}
 	songInfoColumnsWithoutDefault = []string{"song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "deleted_at", "video_link", "melon_song_id"}
-	songInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at"}
+	songInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at", "is_live"}
 	songInfoPrimaryKeyColumns     = []string{"song_info_id"}
 	songInfoGeneratedColumns      = []string{}
 )
