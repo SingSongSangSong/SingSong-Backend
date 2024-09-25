@@ -26,6 +26,7 @@ type PlaylistAddResponse struct {
 	SongInfoId int64  `json:"songId"`
 	Album      string `json:"album"`
 	IsMr       bool   `json:"isMr"`
+	IsLive     bool   `json:"isLive"`
 	MelonLink  string `json:"melonLink"`
 }
 
@@ -120,7 +121,7 @@ func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String, IsMr: row.IsMR.Bool}
+			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String, IsMr: row.IsMR.Bool, IsLive: row.IsLive.Bool}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
 
@@ -247,6 +248,7 @@ func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 				SongInfoId: row.SongInfoID,
 				Album:      row.Album.String,
 				IsMr:       row.IsMR.Bool,
+				IsLive:     row.IsLive.Bool,
 				MelonLink:  CreateMelonLinkByMelonSongId(row.MelonSongID),
 			}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)

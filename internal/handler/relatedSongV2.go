@@ -208,6 +208,7 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 				IsKeep:     isKeepMap[found.SongInfoID],
 				SongNumber: found.SongNumber,
 				IsMr:       found.IsMR.Bool,
+				IsLive:     found.IsLive.Bool,
 				MelonLink:  CreateMelonLinkByMelonSongId(found.MelonSongID),
 			})
 		}
