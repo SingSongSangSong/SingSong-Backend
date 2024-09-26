@@ -23,7 +23,7 @@ type V2RedisChartResponse struct {
 	SongName      string      `json:"song_name"`
 	SongNumber    int         `json:"song_number"`
 	IsMR          int         `json:"is_mr"`
-	ISLive        int         `json:"is_live"`
+	IsLive        int         `json:"is_live"`
 	Album         string      `json:"album"`
 	Gender        string      `json:"gender"`
 	AgeGroup      string      `json:"age_group"`
@@ -64,7 +64,7 @@ func convertOldToNewV2(old []V2RedisChartResponse) []V2ChartSong {
 			SongName:      o.SongName,
 			SongNumber:    o.SongNumber,
 			IsMR:          o.IsMR == 1,   // 1, 0 -> true/false로 변환
-			IsLive:        o.ISLive == 1, // 1, 0 -> true/false로 변환
+			IsLive:        o.IsLive == 1, // 1, 0 -> true/false로 변환
 			Album:         o.Album,
 			MelonLink:     CreateMelonLinkByMelonSongId(o.MelonSongId),
 		})

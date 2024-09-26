@@ -15,57 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/member/nickname": {
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Nickname 업데이트 한다",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Member"
-                ],
-                "summary": "Nickname 업데이트 한다",
-                "parameters": [
-                    {
-                        "description": "닉네임",
-                        "name": "updateNicknameRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateNicknameRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.MemberResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/blacklist": {
             "get": {
                 "security": [
@@ -745,6 +694,57 @@ const docTemplate = `{
                         "description": "성공",
                         "schema": {
                             "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/member/nickname": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Nickname 업데이트 한다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "Nickname 업데이트 한다",
+                "parameters": [
+                    {
+                        "description": "닉네임",
+                        "name": "updateNicknameRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateNicknameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.MemberResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -2051,6 +2051,9 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "isLive": {
+                    "type": "boolean"
+                },
                 "isMr": {
                     "type": "boolean"
                 },
@@ -2336,6 +2339,9 @@ const docTemplate = `{
                 "isKeep": {
                     "type": "boolean"
                 },
+                "isLive": {
+                    "type": "boolean"
+                },
                 "isMr": {
                     "type": "boolean"
                 },
@@ -2366,6 +2372,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
                     "type": "boolean"
                 },
                 "isMr": {
@@ -2408,6 +2417,9 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "isLive": {
+                    "type": "boolean"
+                },
                 "isMr": {
                     "type": "boolean"
                 },
@@ -2441,6 +2453,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
                     "type": "boolean"
                 },
                 "isMr": {
@@ -2485,6 +2500,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
                     "type": "boolean"
                 },
                 "isMr": {
@@ -2551,6 +2569,9 @@ const docTemplate = `{
             "properties": {
                 "album": {
                     "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
                 },
                 "isMr": {
                     "type": "boolean"

@@ -24,6 +24,7 @@ type songInfoResponse struct {
 	KeepCount    int64    `json:"keepCount"`
 	CommentCount int64    `json:"commentCount"`
 	IsMr         bool     `json:"isMr"`
+	IsLive       bool     `json:"isLive"`
 	MelonLink    string   `json:"melonLink"`
 }
 
@@ -103,6 +104,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			CommentCount: commentCount,
 			KeepCount:    keepCount,
 			IsMr:         one.IsMR.Bool,
+			IsLive:       one.IsLive.Bool,
 			MelonLink:    CreateMelonLinkByMelonSongId(one.MelonSongID),
 		}
 
