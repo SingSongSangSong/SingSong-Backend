@@ -15,57 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/member/nickname": {
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Nickname 업데이트 한다",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Member"
-                ],
-                "summary": "Nickname 업데이트 한다",
-                "parameters": [
-                    {
-                        "description": "닉네임",
-                        "name": "updateNicknameRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/handler.UpdateNicknameRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.MemberResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/blacklist": {
             "get": {
                 "security": [
@@ -745,6 +694,57 @@ const docTemplate = `{
                         "description": "성공",
                         "schema": {
                             "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/member/nickname": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Nickname 업데이트 한다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Member"
+                ],
+                "summary": "Nickname 업데이트 한다",
+                "parameters": [
+                    {
+                        "description": "닉네임",
+                        "name": "updateNicknameRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateNicknameRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.MemberResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -1827,6 +1827,67 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v2/songs/{songId}/related": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "연관된 노래들과 다음 페이지 번호를 함께 조회합니다. 노래 상세 화면에 첫 진입했을 경우 page 번호는 1입니다. 무한스크롤을 진행한다면 응답에 포함되어 오는 nextPage를 다음번에 포함하여 보내면 됩니다. nextPage는 1씩 증가합니다. 더이상 노래가 없을 경우, 응답에는 빈 배열과 함께 nextPage는 1로 반환됩니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Songs"
+                ],
+                "summary": "연관된 노래들을 조회합니다",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.relatedSongResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1989,6 +2050,9 @@ const docTemplate = `{
             "properties": {
                 "album": {
                     "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
                 },
                 "isMr": {
                     "type": "boolean"
@@ -2275,6 +2339,9 @@ const docTemplate = `{
                 "isKeep": {
                     "type": "boolean"
                 },
+                "isLive": {
+                    "type": "boolean"
+                },
                 "isMr": {
                     "type": "boolean"
                 },
@@ -2305,6 +2372,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
                     "type": "boolean"
                 },
                 "isMr": {
@@ -2347,6 +2417,9 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "isLive": {
+                    "type": "boolean"
+                },
                 "isMr": {
                     "type": "boolean"
                 },
@@ -2380,6 +2453,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
                     "type": "boolean"
                 },
                 "isMr": {
@@ -2424,6 +2500,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
                     "type": "boolean"
                 },
                 "isMr": {
@@ -2490,6 +2569,9 @@ const docTemplate = `{
             "properties": {
                 "album": {
                     "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
                 },
                 "isMr": {
                     "type": "boolean"

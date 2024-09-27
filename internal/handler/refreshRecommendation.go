@@ -30,6 +30,7 @@ type refreshResponse struct {
 	IsKeep       bool   `json:"isKeep"`
 	SongInfoId   int64  `json:"songId"`
 	IsMr         bool   `json:"isMr"`
+	IsLive       bool   `json:"isLive"`
 	KeepCount    int    `json:"keepCount"`
 	CommentCount int    `json:"commentCount"`
 	MelonLink    string `json:"melonLink"`
@@ -167,6 +168,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 				refreshedSongs[i].IsMr = foundSong.IsMR.Bool
 				refreshedSongs[i].SongName = foundSong.SongName
 				refreshedSongs[i].SingerName = foundSong.ArtistName
+				refreshedSongs[i].IsLive = foundSong.IsLive.Bool
 				refreshedSongs[i].MelonLink = CreateMelonLinkByMelonSongId(foundSong.MelonSongID)
 			}
 

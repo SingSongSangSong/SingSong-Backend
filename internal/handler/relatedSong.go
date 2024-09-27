@@ -20,6 +20,7 @@ type relatedSong struct {
 	IsKeep     bool   `json:"isKeep"`
 	SongInfoId int64  `json:"songId"`
 	IsMr       bool   `json:"isMr"`
+	IsLive     bool   `json:"isLive"`
 	MelonLink  string `json:"melonLink"`
 }
 
@@ -183,6 +184,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			relatedSongs[i].IsKeep = isKeepMap[song.SongInfoId]
 			relatedSongs[i].SongNumber = found.SongNumber
 			relatedSongs[i].IsMr = found.IsMR.Bool
+			relatedSongs[i].IsLive = found.IsLive.Bool
 			relatedSongs[i].MelonLink = CreateMelonLinkByMelonSongId(found.MelonSongID)
 		}
 

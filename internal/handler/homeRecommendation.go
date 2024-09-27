@@ -26,6 +26,7 @@ type songHomeResponse struct {
 	SongInfoId int64  `json:"songId"`
 	Album      string `json:"album"`
 	IsMr       bool   `json:"isMr"`
+	IsLive     bool   `json:"isLive"`
 	MelonLink  string `json:"melonLink"`
 }
 
@@ -167,6 +168,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 							SongInfoId: songInfo.SongInfoID,
 							Album:      songInfo.Album.String,
 							IsMr:       songInfo.IsMR.Bool,
+							IsLive:     songInfo.IsLive.Bool,
 							MelonLink:  CreateMelonLinkByMelonSongId(songInfo.MelonSongID),
 						})
 					}

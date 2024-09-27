@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"github.com/gin-gonic/gin"
-	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/grpc"
 	"log"
@@ -101,9 +100,9 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// MelonSongId를 저장하는 맵 생성
-		melonSongIdsMap := make(map[int64]null.String)
+		songInfoMap := make(map[int64]*mysql.SongInfo)
 		for _, songInfo := range songInfos {
-			melonSongIdsMap[songInfo.SongInfoID] = songInfo.MelonSongID
+			songInfoMap[songInfo.SongInfoID] = songInfo
 		}
 
 		// Loop through the gRPC response to populate songResponse
@@ -115,7 +114,8 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 				SongInfoId: item.SongInfoId,
 				Album:      item.Album,
 				IsMr:       item.IsMr,
-				MelonLink:  CreateMelonLinkByMelonSongId(melonSongIdsMap[item.SongInfoId]),
+				IsLive:     songInfoMap[item.SongInfoId].IsLive.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(songInfoMap[item.SongInfoId].MelonSongID),
 			})
 		}
 

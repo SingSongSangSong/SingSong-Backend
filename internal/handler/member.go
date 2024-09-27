@@ -70,7 +70,7 @@ type UpdateNicknameRequest struct {
 // @Produce      json
 // @Param 	  	updateNicknameRequest   body      UpdateNicknameRequest  true  "닉네임"
 // @Success      200 {object} pkg.BaseResponseStruct{data=MemberResponse} "성공"
-// @Router       /member/nickname [patch]
+// @Router       /v1/member/nickname [patch]
 // @Security BearerAuth
 func UpdateNickname(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {

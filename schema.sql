@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS song_info (
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
 
-ALTER TABLE song_info ADD COLUMN video_link TEXT
+ALTER TABLE song_info ADD COLUMN video_link TEXT;
 
 -- keepSong 테이블 생성
 CREATE TABLE IF NOT EXISTS keep_song (
@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS comment (
     is_recomment BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
 );
 
 ALTER TABLE comment
@@ -205,3 +205,6 @@ ALTER TABLE song_info ADD COLUMN melon_song_id VARCHAR(255);
 UPDATE song_info SI
     JOIN raw_song_info RSI ON SI.song_info_id = RSI.song_info_id
     SET SI.melon_song_id = RSI.melon_song_id;
+
+ALTER TABLE song_info ADD COLUMN is_live BOOLEAN DEFAULT FALSE;
+ALTER TABLE song_info ADD UNIQUE INDEX (song_number, song_name, artist_name);
