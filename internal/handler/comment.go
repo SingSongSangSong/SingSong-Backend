@@ -143,7 +143,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 		comments, err := mysql.Comments(
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
-			qm.Where("comment.song_info_id = ?", songId),
+			qm.Where("comment.song_info_id = ? and comment.deleted_at is null", songId),
 			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.OrderBy("comment.created_at DESC"),
 		).All(c.Request.Context(), db)
@@ -284,7 +284,7 @@ func GetReCommentOnSong(db *sql.DB) gin.HandlerFunc {
 		reComments, err := mysql.Comments(
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
-			qm.Where("comment.parent_comment_id = ?", commentId),
+			qm.Where("comment.parent_comment_id = ? and comment.deleted_at is null", commentId),
 			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.OrderBy("comment.created_at ASC"),
 		).All(c.Request.Context(), db)
