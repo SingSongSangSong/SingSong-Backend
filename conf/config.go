@@ -31,10 +31,11 @@ type AuthConfig struct {
 }
 
 type VectorDBConfig struct {
-	MILVUS_HOST     string
-	MILVUS_PORT     string
-	DIMENSION       int
-	COLLECTION_NAME string
+	MILVUS_HOST        string
+	MILVUS_PORT        string
+	MILVUS_DIMENSION   int
+	COLLECTION_NAME    string
+	PINECONE_DIMENSION int
 }
 
 const (
@@ -85,14 +86,15 @@ func init() {
 	log.Printf("MILVUS_DIMENSION: %s", dimensionStr)
 	dimension, err := strconv.Atoi(dimensionStr)
 	if err != nil {
-		log.Fatalf("Failed to convert DIMENSION to int: %v", err)
+		log.Fatalf("Failed to convert MILVUS_DIMENSION to int: %v", err)
 	}
 
 	VectorDBConfigInstance = &VectorDBConfig{
-		MILVUS_HOST:     os.Getenv("MILVUS_HOST"),
-		MILVUS_PORT:     os.Getenv("MILVUS_PORT"),
-		DIMENSION:       dimension,
-		COLLECTION_NAME: os.Getenv("MILVUS_COLLECTION_NAME"),
+		MILVUS_HOST:        os.Getenv("MILVUS_HOST"),
+		MILVUS_PORT:        os.Getenv("MILVUS_PORT"),
+		MILVUS_DIMENSION:   dimension,
+		COLLECTION_NAME:    os.Getenv("MILVUS_COLLECTION_NAME"),
+		PINECONE_DIMENSION: 548,
 	}
 
 	GrpcConfigInstance = &GrpcConfig{

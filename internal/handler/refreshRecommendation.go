@@ -214,7 +214,7 @@ func generateRefreshKey(memberId int64, englishTag string) string {
 }
 
 func queryVectorByTag(c *gin.Context, englishTag string, idxConnection *pinecone.IndexConnection, vectorQuerySize int) (*pinecone.QueryVectorsResponse, error) {
-	dummyVector := make([]float32, conf.VectorDBConfigInstance.DIMENSION)
+	dummyVector := make([]float32, conf.VectorDBConfigInstance.PINECONE_DIMENSION)
 	for i := range dummyVector {
 		dummyVector[i] = rand.Float32()*2 - 1 // -1 ~ 1
 	}

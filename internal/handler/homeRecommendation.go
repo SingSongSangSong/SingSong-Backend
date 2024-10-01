@@ -89,7 +89,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 				}
 
 				// Define a dummy vector (e.g., zero vector) for the query
-				dummyVector := make([]float32, conf.VectorDBConfigInstance.DIMENSION) // Assuming the vector length is 1536, adjust as necessary
+				dummyVector := make([]float32, conf.VectorDBConfigInstance.PINECONE_DIMENSION) // Assuming the vector length is 1536, adjust as necessary
 				for i := range dummyVector {
 					dummyVector[i] = rand.Float32() //random vector
 				}
