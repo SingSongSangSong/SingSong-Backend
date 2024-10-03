@@ -874,6 +874,15 @@
                                 }
                             ]
                         }
+                    },
+                    "400": {
+                        "description": "PostRequest가 올바르지 않은 경우, 엑세스 토큰은 유효하지만 사용자 정보가 유효하지 않은 경우, 노래 id가 중복되거나 10개 초과인 경우 400 실패"
+                    },
+                    "401": {
+                        "description": "엑세스 토큰 검증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
                     }
                 }
             }
@@ -923,6 +932,56 @@
                                 }
                             ]
                         }
+                    },
+                    "400": {
+                        "description": "postId가 요청에 없는 경우, 해당 게시글이 존재하지 않는 경우 400 실패"
+                    },
+                    "401": {
+                        "description": "엑세스 토큰 검증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 하나 삭제",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 하나 삭제",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postId",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    },
+                    "400": {
+                        "description": "postId가 요청에 없는 경우, 해당 게시글이 존재하지 않는 경우, 게시글 작성자가 아닌 경우 400 실패"
+                    },
+                    "401": {
+                        "description": "사용자 인증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
                     }
                 }
             }
