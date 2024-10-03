@@ -119,6 +119,45 @@ definitions:
       songNumber:
         type: integer
     type: object
+  handler.PostDetailsResponse:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isWriter:
+        type: boolean
+      likes:
+        type: integer
+      postId:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/handler.SongOnPost'
+        type: array
+      title:
+        type: string
+      writerNickname:
+        type: string
+    type: object
+  handler.PostIdResponse:
+    properties:
+      postId:
+        type: integer
+    type: object
+  handler.PostRequest:
+    properties:
+      content:
+        type: string
+      songIds:
+        items:
+          type: integer
+        type: array
+      title:
+        type: string
+    type: object
   handler.ReissueRequest:
     properties:
       accessToken:
@@ -154,6 +193,25 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  handler.SongOnPost:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
     type: object
   handler.TotalChartResponse:
     properties:
@@ -978,6 +1036,63 @@ paths:
       summary: 멤버 회원 탈퇴
       tags:
       - Member
+  /v1/posts:
+    post:
+      consumes:
+      - application/json
+      description: 게시글 등록
+      parameters:
+      - description: PostRequest
+        in: body
+        name: PostRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostIdResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 게시글 등록
+      tags:
+      - Post
+  /v1/posts/{postId}:
+    get:
+      consumes:
+      - application/json
+      description: 게시글 하나 상세 조회
+      parameters:
+      - description: postId
+        in: path
+        name: postId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostDetailsResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 게시글 하나 상세 조회
+      tags:
+      - Post
   /v1/recommend/home:
     post:
       consumes:
