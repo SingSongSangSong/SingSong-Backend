@@ -66,7 +66,7 @@ func LangchainAgentRecommedation(db *sql.DB) gin.HandlerFunc {
 		// gRPC 서버에 연결
 		conn, err := grpc.Dial(GrpcAddr+":50051", grpc.WithInsecure())
 		if err != nil {
-			log.Fatalf("Did not connect: %v", err)
+			log.Printf("Did not connect: %v", err)
 		}
 		defer conn.Close()
 
