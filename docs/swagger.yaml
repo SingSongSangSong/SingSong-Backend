@@ -119,6 +119,45 @@ definitions:
       songNumber:
         type: integer
     type: object
+  handler.PostDetailsResponse:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isWriter:
+        type: boolean
+      likes:
+        type: integer
+      nickname:
+        type: string
+      postId:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/handler.SongOnPost'
+        type: array
+      title:
+        type: string
+    type: object
+  handler.PostIdResponse:
+    properties:
+      postId:
+        type: integer
+    type: object
+  handler.PostRequest:
+    properties:
+      content:
+        type: string
+      songIds:
+        items:
+          type: integer
+        type: array
+      title:
+        type: string
+    type: object
   handler.ReissueRequest:
     properties:
       accessToken:
@@ -154,6 +193,25 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  handler.SongOnPost:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
     type: object
   handler.TotalChartResponse:
     properties:
@@ -978,6 +1036,134 @@ paths:
       summary: 멤버 회원 탈퇴
       tags:
       - Member
+  /v1/posts:
+    get:
+      consumes:
+      - application/json
+      description: 게시글 전체 조회 (페이징)
+      parameters:
+      - description: 현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회
+        in: query
+        name: page
+        type: integer
+      - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostDetailsResponse'
+              type: object
+        "400":
+          description: 실패
+        "500":
+          description: 서버 에러일 경우 500 실패
+      summary: 게시글 전체 조회 (페이징)
+      tags:
+      - Post
+    post:
+      consumes:
+      - application/json
+      description: 게시글 등록
+      parameters:
+      - description: PostRequest
+        in: body
+        name: PostRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostIdResponse'
+              type: object
+        "400":
+          description: PostRequest가 올바르지 않은 경우, 엑세스 토큰은 유효하지만 사용자 정보가 유효하지 않은 경우,
+            노래 id가 중복되거나 10개 초과인 경우 400 실패
+        "401":
+          description: 엑세스 토큰 검증에 실패했을 경우 401 실패
+        "500":
+          description: 서버 에러일 경우 500 실패
+      security:
+      - BearerAuth: []
+      summary: 게시글 등록
+      tags:
+      - Post
+  /v1/posts/{postId}:
+    delete:
+      consumes:
+      - application/json
+      description: 게시글 하나 삭제
+      parameters:
+      - description: postId
+        in: path
+        name: postId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+        "400":
+          description: postId가 요청에 없는 경우, 해당 게시글이 존재하지 않는 경우, 게시글 작성자가 아닌 경우 400 실패
+        "401":
+          description: 사용자 인증에 실패했을 경우 401 실패
+        "500":
+          description: 서버 에러일 경우 500 실패
+      security:
+      - BearerAuth: []
+      summary: 게시글 하나 삭제
+      tags:
+      - Post
+    get:
+      consumes:
+      - application/json
+      description: 게시글 하나 상세 조회
+      parameters:
+      - description: postId
+        in: path
+        name: postId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostDetailsResponse'
+              type: object
+        "400":
+          description: postId가 요청에 없는 경우, 해당 게시글이 존재하지 않는 경우 400 실패
+        "401":
+          description: 엑세스 토큰 검증에 실패했을 경우 401 실패
+        "500":
+          description: 서버 에러일 경우 500 실패
+      security:
+      - BearerAuth: []
+      summary: 게시글 하나 상세 조회
+      tags:
+      - Post
   /v1/recommend/home:
     post:
       consumes:
