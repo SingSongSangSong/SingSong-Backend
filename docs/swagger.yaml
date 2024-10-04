@@ -59,6 +59,13 @@ definitions:
       songId:
         type: integer
     type: object
+  handler.LangchainAgentResponse:
+    properties:
+      songs:
+        items:
+          $ref: '#/definitions/handler.songsLangchainAgentesponse'
+        type: array
+    type: object
   handler.LlmRequest:
     properties:
       userInput:
@@ -537,6 +544,27 @@ definitions:
         items:
           $ref: '#/definitions/handler.songSearchInfoResponse'
         type: array
+    type: object
+  handler.songsLangchainAgentesponse:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      reason:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
     type: object
   handler.userProfileResponse:
     properties:
@@ -1219,6 +1247,35 @@ paths:
       security:
       - BearerAuth: []
       summary: AI가 골랐송
+      tags:
+      - Recommendation
+  /v1/recommend/recommendation/langchainAgent:
+    post:
+      consumes:
+      - application/json
+      description: LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 10개의 노래를 반환합니다
+      parameters:
+      - description: 인풋
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LlmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.LangchainAgentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: LLM으로 검색하기
       tags:
       - Recommendation
   /v1/recommend/recommendation/llm:
