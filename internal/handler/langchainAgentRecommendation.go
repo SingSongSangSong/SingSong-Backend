@@ -13,6 +13,23 @@ import (
 	"net/http"
 )
 
+// songHomeResponse와 songResponse가 동일한 것으로 가정하고 사용
+type songsLangchainAgentesponse struct {
+	SongNumber int    `json:"songNumber"`
+	SongName   string `json:"songName"`
+	SingerName string `json:"singerName"`
+	SongInfoId int64  `json:"songId"`
+	Album      string `json:"album"`
+	IsMr       bool   `json:"isMr"`
+	IsLive     bool   `json:"isLive"`
+	MelonLink  string `json:"melonLink"`
+	Reason     string `json:"reason"`
+}
+
+type LangchainAgentResponse struct {
+	Songs []songsLangchainAgentesponse `json:"songs"`
+}
+
 // LangchainAgentRecommedation godoc
 // @Summary      LLM으로 검색하기
 // @Description  LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 10개의 노래를 반환합니다
@@ -20,7 +37,7 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        input   body      LlmRequest  true  "인풋"
-// @Success      200 {object} pkg.BaseResponseStruct{data=userProfileResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=LangchainAgentResponse} "성공"
 // @Router       /v1/recommend/recommendation/langchainAgent [post]
 // @Security BearerAuth
 func LangchainAgentRecommedation(db *sql.DB) gin.HandlerFunc {
@@ -70,8 +87,8 @@ func LangchainAgentRecommedation(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Populate the userProfileResponse with gRPC response data
-		userProfileRes := userProfileResponse{
-			Songs: []songResponse{},
+		userProfileRes := LangchainAgentResponse{
+			Songs: []songsLangchainAgentesponse{},
 		}
 
 		// SongInfoId 리스트를 담을 빈 리스트 생성
@@ -103,7 +120,7 @@ func LangchainAgentRecommedation(db *sql.DB) gin.HandlerFunc {
 
 		// Loop through the gRPC response to populate songResponse
 		for _, item := range response.SearchResult {
-			userProfileRes.Songs = append(userProfileRes.Songs, songResponse{
+			userProfileRes.Songs = append(userProfileRes.Songs, songsLangchainAgentesponse{
 				SongNumber: songInfoMap[item.SongInfoId].SongNumber,
 				SongName:   songInfoMap[item.SongInfoId].SongName,
 				SingerName: songInfoMap[item.SongInfoId].ArtistName,
@@ -112,6 +129,7 @@ func LangchainAgentRecommedation(db *sql.DB) gin.HandlerFunc {
 				IsMr:       songInfoMap[item.SongInfoId].IsMR.Bool,
 				IsLive:     songInfoMap[item.SongInfoId].IsLive.Bool,
 				MelonLink:  CreateMelonLinkByMelonSongId(songInfoMap[item.SongInfoId].MelonSongID),
+				Reason:     item.Reason,
 			})
 		}
 

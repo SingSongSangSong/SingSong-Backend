@@ -1137,7 +1137,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userProfileResponse"
+                                            "$ref": "#/definitions/handler.LangchainAgentResponse"
                                         }
                                     }
                                 }
@@ -2244,6 +2244,17 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.LangchainAgentResponse": {
+            "type": "object",
+            "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songsLangchainAgentesponse"
+                    }
+                }
+            }
+        },
         "handler.LlmRequest": {
             "type": "object",
             "properties": {
@@ -2979,6 +2990,38 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.songSearchInfoResponse"
                     }
+                }
+            }
+        },
+        "handler.songsLangchainAgentesponse": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
                 }
             }
         },

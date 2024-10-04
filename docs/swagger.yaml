@@ -59,6 +59,13 @@ definitions:
       songId:
         type: integer
     type: object
+  handler.LangchainAgentResponse:
+    properties:
+      songs:
+        items:
+          $ref: '#/definitions/handler.songsLangchainAgentesponse'
+        type: array
+    type: object
   handler.LlmRequest:
     properties:
       userInput:
@@ -537,6 +544,27 @@ definitions:
         items:
           $ref: '#/definitions/handler.songSearchInfoResponse'
         type: array
+    type: object
+  handler.songsLangchainAgentesponse:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      reason:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
     type: object
   handler.userProfileResponse:
     properties:
@@ -1243,7 +1271,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.userProfileResponse'
+                  $ref: '#/definitions/handler.LangchainAgentResponse'
               type: object
       security:
       - BearerAuth: []
