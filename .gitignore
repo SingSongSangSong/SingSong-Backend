@@ -4,3 +4,7 @@
 *.tmpl
 .terraform/
 .terraform*
+volumes
+embedEtcd.yaml
+user.yaml
+standalone_embed.sh

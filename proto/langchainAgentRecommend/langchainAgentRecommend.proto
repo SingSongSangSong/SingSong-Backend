@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package langchainAgentRecommend;
+
+option go_package = "proto/langchainAgentRecommend";  // Go 패키지 경로 추가
+
+// 요청 메시지: memberId를 받아서 유사한 아이템을 검색
+message LangchainAgentRequest {
+  int64 memberId = 1;
+  string command = 2;
+}
+
+// 각 아이템의 메타데이터 정보를 반환하는 메시지
+message SearchResult {
+  int64 songInfoId = 1;        // 아이템의 ID
+  string reason = 2;           // 추천 이유
+}
+
+// 유사한 아이템들의 리스트를 반환하는 응답 메시지
+message LangchainAgentResponse {
+  repeated SearchResult searchResult = 1; // 유사한 아이템 목록
+}
+
+// LangChain 서비스
+service LangchainAgentRecommend {
+  rpc GetLangchainAgentRecommendation(LangchainAgentRequest) returns (LangchainAgentResponse) {}
+}
