@@ -10,6 +10,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -144,15 +145,15 @@ func CreatePost(db *sql.DB) gin.HandlerFunc {
 }
 
 type PostDetailsResponse struct {
-	PostId         int64        `json:"postId"`
-	Title          string       `json:"title"`
-	Content        string       `json:"content"`
-	Likes          int          `json:"likes"`
-	IsWriter       bool         `json:"isWriter"`
-	WriterNickname string       `json:"writerNickname"`
-	IsLiked        bool         `json:"isLiked"`
-	CreatedAt      string       `json:"createdAt"`
-	SongsOnPost    []SongOnPost `json:"songs"`
+	PostId      int64        `json:"postId"`
+	Title       string       `json:"title"`
+	Content     string       `json:"content"`
+	Likes       int          `json:"likes"`
+	IsWriter    bool         `json:"isWriter"`
+	Nickname    string       `json:"nickname"`
+	IsLiked     bool         `json:"isLiked"`
+	CreatedAt   string       `json:"createdAt"`
+	SongsOnPost []SongOnPost `json:"songs"`
 }
 
 type SongOnPost struct {
@@ -250,15 +251,15 @@ func GetPost(db *sql.DB) gin.HandlerFunc {
 		}
 
 		response := PostDetailsResponse{
-			PostId:         one.PostID,
-			Title:          one.Title,
-			Content:        one.Content.String,
-			Likes:          one.Likes,
-			IsWriter:       one.MemberID == memberId,
-			IsLiked:        isLiked,
-			WriterNickname: writer.Nickname.String,
-			CreatedAt:      one.CreatedAt.Time.Format("2006-01-02 15:04:05"),
-			SongsOnPost:    songsOnPost,
+			PostId:      one.PostID,
+			Title:       one.Title,
+			Content:     one.Content.String,
+			Likes:       one.Likes,
+			IsWriter:    one.MemberID == memberId,
+			IsLiked:     isLiked,
+			Nickname:    writer.Nickname.String,
+			CreatedAt:   one.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+			SongsOnPost: songsOnPost,
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "success", response)
@@ -322,5 +323,88 @@ func DeletePost(db *sql.DB) gin.HandlerFunc {
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "success", nil)
+	}
+}
+
+type postPageResponse struct {
+	Posts    []postPreviewResponse `json:"posts"`
+	NextPage int                   `json:"nextPage"`
+}
+
+type postPreviewResponse struct {
+	PostId       int64  `json:"postId"`
+	Title        string `json:"title"`
+	Content      string `json:"content"`
+	Nickname     string `json:"nickname"`
+	Likes        int    `json:"likes"`
+	CommentCount int    `json:"commentCount"`
+}
+
+// ListPosts godoc
+// @Summary      게시글 전체 조회 (페이징)
+// @Description  게시글 전체 조회 (페이징)
+// @Tags         Post
+// @Accept       json
+// @Produce      json
+// @Param        page query int false "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
+// @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
+// @Success      200 {object} pkg.BaseResponseStruct{data=PostDetailsResponse} "성공"
+// @Failure      400 "실패"
+// @Failure      500 "서버 에러일 경우 500 실패"
+// @Router       /v1/posts [get]
+func ListPosts(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		sizeStr := c.DefaultQuery("size", defaultSize)
+		sizeInt, err := strconv.Atoi(sizeStr)
+		if err != nil || sizeInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+			return
+		}
+
+		pageStr := c.DefaultQuery("page", defaultPage)
+		pageInt, err := strconv.Atoi(pageStr)
+		if err != nil || pageInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+			return
+		}
+
+		// OFFSET 계산
+		offset := (pageInt - 1) * sizeInt
+
+		// 페이징 처리된 게시글 가져오기
+		posts, err := mysql.Posts(
+			qm.Load(mysql.PostRels.PostComments),
+			qm.Load(mysql.PostRels.Member),
+			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
+			qm.Limit(sizeInt),               // 한 번에 가져올 레코드 수
+			qm.Offset(offset),               // 건너뛸 레코드 수
+			qm.OrderBy("post.post_id DESC"), // 최신 게시글 순서로 정렬
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		previews := []postPreviewResponse{}
+
+		for _, post := range posts {
+			comments := post.R.PostComments
+			previews = append(previews, postPreviewResponse{
+				PostId:       post.PostID,
+				Title:        post.Title,
+				Content:      post.Content.String,
+				Nickname:     post.R.Member.Nickname.String,
+				Likes:        post.Likes,
+				CommentCount: len(comments),
+			})
+		}
+
+		response := postPageResponse{
+			Posts:    previews,
+			NextPage: pageInt + 1,
+		}
+
+		// 응답 반환
+		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }

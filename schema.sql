@@ -251,12 +251,14 @@ ALTER TABLE post_comment
         FOREIGN KEY (post_id) REFERENCES post(post_id)
             ON DELETE CASCADE ON UPDATE CASCADE;
 
--- 요거 아직 실행할때 로딩걸려서 실행 못해서 나중에 해줘야 함
 ALTER TABLE post_comment
     ADD CONSTRAINT fk_post_comment_member_id
     FOREIGN KEY (member_id) REFERENCES member(member_id)
     ON DELETE CASCADE ON UPDATE CASCADE;
---
+ALTER TABLE post
+    ADD CONSTRAINT fk_post_member_id
+    FOREIGN KEY (member_id) REFERENCES member(member_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
 
 CREATE TABLE IF NOT EXISTS post_song(
     post_song_id BIGINT AUTO_INCREMENT PRIMARY KEY,

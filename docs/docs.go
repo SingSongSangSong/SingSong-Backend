@@ -836,6 +836,59 @@ const docTemplate = `{
             }
         },
         "/v1/posts": {
+            "get": {
+                "description": "게시글 전체 조회 (페이징)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 전체 조회 (페이징)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.PostDetailsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -2251,6 +2304,9 @@ const docTemplate = `{
                 "likes": {
                     "type": "integer"
                 },
+                "nickname": {
+                    "type": "string"
+                },
                 "postId": {
                     "type": "integer"
                 },
@@ -2261,9 +2317,6 @@ const docTemplate = `{
                     }
                 },
                 "title": {
-                    "type": "string"
-                },
-                "writerNickname": {
                     "type": "string"
                 }
             }

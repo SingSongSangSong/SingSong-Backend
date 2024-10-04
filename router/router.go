@@ -133,6 +133,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	post := r.Group("/api/v1/posts")
 	{
 		post.POST("", middleware.AuthMiddleware(db), handler.CreatePost(db))
+		post.GET("", handler.ListPosts(db))
 		post.GET("/:postId", middleware.AuthMiddleware(db), handler.GetPost(db))
 		post.DELETE("/:postId", middleware.AuthMiddleware(db), handler.DeletePost(db))
 	}
