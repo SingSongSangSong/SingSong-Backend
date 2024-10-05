@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package functionCallingRecommend;
+
+option go_package = "proto/functionCallingRecommend";  // Go 패키지 경로 추가
+
+// 요청 메시지: memberId를 받아서 유사한 아이템을 검색
+message FunctionCallingRequest {
+  int64 memberId = 1;
+  string command = 2;
+}
+
+// 유사한 아이템들의 리스트를 반환하는 응답 메시지
+message FunctionCallingResponse {
+  repeated int64 songInfoId = 1; // 유사한 아이템 목록
+}
+
+// LangChain 서비스
+service functionCallingRecommend {
+  rpc GetFunctionCallingRecommendation(FunctionCallingRequest) returns (FunctionCallingResponse) {}
+}

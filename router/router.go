@@ -48,6 +48,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		recommend.GET("/recommendation/:pageId", middleware.AuthMiddleware(db), handler.GetRecommendation(db))
 		recommend.POST("/recommendation/llm", middleware.AuthMiddleware(db), handler.LlmHandler(db))
 		recommend.POST("/recommendation/langchainAgent", middleware.AuthMiddleware(db), handler.LangchainAgentRecommedation(db))
+		recommend.POST("/recommendation/functionCalling", middleware.AuthMiddleware(db), handler.FunctionCallingRecommedation(db))
 	}
 
 	// 태그 엔드포인트 설정
