@@ -49,6 +49,7 @@ var (
 // @Produce      json
 // @Success      200 {object} pkg.BaseResponseStruct{data=userProfileResponse} "성공"
 // @Router       /v1/recommend/recommendation/ai [get]
+// @Router       /v1/recommend/recommendation/{pageId} [get]
 // @Security BearerAuth
 func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {

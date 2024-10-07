@@ -59,6 +59,32 @@ definitions:
       songId:
         type: integer
     type: object
+  handler.FunctionCallingDetailResponse:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
+  handler.FunctionCallingResponse:
+    properties:
+      songs:
+        items:
+          $ref: '#/definitions/handler.FunctionCallingDetailResponse'
+        type: array
+    type: object
   handler.LangchainAgentResponse:
     properties:
       songs:
@@ -1221,6 +1247,28 @@ paths:
       summary: 노래 추천 by 태그
       tags:
       - Recommendation
+  /v1/recommend/recommendation/{pageId}:
+    get:
+      consumes:
+      - application/json
+      description: 사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.userProfileResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: AI가 골랐송
+      tags:
+      - Recommendation
   /v1/recommend/recommendation/ai:
     get:
       consumes:
@@ -1241,6 +1289,35 @@ paths:
       security:
       - BearerAuth: []
       summary: AI가 골랐송
+      tags:
+      - Recommendation
+  /v1/recommend/recommendation/functionCalling:
+    post:
+      consumes:
+      - application/json
+      description: LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 10개의 노래를 반환합니다
+      parameters:
+      - description: 인풋
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LlmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.FunctionCallingResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: LLM으로 검색하기
       tags:
       - Recommendation
   /v1/recommend/recommendation/langchainAgent:
