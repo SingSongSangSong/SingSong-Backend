@@ -424,7 +424,7 @@ type PostReportRequest struct {
 // @Produce      json
 // @Param        postId path string true "postId"
 // @Param        PostReportRequest   body      PostReportRequest  true  "PostReportRequest"
-// @Success      200 "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{} "성공"
 // @Failure      400 "postId param이 잘못 들어왔거나, body 형식이 올바르지 않다면 400 실패"
 // @Failure      500 "서버 에러일 경우 500 실패"
 // @Router       /v1/posts/{postId}/reports [post]
