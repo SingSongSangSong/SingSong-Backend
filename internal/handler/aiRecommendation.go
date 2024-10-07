@@ -137,7 +137,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		}
 		keepListInterface := make([]interface{}, len(keepLists))
 		for i, v := range keepLists {
-			keepListInterface[i] = v
+			keepListInterface[i] = v.KeepListID
 		}
 		keepSongs, err := mysql.KeepSongs(
 			qm.WhereIn("keep_list_id = ?", keepListInterface...),
