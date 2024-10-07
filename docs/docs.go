@@ -1096,6 +1096,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/recommend/recommendation/ai": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "AI가 골랐송",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.userProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/recommend/recommendation/langchainAgent": {
             "post": {
                 "security": [
@@ -1174,55 +1214,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/handler.LlmRequest"
                         }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/handler.userProfileResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/recommend/recommendation/{pageId}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Recommendation"
-                ],
-                "summary": "AI가 골랐송",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "현재 조회할 노래 목록의 쪽수",
-                        "name": "pageId",
-                        "in": "path",
-                        "required": true
                     }
                 ],
                 "responses": {
