@@ -7,12 +7,15 @@ import (
 	pb "SingSong-Server/proto/userProfileRecommend"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/grpc"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // songHomeResponse와 songResponse가 동일한 것으로 가정하고 사용
@@ -44,26 +47,11 @@ var (
 // @Tags         Recommendation
 // @Accept       json
 // @Produce      json
-// @Param        pageId path int true "현재 조회할 노래 목록의 쪽수"
 // @Success      200 {object} pkg.BaseResponseStruct{data=userProfileResponse} "성공"
-// @Router       /v1/recommend/recommendation/{pageId} [get]
+// @Router       /v1/recommend/recommendation/ai [get]
 // @Security BearerAuth
-func GetRecommendation(db *sql.DB) gin.HandlerFunc {
+func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Extract pageId from the path
-		page := c.Param("pageId")
-		if page == "" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find pageId in path variable", nil)
-			return
-		}
-
-		// Convert pageId to int32
-		pageInt, err := strconv.Atoi(page)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid pageId format", nil)
-			return
-		}
-
 		// Get memberId from the middleware (assumed that the middleware sets the memberId)
 		memberId, exists := c.Get("memberId")
 		if !exists {
@@ -92,10 +80,13 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 
 		client := pb.NewUserProfileClient(conn)
 
+		historySongsForMilvus := getRefreshHistoryForMilvus(c, redisClient, memberIdInt)
+		vectorQuerySize := pageSize + len(historySongsForMilvus)
+
 		// gRPC 요청 생성
 		rpcRequest := &pb.ProfileRequest{
 			MemberId: memberIdInt,
-			Page:     int32(pageInt),
+			Page:     int32(vectorQuerySize),
 			Gender:   gender.(string),
 		}
 
@@ -105,6 +96,17 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 			log.Printf("Error calling gRPC: %v", err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
+		}
+		querySongs := extractSongInfoForMilvus(vectorQuerySize, response)
+
+		// 이전에 조회한 노래 빼고 상위 pageSize개 선택
+		refreshedSongs := getTopSongsWithoutHistory(historySongsForMilvus, querySongs)
+
+		// 무한 새로고침 - (페이지의 끝일 때/노래 개수가 애초에 PageSize수보다 작을때) 부족한 노래 수만큼 refreshedSongs를 마저 채운다
+		if len(refreshedSongs) < pageSize {
+			refreshedSongs = fillSongsAgain(refreshedSongs, querySongs)
+			// 기록 비우기
+			historySongsForMilvus = []int64{}
 		}
 
 		// Populate the userProfileResponse with gRPC response data
@@ -116,7 +118,7 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 		var songInfoIds []int64
 
 		// gRPC response에서 SongInfoId만 추출
-		for _, item := range response.SimilarItems {
+		for _, item := range refreshedSongs {
 			songInfoIds = append(songInfoIds, item.SongInfoId)
 		}
 
@@ -179,7 +181,7 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// gRPC response에서 가져온 SongInfoId를 기반으로 songInfoMap, keepSongsMap, commentsCountsMap, keepCountsMap을 활용
-		for _, item := range response.SimilarItems {
+		for _, item := range refreshedSongs {
 			// 기본값으로 초기화
 			isKeep := false
 			commentCount := 0
@@ -197,12 +199,12 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 
 			// userProfileRes.Songs에 추가
 			userProfileRes.Songs = append(userProfileRes.Songs, songResponse{
-				SongNumber:   int(item.SongNumber),
-				SongName:     item.SongName,
-				SingerName:   item.SingerName,
+				SongNumber:   songInfoMap[item.SongInfoId].SongNumber,
+				SongName:     songInfoMap[item.SongInfoId].SongName,
+				SingerName:   songInfoMap[item.SongInfoId].ArtistName,
 				SongInfoId:   item.SongInfoId,
-				Album:        item.Album,
-				IsMr:         item.IsMr,
+				Album:        songInfoMap[item.SongInfoId].Album.String,
+				IsMr:         songInfoMap[item.SongInfoId].IsMR.Bool,
 				IsLive:       songInfoMap[item.SongInfoId].IsLive.Bool,
 				IsKeep:       isKeep,       // Keep 여부 추가
 				CommentCount: commentCount, // 댓글 수 추가
@@ -211,7 +213,60 @@ func GetRecommendation(db *sql.DB) gin.HandlerFunc {
 			})
 		}
 
+		// history 갱신
+		for _, song := range refreshedSongs {
+			historySongsForMilvus = append(historySongsForMilvus, song.SongInfoId)
+		}
+		setRefreshHistoryForMilvus(c, redisClient, memberIdInt, historySongsForMilvus)
+
 		// 결과를 JSON 형식으로 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", userProfileRes)
 	}
+}
+
+func getRefreshHistoryForMilvus(c *gin.Context, redisClient *redis.Client, memberId int64) []int64 {
+	key := generateRefreshKeyForMilvus(memberId)
+
+	val, err := redisClient.Get(c, key).Result()
+	if err == redis.Nil {
+		return []int64{}
+	} else if err != nil {
+		log.Printf("Failed to get history from Redis: %v", err)
+		return []int64{}
+	}
+
+	var history []int64
+	err = json.Unmarshal([]byte(val), &history)
+	if err != nil {
+		log.Printf("Failed to unmarshal history: %v", err)
+		return []int64{}
+	}
+
+	return history
+}
+
+func generateRefreshKeyForMilvus(memberId int64) string {
+	return "aiRecommendation:" + strconv.FormatInt(memberId, 10) + ":" + "milvus"
+}
+
+func extractSongInfoForMilvus(vectorQuerySize int, values *pb.ProfileResponse) []refreshResponse {
+	querySongs := make([]refreshResponse, 0, vectorQuerySize)
+	for _, match := range values.GetSimilarItems() {
+		querySongs = append(querySongs, refreshResponse{
+			SongInfoId: match.SongInfoId,
+		})
+	}
+	return querySongs
+}
+
+func setRefreshHistoryForMilvus(c *gin.Context, redisClient *redis.Client, memberId int64, history []int64) {
+	key := generateRefreshKeyForMilvus(memberId)
+
+	historyJSON, err := json.Marshal(history)
+	if err != nil {
+		log.Printf("Failed to marshal history: %v", err)
+		return
+	}
+
+	redisClient.Set(c, key, historyJSON, 30*time.Minute)
 }
