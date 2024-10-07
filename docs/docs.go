@@ -882,7 +882,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "실패"
+                        "description": "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
                     },
                     "500": {
                         "description": "서버 에러일 경우 500 실패"
@@ -1040,6 +1040,55 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "사용자 인증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            }
+        },
+        "/v1/posts/{postId}/reports": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 신고",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 신고",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postId",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "PostReportRequest",
+                        "name": "PostReportRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PostReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    },
+                    "400": {
+                        "description": "postId param이 잘못 들어왔거나, body 형식이 올바르지 않다면 400 실패"
                     },
                     "500": {
                         "description": "서버 에러일 경우 500 실패"
@@ -2304,6 +2353,9 @@ const docTemplate = `{
                 "likes": {
                     "type": "integer"
                 },
+                "memberId": {
+                    "type": "integer"
+                },
                 "nickname": {
                     "type": "string"
                 },
@@ -2325,6 +2377,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "postId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.PostReportRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "subjectMemberId": {
                     "type": "integer"
                 }
             }

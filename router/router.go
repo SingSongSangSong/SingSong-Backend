@@ -136,6 +136,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		post.GET("", handler.ListPosts(db))
 		post.GET("/:postId", middleware.AuthMiddleware(db), handler.GetPost(db))
 		post.DELETE("/:postId", middleware.AuthMiddleware(db), handler.DeletePost(db))
+		post.POST("/:postId/reports", middleware.AuthMiddleware(db), handler.ReportPost(db))
 	}
 
 	// 스웨거 설정
