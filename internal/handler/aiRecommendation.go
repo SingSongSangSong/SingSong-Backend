@@ -130,8 +130,17 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		}
 
 		// Keep 여부 가져오기
+		keepLists, err := mysql.KeepLists(qm.Where("member_id = ?", memberIdInt)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		keepListInterface := make([]interface{}, len(keepLists))
+		for i, v := range keepLists {
+			keepListInterface[i] = v
+		}
 		keepSongs, err := mysql.KeepSongs(
-			qm.Where("member_id = ?", memberIdInt),
+			qm.WhereIn("keep_list_id = ?", keepListInterface),
 			qm.AndIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
