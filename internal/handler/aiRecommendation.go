@@ -140,7 +140,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 			keepListInterface[i] = v
 		}
 		keepSongs, err := mysql.KeepSongs(
-			qm.WhereIn("keep_list_id = ?", keepListInterface),
+			qm.WhereIn("keep_list_id = ?", keepListInterface...),
 			qm.AndIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
