@@ -3,6 +3,7 @@ package handler
 import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
+	"context"
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
@@ -175,7 +176,8 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 		}
 
 		go func(db *sql.DB, memberId interface{}, songReviewOptionId int64) {
-			option, err2 := mysql.SongReviewOptions(qm.Where("song_review_option_id = ?", songReviewOptionId)).One(c.Request.Context(), db)
+			ctx := context.Background()
+			option, err2 := mysql.SongReviewOptions(qm.Where("song_review_option_id = ?", songReviewOptionId)).One(ctx, db)
 			if err2 != nil {
 				log.Printf("failed to get song review option: " + err2.Error())
 				return
