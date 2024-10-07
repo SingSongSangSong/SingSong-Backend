@@ -835,6 +835,218 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/posts": {
+            "get": {
+                "description": "게시글 전체 조회 (페이징)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 전체 조회 (페이징)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.PostDetailsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 등록",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 등록",
+                "parameters": [
+                    {
+                        "description": "PostRequest",
+                        "name": "PostRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PostRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.PostIdResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "PostRequest가 올바르지 않은 경우, 엑세스 토큰은 유효하지만 사용자 정보가 유효하지 않은 경우, 노래 id가 중복되거나 10개 초과인 경우 400 실패"
+                    },
+                    "401": {
+                        "description": "엑세스 토큰 검증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            }
+        },
+        "/v1/posts/{postId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 하나 상세 조회",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 하나 상세 조회",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postId",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.PostDetailsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "postId가 요청에 없는 경우, 해당 게시글이 존재하지 않는 경우 400 실패"
+                    },
+                    "401": {
+                        "description": "엑세스 토큰 검증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 하나 삭제",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 하나 삭제",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postId",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    },
+                    "400": {
+                        "description": "postId가 요청에 없는 경우, 해당 게시글이 존재하지 않는 경우, 게시글 작성자가 아닌 경우 400 실패"
+                    },
+                    "401": {
+                        "description": "사용자 인증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            }
+        },
         "/v1/recommend/home": {
             "post": {
                 "description": "태그에 해당하는 노래를 추천합니다.",
@@ -884,14 +1096,54 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/recommend/recommendation/llm": {
+        "/v1/recommend/recommendation/ai": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "AI가 골랐송",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.userProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/recommend/recommendation/langchainAgent": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 5개의 노래를 반환합니다",
+                "description": "LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 10개의 노래를 반환합니다",
                 "consumes": [
                     "application/json"
                 ],
@@ -925,7 +1177,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userProfileResponse"
+                                            "$ref": "#/definitions/handler.LangchainAgentResponse"
                                         }
                                     }
                                 }
@@ -935,14 +1187,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/recommend/recommendation/{pageId}": {
-            "get": {
+        "/v1/recommend/recommendation/llm": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.",
+                "description": "LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 5개의 노래를 반환합니다",
                 "consumes": [
                     "application/json"
                 ],
@@ -952,14 +1204,16 @@ const docTemplate = `{
                 "tags": [
                     "Recommendation"
                 ],
-                "summary": "AI가 골랐송",
+                "summary": "LLM으로 검색하기",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "현재 조회할 노래 목록의 쪽수",
-                        "name": "pageId",
-                        "in": "path",
-                        "required": true
+                        "description": "인풋",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LlmRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1981,6 +2235,17 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.LangchainAgentResponse": {
+            "type": "object",
+            "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.songsLangchainAgentesponse"
+                    }
+                }
+            }
+        },
         "handler.LlmRequest": {
             "type": "object",
             "properties": {
@@ -2074,6 +2339,66 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.PostDetailsResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isWriter": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "postId": {
+                    "type": "integer"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongOnPost"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.PostIdResponse": {
+            "type": "object",
+            "properties": {
+                "postId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.PostRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "songIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.ReissueRequest": {
             "type": "object",
             "properties": {
@@ -2127,6 +2452,35 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "handler.SongOnPost": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
                 }
             }
         },
@@ -2627,6 +2981,38 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.songSearchInfoResponse"
                     }
+                }
+            }
+        },
+        "handler.songsLangchainAgentesponse": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
                 }
             }
         },

@@ -208,3 +208,122 @@ UPDATE song_info SI
 
 ALTER TABLE song_info ADD COLUMN is_live BOOLEAN DEFAULT FALSE;
 ALTER TABLE song_info ADD UNIQUE INDEX (song_number, song_name, artist_name);
+
+
+-- 커뮤니티 기능 추가
+CREATE TABLE IF NOT EXISTS board (
+    board_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+INSERT INTO board (name) VALUES ('자유 게시판');
+
+CREATE TABLE IF NOT EXISTS post (
+    post_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    board_id BIGINT NOT NULL,
+    member_id BIGINT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    content TEXT,
+    likes INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+CREATE TABLE post_comment (
+    post_comment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL,
+    member_id BIGINT NOT NULL,
+    content TEXT,
+    likes INT NOT NULL,
+    is_recomment BOOLEAN DEFAULT FALSE,
+    parent_post_comment_id BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+ALTER TABLE post_comment
+    ADD CONSTRAINT fk_post_comment_post_id
+        FOREIGN KEY (post_id) REFERENCES post(post_id)
+            ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE post_comment
+    ADD CONSTRAINT fk_post_comment_member_id
+    FOREIGN KEY (member_id) REFERENCES member(member_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE post
+    ADD CONSTRAINT fk_post_member_id
+    FOREIGN KEY (member_id) REFERENCES member(member_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS post_song(
+    post_song_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL,
+    song_info_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+ALTER TABLE post_song
+    ADD CONSTRAINT fk_post_song_post_id
+    FOREIGN KEY (post_id) REFERENCES post(post_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE IF NOT EXISTS post_comment_song (
+    post_comment_song_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_comment_id BIGINT NOT NULL,
+    song_info_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+ALTER TABLE post_comment_song
+    ADD CONSTRAINT fk_post_comment_song_post_comment_id
+    FOREIGN KEY (post_comment_id) REFERENCES post_comment(post_comment_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE TABLE post_like (
+    post_like_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    post_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+CREATE TABLE post_comment_like (
+    post_comment_like_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    post_comment_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+CREATE TABLE post_report (
+    post_report_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reporter_member_id BIGINT NOT NULL,
+    subject_member_id BIGINT NOT NULL,
+    post_id BIGINT NOT NULL,
+    report_reason VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+CREATE TABLE post_comment_report (
+    post_comment_report_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reporter_member_id BIGINT NOT NULL,
+    subject_member_id BIGINT NOT NULL,
+    post_comment_id BIGINT NOT NULL,
+    report_reason VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);

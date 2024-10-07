@@ -45,8 +45,9 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	{
 		recommend.POST("/home", handler.HomeRecommendation(db, rdb, idxConnection))
 		recommend.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendation(db, rdb, idxConnection)) //일단 새로고침에만 적용
-		recommend.GET("/recommendation/:pageId", middleware.AuthMiddleware(db), handler.GetRecommendation(db))
+		recommend.GET("/recommendation/ai", middleware.AuthMiddleware(db), handler.GetRecommendation(db, rdb))
 		recommend.POST("/recommendation/llm", middleware.AuthMiddleware(db), handler.LlmHandler(db))
+		recommend.POST("/recommendation/langchainAgent", middleware.AuthMiddleware(db), handler.LangchainAgentRecommedation(db))
 	}
 
 	// 태그 엔드포인트 설정
@@ -128,6 +129,14 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		search.GET("/artist-name", handler.SearchSongsByArist(db))
 		search.GET("/song-name", handler.SearchSongsBySongName(db))
 		search.GET("/song-number", handler.SearchSongsBySongNumber(db))
+	}
+
+	post := r.Group("/api/v1/posts")
+	{
+		post.POST("", middleware.AuthMiddleware(db), handler.CreatePost(db))
+		post.GET("", handler.ListPosts(db))
+		post.GET("/:postId", middleware.AuthMiddleware(db), handler.GetPost(db))
+		post.DELETE("/:postId", middleware.AuthMiddleware(db), handler.DeletePost(db))
 	}
 
 	// 스웨거 설정

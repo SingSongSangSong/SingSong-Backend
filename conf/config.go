@@ -83,7 +83,6 @@ func init() {
 	}
 
 	dimensionStr := os.Getenv("MILVUS_DIMENSION")
-	log.Printf("MILVUS_DIMENSION: %s", dimensionStr)
 	dimension, err := strconv.Atoi(dimensionStr)
 	if err != nil {
 		log.Fatalf("Failed to convert MILVUS_DIMENSION to int: %v", err)
