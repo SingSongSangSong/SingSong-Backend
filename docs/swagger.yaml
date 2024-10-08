@@ -152,6 +152,57 @@ definitions:
       songNumber:
         type: integer
     type: object
+  handler.PostCommentReportResponse:
+    properties:
+      postCommentId:
+        type: integer
+      postReportId:
+        type: integer
+      postReporterId:
+        type: integer
+      reason:
+        type: string
+      subjectMemberId:
+        type: integer
+    type: object
+  handler.PostCommentRequest:
+    properties:
+      content:
+        type: string
+      isRecomment:
+        type: boolean
+      parentCommentId:
+        type: integer
+      postId:
+        type: integer
+    type: object
+  handler.PostCommentResponse:
+    properties:
+      commentId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentCommentId:
+        type: integer
+      postId:
+        type: integer
+      postRecomments:
+        items:
+          $ref: '#/definitions/handler.PostCommentResponse'
+        type: array
+    type: object
   handler.PostDetailsResponse:
     properties:
       content:
@@ -1090,6 +1141,58 @@ paths:
       summary: 멤버 회원 탈퇴
       tags:
       - Member
+  /v1/post/comment/{postCommentId}/like:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글에 좋아요 누르기
+      parameters:
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글에 좋아요 누르기
+      tags:
+      - Post
+  /v1/post/comment/report:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글ID를 통해 신고하기
+      parameters:
+      - description: ReportRequest
+        in: body
+        name: ReportRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostCommentReportResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글ID를 통해 신고하기
+      tags:
+      - Post
   /v1/posts:
     get:
       consumes:
@@ -1216,6 +1319,95 @@ paths:
       security:
       - BearerAuth: []
       summary: 게시글 하나 상세 조회
+      tags:
+      - Post
+  /v1/posts/comment:
+    post:
+      consumes:
+      - application/json
+      description: PostId에 댓글 달기
+      parameters:
+      - description: postCommentRequest
+        in: body
+        name: PostCommentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PostCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostCommentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: PostId에 댓글 달기
+      tags:
+      - Post
+  /v1/posts/comment/{postId}:
+    get:
+      consumes:
+      - application/json
+      description: Get comments for a specific song identified by songId
+      parameters:
+      - description: Song ID
+        in: path
+        name: songId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.PostCommentResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve comments for the specified SongId
+      tags:
+      - Post
+  /v1/posts/comment/recomments/{postCommentId}:
+    get:
+      consumes:
+      - application/json
+      description: Get rePostComments for a specific comment identified by postCommentId
+      parameters:
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.PostCommentResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve rePostComments for the specified PostCommentId
       tags:
       - Post
   /v1/recommend/home:
