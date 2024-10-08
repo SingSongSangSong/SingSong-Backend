@@ -8,7 +8,6 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -123,7 +122,6 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
 			return
 		}
-		log.Println("blockerId: ", blockerId)
 
 		//차단 유저 제외
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
@@ -131,7 +129,6 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		log.Printf("blacklists: %d", len(blacklists))
 
 		//blocked_member_id 리스트 만들기
 		blockedMemberIds := make([]interface{}, 0, len(blacklists))
@@ -260,7 +257,6 @@ func GetReCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid commentId", nil)
 			return
 		}
-		log.Printf("commentId: %d", commentId)
 
 		blockerId, exists := c.Get("memberId")
 		if !exists {
@@ -292,7 +288,6 @@ func GetReCommentOnSong(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		log.Printf("recomments: %d", len(reComments))
 
 		// Prepare the final data list directly in the order retrieved
 		data := make([]CommentResponse, 0, len(reComments))
@@ -468,5 +463,157 @@ func LikeComment(db *sql.DB) gin.HandlerFunc {
 
 		pkg.BaseResponse(c, http.StatusOK, "success", comment.Likes.Int)
 		return
+	}
+}
+
+type LatestCommentResponse struct {
+	CommentId       int64               `json:"commentId"`
+	Content         string              `json:"content"`
+	IsRecomment     bool                `json:"isRecomment"`
+	ParentCommentId int64               `json:"parentCommentId"`
+	MemberId        int64               `json:"memberId"`
+	Nickname        string              `json:"nickname"`
+	CreatedAt       time.Time           `json:"createdAt"`
+	Likes           int                 `json:"likes"`
+	IsLiked         bool                `json:"isLiked"`
+	Song            SongOfLatestComment `json:"song"`
+}
+
+type SongOfLatestComment struct {
+	SongNumber int    `json:"songNumber"`
+	SongName   string `json:"songName"`
+	SingerName string `json:"singerName"`
+	SongInfoId int64  `json:"songId"`
+	Album      string `json:"album"`
+	IsMr       bool   `json:"isMr"`
+	IsLive     bool   `json:"isLive"`
+	MelonLink  string `json:"melonLink"`
+}
+
+// GetLatestComments 홈화면 최신 댓글 가져오기
+// @Summary      Get latest comments across all songs
+// @Description  Get latest comments across all songs. default size = 5
+// @Tags         Comment
+// @Accept       json
+// @Produce      json
+// @Param        size   query      int  false  "size"
+// @Success      200 {object} pkg.BaseResponseStruct{data=[]LatestCommentResponse} "Success"
+// @Router       /v1/comment/latest [get]
+// @Security BearerAuth
+func GetLatestComments(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
+		sizeValue := c.Query("size")
+		if sizeValue == "" {
+			sizeValue = "5" //default value
+		}
+
+		size, err := strconv.Atoi(sizeValue)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			return
+		}
+
+		//블랙리스트 제외
+		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", memberId)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		blockedMemberIds := make([]interface{}, 0, len(blacklists))
+		for _, blacklist := range blacklists {
+			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
+		}
+
+		comments, err := mysql.Comments(
+			qm.Load(mysql.CommentRels.Member),
+			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
+			qm.Where("comment.deleted_at is null"),
+			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
+			qm.OrderBy("comment_id DESC"),                                    // created_at 기준으로 최신 순 정렬
+			qm.Limit(size),                                                   // 최신 size개의 댓글만 가져옴
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// song_info_id들만 추출
+		songInfoIDs := make([]interface{}, len(comments))
+		for i, comment := range comments {
+			songInfoIDs[i] = comment.SongInfoID
+		}
+
+		// 노래 조회
+		songs, err := mysql.SongInfos(
+			qm.WhereIn("song_info_id IN ?", songInfoIDs...),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// song 정보를 를 맵으로 저장
+		songMap := make(map[int64]*mysql.SongInfo)
+		for _, song := range songs {
+			songMap[song.SongInfoID] = song
+		}
+
+		// comment_id들만 추출
+		commentIDs := make([]interface{}, len(comments))
+		for i, comment := range comments {
+			commentIDs[i] = comment.CommentID
+		}
+
+		// 댓글 좋아요 여부 조회
+		likes, err := mysql.CommentLikes(
+			qm.WhereIn("comment_id IN ?", commentIDs...),
+			qm.And("member_id = ?", memberId),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// 좋아요를 누른 comment_id를 맵으로 저장 (빠른 조회를 위해)
+		likedCommentMap := make(map[int64]bool)
+		for _, like := range likes {
+			likedCommentMap[like.CommentID] = true
+		}
+
+		response := make([]LatestCommentResponse, 0, size)
+
+		for _, comment := range comments {
+			song := songMap[comment.SongInfoID]
+			response = append(response, LatestCommentResponse{
+				CommentId:       comment.CommentID,
+				Content:         comment.Content.String,
+				IsRecomment:     comment.IsRecomment.Bool,
+				ParentCommentId: comment.ParentCommentID.Int64,
+				MemberId:        comment.MemberID,
+				Nickname:        comment.R.Member.Nickname.String,
+				CreatedAt:       comment.CreatedAt.Time,
+				Likes:           comment.Likes.Int,
+				IsLiked:         likedCommentMap[comment.CommentID],
+				Song: SongOfLatestComment{
+					song.SongNumber,
+					song.SongName,
+					song.ArtistName,
+					song.SongInfoID,
+					song.Album.String,
+					song.IsMR.Bool,
+					song.IsLive.Bool,
+					CreateMelonLinkByMelonSongId(song.MelonSongID),
+				},
+			})
+		}
+
+		// 성공 응답
+		pkg.BaseResponse(c, http.StatusOK, "success", response)
 	}
 }

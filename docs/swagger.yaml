@@ -92,6 +92,29 @@ definitions:
           $ref: '#/definitions/handler.songsLangchainAgentesponse'
         type: array
     type: object
+  handler.LatestCommentResponse:
+    properties:
+      commentId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentCommentId:
+        type: integer
+      song:
+        $ref: '#/definitions/handler.SongOfLatestComment'
+    type: object
   handler.LlmRequest:
     properties:
       userInput:
@@ -226,6 +249,25 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  handler.SongOfLatestComment:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
     type: object
   handler.SongOnPost:
     properties:
@@ -794,6 +836,35 @@ paths:
       security:
       - BearerAuth: []
       summary: Retrieve comments for the specified SongId
+      tags:
+      - Comment
+  /v1/comment/latest:
+    get:
+      consumes:
+      - application/json
+      description: Get latest comments across all songs. default size = 5
+      parameters:
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.LatestCommentResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get latest comments across all songs
       tags:
       - Comment
   /v1/comment/recomment/{commentId}:

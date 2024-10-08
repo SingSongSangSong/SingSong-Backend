@@ -106,6 +106,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		comment.POST("/report", middleware.AuthMiddleware(db), handler.ReportComment(db))
 		comment.GET("/recomment/:commentId", middleware.AuthMiddleware(db), handler.GetReCommentOnSong(db))
 		comment.POST("/:commentId/like", middleware.AuthMiddleware(db), handler.LikeComment(db))
+		comment.GET("/latest", middleware.AuthMiddleware(db), handler.GetLatestComments(db))
 	}
 
 	blacklist := r.Group("/api/v1/blacklist")
