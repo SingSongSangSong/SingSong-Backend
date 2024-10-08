@@ -491,8 +491,8 @@ type SongOfLatestComment struct {
 }
 
 // GetLatestComments 홈화면 최신 댓글 가져오기
-// @Summary      Get latest comments across all songs
-// @Description  Get latest comments across all songs. default size = 5
+// @Summary      홈화면 최신 댓글 가져오기
+// @Description  홈화면 최신 댓글 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 5
 // @Tags         Comment
 // @Accept       json
 // @Produce      json

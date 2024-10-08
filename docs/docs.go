@@ -245,7 +245,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Get latest comments across all songs. default size = 5",
+                "description": "홈화면 최신 댓글 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 5",
                 "consumes": [
                     "application/json"
                 ],
@@ -255,7 +255,7 @@ const docTemplate = `{
                 "tags": [
                     "Comment"
                 ],
-                "summary": "Get latest comments across all songs",
+                "summary": "홈화면 최신 댓글 가져오기",
                 "parameters": [
                     {
                         "type": "integer",

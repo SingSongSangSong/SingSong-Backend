@@ -842,7 +842,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Get latest comments across all songs. default size = 5
+      description: 홈화면 최신 댓글 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 5
       parameters:
       - description: size
         in: query
@@ -864,7 +864,7 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Get latest comments across all songs
+      summary: 홈화면 최신 댓글 가져오기
       tags:
       - Comment
   /v1/comment/recomment/{commentId}:
