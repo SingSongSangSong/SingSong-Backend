@@ -888,7 +888,7 @@ const docTemplate = `{
         },
         "/v1/posts": {
             "get": {
-                "description": "게시글 전체 조회 (페이징)",
+                "description": "게시글 전체 조회 (커서 기반 페이징)",
                 "consumes": [
                     "application/json"
                 ],
@@ -898,12 +898,12 @@ const docTemplate = `{
                 "tags": [
                     "Post"
                 ],
-                "summary": "게시글 전체 조회 (페이징)",
+                "summary": "게시글 전체 조회 (커서 기반 페이징)",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
-                        "name": "page",
+                        "description": "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "name": "cursor",
                         "in": "query"
                     },
                     {
@@ -933,7 +933,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "실패"
+                        "description": "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
                     },
                     "500": {
                         "description": "서버 에러일 경우 500 실패"
@@ -1091,6 +1091,107 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "사용자 인증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            }
+        },
+        "/v1/posts/{postId}/likes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "해당하는 게시글에 좋아요 누르기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "해당하는 게시글에 좋아요 누르기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/posts/{postId}/reports": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 신고",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 신고",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postId",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "PostReportRequest",
+                        "name": "PostReportRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PostReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    },
+                    "400": {
+                        "description": "postId param이 잘못 들어왔거나, body 형식이 올바르지 않다면 400 실패"
                     },
                     "500": {
                         "description": "서버 에러일 경우 500 실패"
@@ -2574,6 +2675,9 @@ const docTemplate = `{
                 "likes": {
                     "type": "integer"
                 },
+                "memberId": {
+                    "type": "integer"
+                },
                 "nickname": {
                     "type": "string"
                 },
@@ -2595,6 +2699,17 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "postId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.PostReportRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "subjectMemberId": {
                     "type": "integer"
                 }
             }

@@ -69,7 +69,7 @@ func CreatePost(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if len(postRequest.SongInfoIds) == 0 {
+		if postRequest.SongInfoIds == nil || len(postRequest.SongInfoIds) == 0 {
 			post := mysql.Post{
 				BoardID:  1, //default board
 				MemberID: memberId.(int64),
@@ -149,6 +149,7 @@ type PostDetailsResponse struct {
 	Title       string       `json:"title"`
 	Content     string       `json:"content"`
 	Likes       int          `json:"likes"`
+	MemberId    int64        `json:"memberId"`
 	IsWriter    bool         `json:"isWriter"`
 	Nickname    string       `json:"nickname"`
 	IsLiked     bool         `json:"isLiked"`
@@ -255,6 +256,7 @@ func GetPost(db *sql.DB) gin.HandlerFunc {
 			Title:       one.Title,
 			Content:     one.Content.String,
 			Likes:       one.Likes,
+			MemberId:    one.MemberID,
 			IsWriter:    one.MemberID == memberId,
 			IsLiked:     isLiked,
 			Nickname:    writer.Nickname.String,
@@ -327,8 +329,8 @@ func DeletePost(db *sql.DB) gin.HandlerFunc {
 }
 
 type postPageResponse struct {
-	Posts    []postPreviewResponse `json:"posts"`
-	NextPage int                   `json:"nextPage"`
+	Posts      []postPreviewResponse `json:"posts"`
+	LastCursor int64                 `json:"lastCursor"`
 }
 
 type postPreviewResponse struct {
@@ -341,15 +343,15 @@ type postPreviewResponse struct {
 }
 
 // ListPosts godoc
-// @Summary      게시글 전체 조회 (페이징)
-// @Description  게시글 전체 조회 (페이징)
+// @Summary      게시글 전체 조회 (커서 기반 페이징)
+// @Description  게시글 전체 조회 (커서 기반 페이징)
 // @Tags         Post
 // @Accept       json
 // @Produce      json
-// @Param        page query int false "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
+// @Param        cursor query int false "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
 // @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=PostDetailsResponse} "성공"
-// @Failure      400 "실패"
+// @Failure      400 "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
 // @Failure      500 "서버 에러일 경우 500 실패"
 // @Router       /v1/posts [get]
 func ListPosts(db *sql.DB) gin.HandlerFunc {
@@ -361,31 +363,29 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		pageStr := c.DefaultQuery("page", defaultPage)
-		pageInt, err := strconv.Atoi(pageStr)
-		if err != nil || pageInt < 0 {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+		cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
+		cursorInt, err := strconv.Atoi(cursorStr)
+		if err != nil || cursorInt <= 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
 		}
 
-		// OFFSET 계산
-		offset := (pageInt - 1) * sizeInt
-
 		// 페이징 처리된 게시글 가져오기
 		posts, err := mysql.Posts(
+			qm.Select("DISTINCT post.*"), // 중복된 게시글 제거
 			qm.Load(mysql.PostRels.PostComments),
 			qm.Load(mysql.PostRels.Member),
 			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
-			qm.Limit(sizeInt),               // 한 번에 가져올 레코드 수
-			qm.Offset(offset),               // 건너뛸 레코드 수
-			qm.OrderBy("post.post_id DESC"), // 최신 게시글 순서로 정렬
+			qm.Where("post.post_id < ?", cursorInt),
+			qm.OrderBy("post.post_id DESC"),
+			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		previews := []postPreviewResponse{}
+		previews := make([]postPreviewResponse, 0, sizeInt)
 
 		for _, post := range posts {
 			comments := post.R.PostComments
@@ -399,12 +399,167 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			})
 		}
 
+		// 다음 페이지를 위한 커서 값 설정
+		var lastCursor int64 = 0
+		if len(previews) > 0 {
+			lastCursor = previews[len(previews)-1].PostId
+		}
+
 		response := postPageResponse{
-			Posts:    previews,
-			NextPage: pageInt + 1,
+			Posts:      previews,
+			LastCursor: lastCursor,
 		}
 
 		// 응답 반환
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
+	}
+}
+
+type PostReportRequest struct {
+	Reason          string `json:"reason"`
+	SubjectMemberId int64  `json:"subjectMemberId"`
+}
+
+// ReportPost godoc
+// @Summary      게시글 신고
+// @Description  게시글 신고
+// @Tags         Post
+// @Accept       json
+// @Produce      json
+// @Param        postId path string true "postId"
+// @Param        PostReportRequest   body      PostReportRequest  true  "PostReportRequest"
+// @Success      200 {object} pkg.BaseResponseStruct{} "성공"
+// @Failure      400 "postId param이 잘못 들어왔거나, body 형식이 올바르지 않다면 400 실패"
+// @Failure      500 "서버 에러일 경우 500 실패"
+// @Router       /v1/posts/{postId}/reports [post]
+// @Security BearerAuth
+func ReportPost(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		postIdStr := c.Param("postId")
+		if postIdStr == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find postId in path variable", nil)
+			return
+		}
+
+		// string을 int64로 변환
+		postId, err := strconv.ParseInt(postIdStr, 10, 64)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - postId type invalid", nil)
+			return
+		}
+
+		reportRequest := &PostReportRequest{}
+		if err := c.ShouldBindJSON(&reportRequest); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
+
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
+
+		nullReason := null.StringFrom(reportRequest.Reason)
+
+		m := mysql.PostReport{PostID: postId, ReportReason: nullReason, SubjectMemberID: reportRequest.SubjectMemberId, ReporterMemberID: memberId.(int64)}
+		err = m.Insert(c.Request.Context(), db, boil.Infer())
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "success", nil)
+	}
+}
+
+// LikePost godoc
+// @Summary      해당하는 게시글에 좋아요 누르기
+// @Description  해당하는 게시글에 좋아요 누르기
+// @Tags         Post
+// @Accept       json
+// @Produce      json
+// @Param        postId   path  int  true  "Post ID"
+// @Success      200 {object} pkg.BaseResponseStruct{data=int} "성공"
+// @Router       /v1/posts/{postId}/likes [post]
+// @Security BearerAuth
+func LikePost(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// memberId 가져오기
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
+		// postId 가져오기
+		postIdParam := c.Param("postId")
+		postId, err := strconv.ParseInt(postIdParam, 10, 64)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid postId", nil)
+			return
+		}
+
+		// 좋아요 상태 변경 함수
+		changeLikeStatus := func(post *mysql.Post, delta int) error {
+			post.Likes += delta
+			_, err := post.Update(c, db, boil.Infer())
+			return err
+		}
+
+		// 이미 좋아요를 눌렀는지 확인
+		postLikes, err := mysql.PostLikes(
+			qm.Where("member_id = ? AND post_id = ? AND deleted_at IS NULL", memberId.(int64), postId),
+		).One(c.Request.Context(), db)
+
+		// 이미 좋아요를 누른 상태에서 좋아요 취소 요청
+		if err == nil {
+			postLikes.DeletedAt = null.TimeFrom(time.Now())
+			if _, err := postLikes.Update(c.Request.Context(), db, boil.Infer()); err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			// Post Table에서 해당 postId의 LikeCount를 1 감소시킨다
+			post, err := mysql.Posts(
+				qm.Where("post_id = ?", postId),
+			).One(c.Request.Context(), db)
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			if err := changeLikeStatus(post, -1); err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			pkg.BaseResponse(c, http.StatusOK, "success", post.Likes)
+			return
+		}
+
+		// 게시글 좋아요 누르기
+		like := mysql.PostLike{MemberID: memberId.(int64), PostID: postId}
+		if err := like.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// CommentTable에서 해당 CommentId의 LikeCount를 1 증가시킨다
+		post, err := mysql.Posts(
+			qm.Where("post_id = ?", postId),
+		).One(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		if err := changeLikeStatus(post, 1); err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "success", post.Likes)
+		return
 	}
 }
