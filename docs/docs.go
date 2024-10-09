@@ -1070,9 +1070,9 @@ const docTemplate = `{
                 "summary": "해당하는 댓글에 좋아요 누르기",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Comment ID",
-                        "name": "commentId",
+                        "type": "string",
+                        "description": "postCommentId",
+                        "name": "postCommentId",
                         "in": "path",
                         "required": true
                     }
@@ -1107,8 +1107,8 @@ const docTemplate = `{
                 "summary": "Retrieve rePostComments for the specified PostCommentId",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "description": "Post Comment ID",
+                        "type": "string",
+                        "description": "postCommentId",
                         "name": "postCommentId",
                         "in": "path",
                         "required": true

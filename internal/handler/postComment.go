@@ -286,7 +286,7 @@ type GetPostReCommentResponse struct {
 // @Tags         Post
 // @Accept       json
 // @Produce      json
-// @Param        postCommentId   path      int  true  "Post Comment ID"
+// @Param        postCommentId path string true "postCommentId"
 // @Param        page query int false "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
 // @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=GetPostReCommentResponse} "Success"
@@ -296,7 +296,6 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Retrieve commentId from path parameter
 		postCommentIdParam := c.Param("postCommentId")
-		log.Printf("postCommentIdParam: %s", postCommentIdParam)
 		postCommentId, err := strconv.Atoi(postCommentIdParam)
 		if err != nil {
 			log.Println("Error converting postCommentId:", err) // 변환 실패 시 로그
@@ -343,7 +342,7 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		reComments, err := mysql.PostComments(
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = post_comment.member_id"),
-			qm.Where("post_comment.parent_comment_id = ? and post_comment.deleted_at is null", postCommentId),
+			qm.Where("post_comment.parent_post_comment_id = ? and post_comment.deleted_at is null", postCommentId),
 			qm.WhereNotIn("post_comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.Limit(sizeInt),
 			qm.Offset(offset),
@@ -459,7 +458,7 @@ func ReportPostComment(db *sql.DB) gin.HandlerFunc {
 // @Tags         Post
 // @Accept       json
 // @Produce      json
-// @Param        commentId   path  int  true  "Comment ID"
+// @Param        postCommentId path string true "postCommentId"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
 // @Router       /v1/posts/comments/{postCommentId}/like [post]
 // @Security BearerAuth

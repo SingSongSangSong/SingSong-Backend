@@ -1363,11 +1363,11 @@ paths:
       - application/json
       description: 해당하는 댓글에 좋아요 누르기
       parameters:
-      - description: Comment ID
+      - description: postCommentId
         in: path
-        name: commentId
+        name: postCommentId
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1386,11 +1386,11 @@ paths:
       - application/json
       description: Get rePostComments for a specific comment identified by postCommentId
       parameters:
-      - description: Post Comment ID
+      - description: postCommentId
         in: path
         name: postCommentId
         required: true
-        type: integer
+        type: string
       - description: 현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회
         in: query
         name: page
