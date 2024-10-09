@@ -118,7 +118,7 @@ type PostCommentWithCounts struct {
 // @Accept       json
 // @Produce      json
 // @Param        postId   path     int  true  "Post ID"
-// @Param        cursor query int false "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
+// @Param        cursor query int false "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 먼저 작성된 댓글부터 조회"
 // @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=GetPostCommentResponse} "Success"
 // @Router       /v1/posts/{postId}/comments [get]
@@ -228,7 +228,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 
 		// 전체 댓글 수를 가져오는 쿼리
 		totalCommentsCount, err := mysql.PostComments(
-			qm.Where("post_comment.post_id = ? AND post_comment.is_recomment = false AND post_comment.deleted_at IS NULL", postId),
+			qm.Where("post_comment.post_id = ? AND post_comment.deleted_at IS NULL", postId),
 			qm.WhereNotIn("post_comment.member_id NOT IN ?", blockedMemberIds...), // 블랙리스트 제외
 		).Count(c.Request.Context(), db)
 
@@ -309,7 +309,7 @@ type GetPostReCommentResponse struct {
 // @Accept       json
 // @Produce      json
 // @Param        postCommentId path string true "postCommentId"
-// @Param        cursor query int false "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
+// @Param        cursor query int false "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 먼저 작성된 댓글부터 조회"
 // @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=GetPostReCommentResponse} "Success"
 // @Router       /v1/posts/comments/{postCommentId}/recomments [get]
