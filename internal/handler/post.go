@@ -375,19 +375,20 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 
 		// 페이징 처리된 게시글 가져오기
 		posts, err := mysql.Posts(
+			qm.Select("DISTINCT post.*"), // 중복된 게시글 제거
 			qm.Load(mysql.PostRels.PostComments),
 			qm.Load(mysql.PostRels.Member),
 			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
+			qm.OrderBy("post.post_id DESC"), // 최신 게시글 순서로 정렬
 			qm.Limit(sizeInt),               // 한 번에 가져올 레코드 수
 			qm.Offset(offset),               // 건너뛸 레코드 수
-			qm.OrderBy("post.post_id DESC"), // 최신 게시글 순서로 정렬
 		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		previews := []postPreviewResponse{}
+		previews := make([]postPreviewResponse, 0, sizeInt)
 
 		for _, post := range posts {
 			comments := post.R.PostComments
