@@ -85,12 +85,57 @@ definitions:
           $ref: '#/definitions/handler.FunctionCallingDetailResponse'
         type: array
     type: object
+  handler.GetPostCommentResponse:
+    properties:
+      lastCursor:
+        type: integer
+      postComments:
+        items:
+          $ref: '#/definitions/handler.PostCommentResponse'
+        type: array
+      totalPostCommentCount:
+        type: integer
+    type: object
+  handler.GetPostReCommentResponse:
+    properties:
+      lastCursor:
+        type: integer
+      postReComments:
+        items:
+          $ref: '#/definitions/handler.PostCommentResponse'
+        type: array
+      totalPostReCommentCount:
+        type: integer
+    type: object
   handler.LangchainAgentResponse:
     properties:
       songs:
         items:
           $ref: '#/definitions/handler.songsLangchainAgentesponse'
         type: array
+    type: object
+  handler.LatestCommentResponse:
+    properties:
+      commentId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentCommentId:
+        type: integer
+      song:
+        $ref: '#/definitions/handler.SongOfLatestComment'
     type: object
   handler.LlmRequest:
     properties:
@@ -152,6 +197,55 @@ definitions:
       songNumber:
         type: integer
     type: object
+  handler.PostCommentReportResponse:
+    properties:
+      postCommentId:
+        type: integer
+      postReportId:
+        type: integer
+      postReporterId:
+        type: integer
+      reason:
+        type: string
+      subjectMemberId:
+        type: integer
+    type: object
+  handler.PostCommentRequest:
+    properties:
+      content:
+        type: string
+      isRecomment:
+        type: boolean
+      parentCommentId:
+        type: integer
+      postId:
+        type: integer
+    type: object
+  handler.PostCommentResponse:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentPostCommentId:
+        type: integer
+      postCommentId:
+        type: integer
+      postId:
+        type: integer
+      postRecommentsCount:
+        type: integer
+    type: object
   handler.PostDetailsResponse:
     properties:
       content:
@@ -163,6 +257,8 @@ definitions:
       isWriter:
         type: boolean
       likes:
+        type: integer
+      memberId:
         type: integer
       nickname:
         type: string
@@ -178,6 +274,13 @@ definitions:
   handler.PostIdResponse:
     properties:
       postId:
+        type: integer
+    type: object
+  handler.PostReportRequest:
+    properties:
+      reason:
+        type: string
+      subjectMemberId:
         type: integer
     type: object
   handler.PostRequest:
@@ -226,6 +329,25 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  handler.SongOfLatestComment:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
     type: object
   handler.SongOnPost:
     properties:
@@ -367,6 +489,42 @@ definitions:
         type: string
       version:
         type: string
+    type: object
+  handler.newSongInfo:
+    properties:
+      album:
+        type: string
+      commentCount:
+        type: integer
+      isKeep:
+        type: boolean
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      isRecentlyUpdated:
+        type: boolean
+      keepCount:
+        type: integer
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
+  handler.newSongInfoResponse:
+    properties:
+      lastCursor:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/handler.newSongInfo'
+        type: array
     type: object
   handler.refreshRequest:
     properties:
@@ -796,6 +954,35 @@ paths:
       summary: Retrieve comments for the specified SongId
       tags:
       - Comment
+  /v1/comment/latest:
+    get:
+      consumes:
+      - application/json
+      description: 홈화면 최신 댓글 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 5
+      parameters:
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.LatestCommentResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 홈화면 최신 댓글 가져오기
+      tags:
+      - Comment
   /v1/comment/recomment/{commentId}:
     get:
       consumes:
@@ -1094,11 +1281,12 @@ paths:
     get:
       consumes:
       - application/json
-      description: 게시글 전체 조회 (페이징)
+      description: 게시글 전체 조회 (커서 기반 페이징)
       parameters:
-      - description: 현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회
+      - description: 마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 최신 글부터 조회
         in: query
-        name: page
+        name: cursor
         type: integer
       - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
         in: query
@@ -1117,10 +1305,10 @@ paths:
                   $ref: '#/definitions/handler.PostDetailsResponse'
               type: object
         "400":
-          description: 실패
+          description: query param 값이 들어왔는데, 숫자가 아니라면 400 실패
         "500":
           description: 서버 에러일 경우 500 실패
-      summary: 게시글 전체 조회 (페이징)
+      summary: 게시글 전체 조회 (커서 기반 페이징)
       tags:
       - Post
     post:
@@ -1216,6 +1404,223 @@ paths:
       security:
       - BearerAuth: []
       summary: 게시글 하나 상세 조회
+      tags:
+      - Post
+  /v1/posts/{postId}/comments:
+    get:
+      consumes:
+      - application/json
+      description: Get comments for a specific post identified by postId with optional
+        page and size query parameters
+      parameters:
+      - description: Post ID
+        in: path
+        name: postId
+        required: true
+        type: integer
+      - description: 마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 최신 글부터 조회
+        in: query
+        name: cursor
+        type: integer
+      - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.GetPostCommentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve comments for the specified postId
+      tags:
+      - Post
+  /v1/posts/{postId}/likes:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 게시글에 좋아요 누르기
+      parameters:
+      - description: Post ID
+        in: path
+        name: postId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: integer
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 해당하는 게시글에 좋아요 누르기
+      tags:
+      - Post
+  /v1/posts/{postId}/reports:
+    post:
+      consumes:
+      - application/json
+      description: 게시글 신고
+      parameters:
+      - description: postId
+        in: path
+        name: postId
+        required: true
+        type: string
+      - description: PostReportRequest
+        in: body
+        name: PostReportRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PostReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+        "400":
+          description: postId param이 잘못 들어왔거나, body 형식이 올바르지 않다면 400 실패
+        "500":
+          description: 서버 에러일 경우 500 실패
+      security:
+      - BearerAuth: []
+      summary: 게시글 신고
+      tags:
+      - Post
+  /v1/posts/comments:
+    post:
+      consumes:
+      - application/json
+      description: PostId에 댓글 달기
+      parameters:
+      - description: postCommentRequest
+        in: body
+        name: PostCommentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PostCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostCommentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: PostId에 댓글 달기
+      tags:
+      - Post
+  /v1/posts/comments/{postCommentId}/like:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글에 좋아요 누르기
+      parameters:
+      - description: postCommentId
+        in: path
+        name: postCommentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글에 좋아요 누르기
+      tags:
+      - Post
+  /v1/posts/comments/{postCommentId}/recomments:
+    get:
+      consumes:
+      - application/json
+      description: Get rePostComments for a specific comment identified by postCommentId
+      parameters:
+      - description: postCommentId
+        in: path
+        name: postCommentId
+        required: true
+        type: string
+      - description: 마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 최신 글부터 조회
+        in: query
+        name: cursor
+        type: integer
+      - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.GetPostReCommentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve rePostComments for the specified PostCommentId
+      tags:
+      - Post
+  /v1/posts/comments/report:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글ID를 통해 신고하기
+      parameters:
+      - description: ReportRequest
+        in: body
+        name: ReportRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostCommentReportResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글ID를 통해 신고하기
       tags:
       - Post
   /v1/recommend/home:
@@ -1785,6 +2190,43 @@ paths:
       summary: 노래 평가를 등록/수정합니다.
       tags:
       - Songs
+  /v1/songs/new:
+    get:
+      consumes:
+      - application/json
+      description: 최근 한달간의 신곡을 최신순으로 조회합니다. 최근 일주일동안 추가된 신곡은 isRecentlyUpdated = true
+        입니다.
+      parameters:
+      - description: 마지막에 조회했던 커서의 songId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 최신곡부터 조회
+        in: query
+        name: cursor
+        type: integer
+      - description: 한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.newSongInfoResponse'
+              type: object
+        "400":
+          description: query param 값이 들어왔는데, 숫자가 아니라면 400 실패
+        "500":
+          description: 서버 에러일 경우 500 실패
+      security:
+      - BearerAuth: []
+      summary: 최근 한달간의 신곡을 조회 (최신순 조회)
+      tags:
+      - New Song
   /v1/tags:
     get:
       consumes:

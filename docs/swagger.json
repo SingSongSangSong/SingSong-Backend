@@ -230,6 +230,57 @@
                 }
             }
         },
+        "/v1/comment/latest": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "홈화면 최신 댓글 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 5",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "홈화면 최신 댓글 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.LatestCommentResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/comment/recomment/{commentId}": {
             "get": {
                 "security": [
@@ -829,7 +880,7 @@
         },
         "/v1/posts": {
             "get": {
-                "description": "게시글 전체 조회 (페이징)",
+                "description": "게시글 전체 조회 (커서 기반 페이징)",
                 "consumes": [
                     "application/json"
                 ],
@@ -839,12 +890,12 @@
                 "tags": [
                     "Post"
                 ],
-                "summary": "게시글 전체 조회 (페이징)",
+                "summary": "게시글 전체 조회 (커서 기반 페이징)",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
-                        "name": "page",
+                        "description": "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "name": "cursor",
                         "in": "query"
                     },
                     {
@@ -874,7 +925,7 @@
                         }
                     },
                     "400": {
-                        "description": "실패"
+                        "description": "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
                     },
                     "500": {
                         "description": "서버 에러일 경우 500 실패"
@@ -936,6 +987,206 @@
                     },
                     "500": {
                         "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            }
+        },
+        "/v1/posts/comments": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "PostId에 댓글 달기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "PostId에 댓글 달기",
+                "parameters": [
+                    {
+                        "description": "postCommentRequest",
+                        "name": "PostCommentRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PostCommentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.PostCommentResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/posts/comments/report": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "해당하는 댓글ID를 통해 신고하기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "해당하는 댓글ID를 통해 신고하기",
+                "parameters": [
+                    {
+                        "description": "ReportRequest",
+                        "name": "ReportRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.ReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.PostCommentReportResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/posts/comments/{postCommentId}/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "해당하는 댓글에 좋아요 누르기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "해당하는 댓글에 좋아요 누르기",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postCommentId",
+                        "name": "postCommentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/posts/comments/{postCommentId}/recomments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get rePostComments for a specific comment identified by postCommentId",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "Retrieve rePostComments for the specified PostCommentId",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postCommentId",
+                        "name": "postCommentId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.GetPostReCommentResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             }
@@ -1032,6 +1283,168 @@
                     },
                     "401": {
                         "description": "사용자 인증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            }
+        },
+        "/v1/posts/{postId}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get comments for a specific post identified by postId with optional page and size query parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "Retrieve comments for the specified postId",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.GetPostCommentResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/posts/{postId}/likes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "해당하는 게시글에 좋아요 누르기",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "해당하는 게시글에 좋아요 누르기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/posts/{postId}/reports": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 신고",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 신고",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postId",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "PostReportRequest",
+                        "name": "PostReportRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.PostReportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    },
+                    "400": {
+                        "description": "postId param이 잘못 들어왔거나, body 형식이 올바르지 않다면 400 실패"
                     },
                     "500": {
                         "description": "서버 에러일 경우 500 실패"
@@ -1726,6 +2139,66 @@
                 }
             }
         },
+        "/v1/songs/new": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "최근 한달간의 신곡을 최신순으로 조회합니다. 최근 일주일동안 추가된 신곡은 isRecentlyUpdated = true 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "New Song"
+                ],
+                "summary": "최근 한달간의 신곡을 조회 (최신순 조회)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "마지막에 조회했던 커서의 songId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신곡부터 조회",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.newSongInfoResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            }
+        },
         "/v1/songs/{songId}": {
             "get": {
                 "security": [
@@ -2358,6 +2831,40 @@
                 }
             }
         },
+        "handler.GetPostCommentResponse": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "postComments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PostCommentResponse"
+                    }
+                },
+                "totalPostCommentCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.GetPostReCommentResponse": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "postReComments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PostCommentResponse"
+                    }
+                },
+                "totalPostReCommentCount": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.LangchainAgentResponse": {
             "type": "object",
             "properties": {
@@ -2366,6 +2873,41 @@
                     "items": {
                         "$ref": "#/definitions/handler.songsLangchainAgentesponse"
                     }
+                }
+            }
+        },
+        "handler.LatestCommentResponse": {
+            "type": "object",
+            "properties": {
+                "commentId": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                },
+                "song": {
+                    "$ref": "#/definitions/handler.SongOfLatestComment"
                 }
             }
         },
@@ -2462,6 +3004,81 @@
                 }
             }
         },
+        "handler.PostCommentReportResponse": {
+            "type": "object",
+            "properties": {
+                "postCommentId": {
+                    "type": "integer"
+                },
+                "postReportId": {
+                    "type": "integer"
+                },
+                "postReporterId": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "subjectMemberId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.PostCommentRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                },
+                "postId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.PostCommentResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "parentPostCommentId": {
+                    "type": "integer"
+                },
+                "postCommentId": {
+                    "type": "integer"
+                },
+                "postId": {
+                    "type": "integer"
+                },
+                "postRecommentsCount": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.PostDetailsResponse": {
             "type": "object",
             "properties": {
@@ -2478,6 +3095,9 @@
                     "type": "boolean"
                 },
                 "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
                     "type": "integer"
                 },
                 "nickname": {
@@ -2501,6 +3121,17 @@
             "type": "object",
             "properties": {
                 "postId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.PostReportRequest": {
+            "type": "object",
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "subjectMemberId": {
                     "type": "integer"
                 }
             }
@@ -2575,6 +3206,35 @@
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "handler.SongOfLatestComment": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
                 }
             }
         },
@@ -2793,6 +3453,61 @@
                 },
                 "version": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.newSongInfo": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "isRecentlyUpdated": {
+                    "type": "boolean"
+                },
+                "keepCount": {
+                    "type": "integer"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.newSongInfoResponse": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.newSongInfo"
+                    }
                 }
             }
         },
