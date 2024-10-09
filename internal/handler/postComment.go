@@ -44,7 +44,7 @@ type PostCommentResponse struct {
 // @Produce      json
 // @Param        PostCommentRequest   body      PostCommentRequest  true  "postCommentRequest"
 // @Success      200 {object} pkg.BaseResponseStruct{data=PostCommentResponse} "성공"
-// @Router       /v1/posts/comment [post]
+// @Router       /v1/posts/comments [post]
 // @Security BearerAuth
 func CommentOnPost(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -97,15 +97,23 @@ func CommentOnPost(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+type GetPostCommentResponse struct {
+	TotalPostCommentCount int                   `json:"totalPostCommentCount"`
+	PostComments          []PostCommentResponse `json:"postComments"`
+	NextPage              int                   `json:"nextPage"`
+}
+
 // GetCommentOnPost godoc
-// @Summary      Retrieve comments for the specified SongId
-// @Description  Get comments for a specific song identified by songId
+// @Summary      Retrieve comments for the specified postId
+// @Description  Get comments for a specific post identified by postId with optional page and size query parameters
 // @Tags         Post
 // @Accept       json
 // @Produce      json
-// @Param        songId   path      int  true  "Song ID"
-// @Success      200 {object} pkg.BaseResponseStruct{data=[]PostCommentResponse} "Success"
-// @Router       /v1/posts/comment/{postId} [get]
+// @Param        postId   path     int  true  "Post ID"
+// @Param        page query int false "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
+// @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
+// @Success      200 {object} pkg.BaseResponseStruct{data=GetPostCommentResponse} "Success"
+// @Router       /v1/posts/{postId}/comments [get]
 // @Security BearerAuth
 func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -113,9 +121,26 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		postIdParam := c.Param("postId")
 		postId, err := strconv.Atoi(postIdParam)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid postId", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid postCommentId", nil)
 			return
 		}
+
+		sizeStr := c.DefaultQuery("size", defaultSize)
+		sizeInt, err := strconv.Atoi(sizeStr)
+		if err != nil || sizeInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+			return
+		}
+
+		pageStr := c.DefaultQuery("page", defaultPage)
+		pageInt, err := strconv.Atoi(pageStr)
+		if err != nil || pageInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+			return
+		}
+
+		// OFFSET 계산
+		offset := (pageInt - 1) * sizeInt
 
 		blockerId, exists := c.Get("memberId")
 		if !exists {
@@ -138,10 +163,12 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 
 		// Retrieve comments for the specified songId
 		postComments, err := mysql.PostComments(
-			qm.Load(mysql.CommentRels.Member),
-			qm.LeftOuterJoin("member on member.member_id = post_comment.member_id"),
-			qm.Where("post_comment.post_id = ? and post_comment.deleted_at is null", postId),
-			qm.WhereNotIn("post_comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
+			qm.Load(mysql.PostCommentRels.Member),
+			qm.LeftOuterJoin("member ON member.member_id = post_comment.member_id"),
+			qm.Where("post_comment.post_id = ? AND post_comment.deleted_at IS NULL", postId),
+			qm.WhereNotIn("post_comment.member_id NOT IN ?", blockedMemberIds...), // 블랙리스트 제외
+			qm.Limit(sizeInt), // limit은 가져올 댓글 수
+			qm.Offset(offset), // offset은 몇 번째부터 시작할지
 			qm.OrderBy("post_comment.created_at DESC"),
 		).All(c.Request.Context(), db)
 		if err != nil {
@@ -149,8 +176,15 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		// 전체 댓글 수를 가져오는 쿼리
+		totalCommentsCount, err := mysql.PostComments(
+			qm.Where("post_comment.post_id = ? AND post_comment.is_recomment = false AND post_comment.deleted_at IS NULL", postId),
+			qm.WhereNotIn("post_comment.member_id NOT IN ?", blockedMemberIds...), // 블랙리스트 제외
+		).Count(c.Request.Context(), db)
+
+		// 결과가 없는 경우 빈 리스트 반환
 		if len(postComments) == 0 {
-			pkg.BaseResponse(c, http.StatusOK, "success", []PostCommentResponse{})
+			pkg.BaseResponse(c, http.StatusOK, "success", GetPostCommentResponse{TotalPostCommentCount: int(totalCommentsCount), PostComments: []PostCommentResponse{}, NextPage: pageInt})
 			return
 		}
 
@@ -183,6 +217,8 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		// Add all top-level comments (those without parent comments) to the slice
 		for _, comment := range postComments {
 			if !comment.IsRecomment.Bool {
+				if comment.CreatedAt.Valid {
+				}
 				// Top-level comment, add to slice
 				topLevelComments = append(topLevelComments, PostCommentResponse{
 					CommentId:       comment.PostCommentID,
@@ -234,8 +270,14 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Return comments as part of the response
-		pkg.BaseResponse(c, http.StatusOK, "success", topLevelComments)
+		pkg.BaseResponse(c, http.StatusOK, "success", GetPostCommentResponse{TotalPostCommentCount: int(totalCommentsCount), PostComments: topLevelComments, NextPage: pageInt + 1})
 	}
+}
+
+type GetPostReCommentResponse struct {
+	TotalPostReCommentCount int                   `json:"totalPostReCommentCount"`
+	PostReComments          []PostCommentResponse `json:"postReComments"`
+	NextPage                int                   `json:"nextPage"`
 }
 
 // GetReCommentOnPost 댓글에 대한 대댓글 정보 보기
@@ -244,20 +286,40 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 // @Tags         Post
 // @Accept       json
 // @Produce      json
-// @Param        commentId   path      int  true  "Comment ID"
-// @Success      200 {object} pkg.BaseResponseStruct{data=[]PostCommentResponse} "Success"
-// @Router       /v1/posts/comment/recomments/{postCommentId} [get]
+// @Param        postCommentId   path      int  true  "Post Comment ID"
+// @Param        page query int false "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
+// @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
+// @Success      200 {object} pkg.BaseResponseStruct{data=GetPostReCommentResponse} "Success"
+// @Router       /v1/posts/comments/{postCommentId}/recomments [get]
 // @Security BearerAuth
 func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Retrieve commentId from path parameter
-		commentIdParam := c.Param("postCommentId")
-		commentId, err := strconv.Atoi(commentIdParam)
+		postCommentIdParam := c.Param("postCommentId")
+		log.Printf("postCommentIdParam: %s", postCommentIdParam)
+		postCommentId, err := strconv.Atoi(postCommentIdParam)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid commentId", nil)
+			log.Println("Error converting postCommentId:", err) // 변환 실패 시 로그
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid postCommentId", nil)
 			return
 		}
-		log.Printf("commentId: %d", commentId)
+
+		sizeStr := c.DefaultQuery("size", defaultSize)
+		sizeInt, err := strconv.Atoi(sizeStr)
+		if err != nil || sizeInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+			return
+		}
+
+		pageStr := c.DefaultQuery("page", defaultPage)
+		pageInt, err := strconv.Atoi(pageStr)
+		if err != nil || pageInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+			return
+		}
+
+		// OFFSET 계산
+		offset := (pageInt - 1) * sizeInt
 
 		blockerId, exists := c.Get("memberId")
 		if !exists {
@@ -281,15 +343,21 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		reComments, err := mysql.PostComments(
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = post_comment.member_id"),
-			qm.Where("post_comment.parent_comment_id = ? and post_comment.deleted_at is null", commentId),
+			qm.Where("post_comment.parent_comment_id = ? and post_comment.deleted_at is null", postCommentId),
 			qm.WhereNotIn("post_comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
+			qm.Limit(sizeInt),
+			qm.Offset(offset),
 			qm.OrderBy("post_comment.created_at ASC"),
 		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-		log.Printf("recomments: %d", len(reComments))
+
+		if len(reComments) == 0 {
+			pkg.BaseResponse(c, http.StatusOK, "success", GetPostReCommentResponse{TotalPostReCommentCount: 0, PostReComments: []PostCommentResponse{}, NextPage: pageInt})
+			return
+		}
 
 		// Prepare the final data list directly in the order retrieved
 		data := make([]PostCommentResponse, 0, len(reComments))
@@ -307,8 +375,20 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			})
 		}
 
+		// 전체 댓글 수를 가져오는 쿼리
+		totalReCommentsCount, err := mysql.PostComments(
+			qm.Where("post_comment.parent_comment_id = ? AND post_comment.is_recomment = true AND post_comment.deleted_at IS NULL", postCommentId),
+			qm.WhereNotIn("post_comment.member_id NOT IN ?", blockedMemberIds...), // 블랙리스트 제외
+		).Count(c.Request.Context(), db)
+
+		postRecommendResponse := GetPostReCommentResponse{
+			TotalPostReCommentCount: int(totalReCommentsCount),
+			PostReComments:          data,
+			NextPage:                pageInt + 1,
+		}
+
 		// Return the response with the data list
-		pkg.BaseResponse(c, http.StatusOK, "success", data)
+		pkg.BaseResponse(c, http.StatusOK, "success", postRecommendResponse)
 	}
 }
 
@@ -319,11 +399,11 @@ type PostCommentReportRequest struct {
 }
 
 type PostCommentReportResponse struct {
-	PostReportId    int64  `json:"postReportId"`
-	PostCommentId   int64  `json:"postCommentId"`
-	Reason          string `json:"reason"`
-	SubjectMemberId int64  `json:"subjectMemberId"`
-	PostReporterId  int64  `json:"postReporterId"`
+	PostCommentReportId   int64  `json:"postReportId"`
+	PostCommentId         int64  `json:"postCommentId"`
+	Reason                string `json:"reason"`
+	SubjectMemberId       int64  `json:"subjectMemberId"`
+	PostCommentReporterId int64  `json:"postReporterId"`
 }
 
 // ReportPostComment godoc
@@ -334,7 +414,7 @@ type PostCommentReportResponse struct {
 // @Produce      json
 // @Param        ReportRequest   body      ReportRequest  true  "ReportRequest"
 // @Success      200 {object} pkg.BaseResponseStruct{data=PostCommentReportResponse} "성공"
-// @Router       /v1/post/comment/report [post]
+// @Router       /v1/posts/comments/report [post]
 // @Security BearerAuth
 func ReportPostComment(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -362,11 +442,11 @@ func ReportPostComment(db *sql.DB) gin.HandlerFunc {
 		}
 
 		reportResponse := PostCommentReportResponse{
-			PostReportId:    m.PostCommentReportID,
-			PostCommentId:   m.PostCommentID,
-			Reason:          m.ReportReason.String,
-			SubjectMemberId: m.SubjectMemberID,
-			PostReporterId:  m.ReporterMemberID,
+			PostCommentReportId:   m.PostCommentReportID,
+			PostCommentId:         m.PostCommentID,
+			Reason:                m.ReportReason.String,
+			SubjectMemberId:       m.SubjectMemberID,
+			PostCommentReporterId: m.ReporterMemberID,
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "success", reportResponse)
@@ -381,7 +461,7 @@ func ReportPostComment(db *sql.DB) gin.HandlerFunc {
 // @Produce      json
 // @Param        commentId   path  int  true  "Comment ID"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
-// @Router       /v1/post/comment/{postCommentId}/like [post]
+// @Router       /v1/posts/comments/{postCommentId}/like [post]
 // @Security BearerAuth
 func LikePostComment(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
