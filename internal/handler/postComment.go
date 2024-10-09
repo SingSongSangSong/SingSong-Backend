@@ -160,19 +160,15 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		//blocked_member_id 리스트 만들기
 		blockedMemberIds := make([]interface{}, 0, len(blacklists))
-		for _, blacklist := range blacklists {
-			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
-		}
-
 		// blockedMemberIds가 빈 슬라이스가 아닐 경우 쿼리에서 사용하기 위해 변환
 		blockedMemberIdsPlaceholder := "0" // 기본적으로 차단된 사용자가 없는 경우
-		if len(blockedMemberIds) > 0 {
+		if len(blacklists) > 0 {
 			// blockedMemberIds 슬라이스를 콤마로 구분된 문자열로 변환
-			ids := make([]string, len(blockedMemberIds))
-			for i, id := range blockedMemberIds {
-				ids[i] = fmt.Sprintf("%v", id)
+			ids := make([]string, len(blacklists))
+			for i, blacklist := range blacklists {
+				ids[i] = fmt.Sprintf("%v", blacklist.BlockedMemberID)
+				blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
 			}
 			blockedMemberIdsPlaceholder = strings.Join(ids, ",")
 		}
@@ -206,7 +202,6 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		defer rows.Close()
 
 		var postComments []PostCommentWithCounts
-
 		// 조회 결과를 반복하면서 값을 스캔
 		for rows.Next() {
 			var postComment PostCommentWithCounts
