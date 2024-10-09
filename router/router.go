@@ -143,6 +143,15 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		post.DELETE("/:postId", middleware.AuthMiddleware(db), handler.DeletePost(db))
 		post.POST("/:postId/reports", middleware.AuthMiddleware(db), handler.ReportPost(db))
 		post.POST("/:postId/likes", middleware.AuthMiddleware(db), handler.LikePost(db))
+		post.GET("/:postId/comments", middleware.AuthMiddleware(db), handler.GetCommentOnPost(db))
+	}
+
+	postComment := r.Group("/api/v1/posts/comments")
+	{
+		postComment.POST("", middleware.AuthMiddleware(db), handler.CommentOnPost(db))
+		postComment.GET("/:postCommentId/recomments", middleware.AuthMiddleware(db), handler.GetReCommentOnPost(db))
+		postComment.POST("/report", middleware.AuthMiddleware(db), handler.ReportPostComment(db))
+		postComment.POST("/:postCommentId/like", middleware.AuthMiddleware(db), handler.LikePostComment(db))
 	}
 
 	// 스웨거 설정

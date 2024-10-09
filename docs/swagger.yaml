@@ -85,6 +85,28 @@ definitions:
           $ref: '#/definitions/handler.FunctionCallingDetailResponse'
         type: array
     type: object
+  handler.GetPostCommentResponse:
+    properties:
+      lastCursor:
+        type: integer
+      postComments:
+        items:
+          $ref: '#/definitions/handler.PostCommentResponse'
+        type: array
+      totalPostCommentCount:
+        type: integer
+    type: object
+  handler.GetPostReCommentResponse:
+    properties:
+      lastCursor:
+        type: integer
+      postReComments:
+        items:
+          $ref: '#/definitions/handler.PostCommentResponse'
+        type: array
+      totalPostReCommentCount:
+        type: integer
+    type: object
   handler.LangchainAgentResponse:
     properties:
       songs:
@@ -173,6 +195,55 @@ definitions:
       songName:
         type: string
       songNumber:
+        type: integer
+    type: object
+  handler.PostCommentReportResponse:
+    properties:
+      postCommentId:
+        type: integer
+      postReportId:
+        type: integer
+      postReporterId:
+        type: integer
+      reason:
+        type: string
+      subjectMemberId:
+        type: integer
+    type: object
+  handler.PostCommentRequest:
+    properties:
+      content:
+        type: string
+      isRecomment:
+        type: boolean
+      parentCommentId:
+        type: integer
+      postId:
+        type: integer
+    type: object
+  handler.PostCommentResponse:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentPostCommentId:
+        type: integer
+      postCommentId:
+        type: integer
+      postId:
+        type: integer
+      postRecommentsCount:
         type: integer
     type: object
   handler.PostDetailsResponse:
@@ -1335,6 +1406,44 @@ paths:
       summary: 게시글 하나 상세 조회
       tags:
       - Post
+  /v1/posts/{postId}/comments:
+    get:
+      consumes:
+      - application/json
+      description: Get comments for a specific post identified by postId with optional
+        page and size query parameters
+      parameters:
+      - description: Post ID
+        in: path
+        name: postId
+        required: true
+        type: integer
+      - description: 마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 최신 글부터 조회
+        in: query
+        name: cursor
+        type: integer
+      - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.GetPostCommentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve comments for the specified postId
+      tags:
+      - Post
   /v1/posts/{postId}/likes:
     post:
       consumes:
@@ -1394,6 +1503,124 @@ paths:
       security:
       - BearerAuth: []
       summary: 게시글 신고
+      tags:
+      - Post
+  /v1/posts/comments:
+    post:
+      consumes:
+      - application/json
+      description: PostId에 댓글 달기
+      parameters:
+      - description: postCommentRequest
+        in: body
+        name: PostCommentRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.PostCommentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostCommentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: PostId에 댓글 달기
+      tags:
+      - Post
+  /v1/posts/comments/{postCommentId}/like:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글에 좋아요 누르기
+      parameters:
+      - description: postCommentId
+        in: path
+        name: postCommentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글에 좋아요 누르기
+      tags:
+      - Post
+  /v1/posts/comments/{postCommentId}/recomments:
+    get:
+      consumes:
+      - application/json
+      description: Get rePostComments for a specific comment identified by postCommentId
+      parameters:
+      - description: postCommentId
+        in: path
+        name: postCommentId
+        required: true
+        type: string
+      - description: 마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 최신 글부터 조회
+        in: query
+        name: cursor
+        type: integer
+      - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.GetPostReCommentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve rePostComments for the specified PostCommentId
+      tags:
+      - Post
+  /v1/posts/comments/report:
+    post:
+      consumes:
+      - application/json
+      description: 해당하는 댓글ID를 통해 신고하기
+      parameters:
+      - description: ReportRequest
+        in: body
+        name: ReportRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ReportRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.PostCommentReportResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글ID를 통해 신고하기
       tags:
       - Post
   /v1/recommend/home:
