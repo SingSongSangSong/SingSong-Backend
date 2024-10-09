@@ -238,6 +238,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/comment/latest": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "홈화면 최신 댓글 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 5",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "홈화면 최신 댓글 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.LatestCommentResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/comment/recomment/{commentId}": {
             "get": {
                 "security": [
@@ -2377,6 +2428,41 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.LatestCommentResponse": {
+            "type": "object",
+            "properties": {
+                "commentId": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                },
+                "song": {
+                    "$ref": "#/definitions/handler.SongOfLatestComment"
+                }
+            }
+        },
         "handler.LlmRequest": {
             "type": "object",
             "properties": {
@@ -2583,6 +2669,35 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "handler.SongOfLatestComment": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
                 }
             }
         },
