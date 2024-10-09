@@ -69,7 +69,7 @@ func CreatePost(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if len(postRequest.SongInfoIds) == 0 {
+		if postRequest.SongInfoIds == nil || len(postRequest.SongInfoIds) == 0 {
 			post := mysql.Post{
 				BoardID:  1, //default board
 				MemberID: memberId.(int64),
@@ -329,8 +329,8 @@ func DeletePost(db *sql.DB) gin.HandlerFunc {
 }
 
 type postPageResponse struct {
-	Posts    []postPreviewResponse `json:"posts"`
-	NextPage int                   `json:"nextPage"`
+	Posts      []postPreviewResponse `json:"posts"`
+	LastCursor int64                 `json:"lastCursor"`
 }
 
 type postPreviewResponse struct {
@@ -343,12 +343,12 @@ type postPreviewResponse struct {
 }
 
 // ListPosts godoc
-// @Summary      게시글 전체 조회 (페이징)
-// @Description  게시글 전체 조회 (페이징)
+// @Summary      게시글 전체 조회 (커서 기반 페이징)
+// @Description  게시글 전체 조회 (커서 기반 페이징)
 // @Tags         Post
 // @Accept       json
 // @Produce      json
-// @Param        page query int false "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
+// @Param        cursor query int false "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
 // @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=PostDetailsResponse} "성공"
 // @Failure      400 "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
@@ -363,15 +363,12 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		pageStr := c.DefaultQuery("page", defaultPage)
-		pageInt, err := strconv.Atoi(pageStr)
-		if err != nil || pageInt < 0 {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+		cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
+		cursorInt, err := strconv.Atoi(cursorStr)
+		if err != nil || cursorInt <= 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
 		}
-
-		// OFFSET 계산
-		offset := (pageInt - 1) * sizeInt
 
 		// 페이징 처리된 게시글 가져오기
 		posts, err := mysql.Posts(
@@ -379,9 +376,9 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			qm.Load(mysql.PostRels.PostComments),
 			qm.Load(mysql.PostRels.Member),
 			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
-			qm.OrderBy("post.post_id DESC"), // 최신 게시글 순서로 정렬
-			qm.Limit(sizeInt),               // 한 번에 가져올 레코드 수
-			qm.Offset(offset),               // 건너뛸 레코드 수
+			qm.Where("post.post_id < ?", cursorInt),
+			qm.OrderBy("post.post_id DESC"),
+			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
@@ -402,9 +399,15 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			})
 		}
 
+		// 다음 페이지를 위한 커서 값 설정
+		var lastCursor int64 = 0
+		if len(previews) > 0 {
+			lastCursor = previews[len(previews)-1].PostId
+		}
+
 		response := postPageResponse{
-			Posts:    previews,
-			NextPage: pageInt + 1,
+			Posts:      previews,
+			LastCursor: lastCursor,
 		}
 
 		// 응답 반환

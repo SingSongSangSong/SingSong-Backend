@@ -837,7 +837,7 @@ const docTemplate = `{
         },
         "/v1/posts": {
             "get": {
-                "description": "게시글 전체 조회 (페이징)",
+                "description": "게시글 전체 조회 (커서 기반 페이징)",
                 "consumes": [
                     "application/json"
                 ],
@@ -847,12 +847,12 @@ const docTemplate = `{
                 "tags": [
                     "Post"
                 ],
-                "summary": "게시글 전체 조회 (페이징)",
+                "summary": "게시글 전체 조회 (커서 기반 페이징)",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
-                        "name": "page",
+                        "description": "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "name": "cursor",
                         "in": "query"
                     },
                     {
