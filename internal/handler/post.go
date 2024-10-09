@@ -468,3 +468,94 @@ func ReportPost(db *sql.DB) gin.HandlerFunc {
 		pkg.BaseResponse(c, http.StatusOK, "success", nil)
 	}
 }
+
+// LikePost godoc
+// @Summary      해당하는 게시글에 좋아요 누르기
+// @Description  해당하는 게시글에 좋아요 누르기
+// @Tags         Post
+// @Accept       json
+// @Produce      json
+// @Param        postId   path  int  true  "Post ID"
+// @Success      200 {object} pkg.BaseResponseStruct{data=int} "성공"
+// @Router       /v1/posts/{postId}/likes [post]
+// @Security BearerAuth
+func LikePost(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// memberId 가져오기
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
+		// postId 가져오기
+		postIdParam := c.Param("postId")
+		postId, err := strconv.ParseInt(postIdParam, 10, 64)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid postId", nil)
+			return
+		}
+
+		// 좋아요 상태 변경 함수
+		changeLikeStatus := func(post *mysql.Post, delta int) error {
+			post.Likes += delta
+			_, err := post.Update(c, db, boil.Infer())
+			return err
+		}
+
+		// 이미 좋아요를 눌렀는지 확인
+		postLikes, err := mysql.PostLikes(
+			qm.Where("member_id = ? AND post_id = ? AND deleted_at IS NULL", memberId.(int64), postId),
+		).One(c.Request.Context(), db)
+
+		// 이미 좋아요를 누른 상태에서 좋아요 취소 요청
+		if err == nil {
+			postLikes.DeletedAt = null.TimeFrom(time.Now())
+			if _, err := postLikes.Update(c.Request.Context(), db, boil.Infer()); err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			// Post Table에서 해당 postId의 LikeCount를 1 감소시킨다
+			post, err := mysql.Posts(
+				qm.Where("post_id = ?", postId),
+			).One(c.Request.Context(), db)
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			if err := changeLikeStatus(post, -1); err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+
+			pkg.BaseResponse(c, http.StatusOK, "success", post.Likes)
+			return
+		}
+
+		// 게시글 좋아요 누르기
+		like := mysql.PostLike{MemberID: memberId.(int64), PostID: postId}
+		if err := like.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// CommentTable에서 해당 CommentId의 LikeCount를 1 증가시킨다
+		post, err := mysql.Posts(
+			qm.Where("post_id = ?", postId),
+		).One(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		if err := changeLikeStatus(post, 1); err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "success", post.Likes)
+		return
+	}
+}

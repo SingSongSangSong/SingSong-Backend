@@ -1174,56 +1174,31 @@ paths:
       tags:
       - Post
   /v1/posts/{postId}/likes:
-    delete:
-      consumes:
-      - application/json
-      description: 게시글 좋아요 해제
-      parameters:
-      - description: postId
-        in: path
-        name: postId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 성공
-        "400":
-          description: postId param이 잘못 들어왔다면 400 실패
-        "401":
-          description: 토큰 인증에 실패했다면 401 실패
-        "500":
-          description: 서버 에러일 경우 500 실패
-      security:
-      - BearerAuth: []
-      summary: 게시글 좋아요 해제
-      tags:
-      - Post
     post:
       consumes:
       - application/json
-      description: 게시글 좋아요 추가
+      description: 해당하는 게시글에 좋아요 누르기
       parameters:
-      - description: postId
+      - description: Post ID
         in: path
         name: postId
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: 성공
-        "400":
-          description: postId param이 잘못 들어왔다면 400 실패
-        "401":
-          description: 토큰 인증에 실패했다면 401 실패
-        "500":
-          description: 서버 에러일 경우 500 실패
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: integer
+              type: object
       security:
       - BearerAuth: []
-      summary: 게시글 좋아요 추가
+      summary: 해당하는 게시글에 좋아요 누르기
       tags:
       - Post
   /v1/posts/{postId}/reports:

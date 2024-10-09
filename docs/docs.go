@@ -1054,7 +1054,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "게시글 좋아요 추가",
+                "description": "해당하는 게시글에 좋아요 누르기",
                 "consumes": [
                     "application/json"
                 ],
@@ -1064,11 +1064,11 @@ const docTemplate = `{
                 "tags": [
                     "Post"
                 ],
-                "summary": "게시글 좋아요 추가",
+                "summary": "해당하는 게시글에 좋아요 누르기",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "postId",
+                        "type": "integer",
+                        "description": "Post ID",
                         "name": "postId",
                         "in": "path",
                         "required": true
@@ -1076,57 +1076,22 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "성공"
-                    },
-                    "400": {
-                        "description": "postId param이 잘못 들어왔다면 400 실패"
-                    },
-                    "401": {
-                        "description": "토큰 인증에 실패했다면 401 실패"
-                    },
-                    "500": {
-                        "description": "서버 에러일 경우 500 실패"
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "게시글 좋아요 해제",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Post"
-                ],
-                "summary": "게시글 좋아요 해제",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "postId",
-                        "name": "postId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "성공"
-                    },
-                    "400": {
-                        "description": "postId param이 잘못 들어왔다면 400 실패"
-                    },
-                    "401": {
-                        "description": "토큰 인증에 실패했다면 401 실패"
-                    },
-                    "500": {
-                        "description": "서버 에러일 경우 500 실패"
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             }
