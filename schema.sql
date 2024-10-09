@@ -327,3 +327,6 @@ CREATE TABLE post_comment_report (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL
 );
+
+ALTER TABLE `member`
+    MODIFY `email` varchar(255) NOT NULL;
