@@ -87,7 +87,7 @@ definitions:
     type: object
   handler.GetPostCommentResponse:
     properties:
-      nextPage:
+      lastCursor:
         type: integer
       postComments:
         items:
@@ -98,7 +98,7 @@ definitions:
     type: object
   handler.GetPostReCommentResponse:
     properties:
-      nextPage:
+      lastCursor:
         type: integer
       postReComments:
         items:
@@ -223,8 +223,6 @@ definitions:
     type: object
   handler.PostCommentResponse:
     properties:
-      commentId:
-        type: integer
       content:
         type: string
       createdAt:
@@ -239,14 +237,14 @@ definitions:
         type: integer
       nickname:
         type: string
-      parentCommentId:
+      parentPostCommentId:
+        type: integer
+      postCommentId:
         type: integer
       postId:
         type: integer
-      postRecomments:
-        items:
-          $ref: '#/definitions/handler.PostCommentResponse'
-        type: array
+      postRecommentsCount:
+        type: integer
     type: object
   handler.PostDetailsResponse:
     properties:
@@ -1384,9 +1382,10 @@ paths:
         name: postId
         required: true
         type: integer
-      - description: 현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회
+      - description: 마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 최신 글부터 조회
         in: query
-        name: page
+        name: cursor
         type: integer
       - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
         in: query
@@ -1533,9 +1532,10 @@ paths:
         name: postCommentId
         required: true
         type: string
-      - description: 현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회
+      - description: 마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 최신 글부터 조회
         in: query
-        name: page
+        name: cursor
         type: integer
       - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
         in: query

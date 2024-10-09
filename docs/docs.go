@@ -1166,8 +1166,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
-                        "name": "page",
+                        "description": "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "name": "cursor",
                         "in": "query"
                     },
                     {
@@ -1326,8 +1326,8 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
-                        "name": "page",
+                        "description": "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "name": "cursor",
                         "in": "query"
                     },
                     {
@@ -2782,7 +2782,7 @@ const docTemplate = `{
         "handler.GetPostCommentResponse": {
             "type": "object",
             "properties": {
-                "nextPage": {
+                "lastCursor": {
                     "type": "integer"
                 },
                 "postComments": {
@@ -2799,7 +2799,7 @@ const docTemplate = `{
         "handler.GetPostReCommentResponse": {
             "type": "object",
             "properties": {
-                "nextPage": {
+                "lastCursor": {
                     "type": "integer"
                 },
                 "postReComments": {
@@ -2992,9 +2992,6 @@ const docTemplate = `{
         "handler.PostCommentResponse": {
             "type": "object",
             "properties": {
-                "commentId": {
-                    "type": "integer"
-                },
                 "content": {
                     "type": "string"
                 },
@@ -3016,17 +3013,17 @@ const docTemplate = `{
                 "nickname": {
                     "type": "string"
                 },
-                "parentCommentId": {
+                "parentPostCommentId": {
+                    "type": "integer"
+                },
+                "postCommentId": {
                     "type": "integer"
                 },
                 "postId": {
                     "type": "integer"
                 },
-                "postRecomments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.PostCommentResponse"
-                    }
+                "postRecommentsCount": {
+                    "type": "integer"
                 }
             }
         },

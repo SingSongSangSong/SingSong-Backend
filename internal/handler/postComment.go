@@ -4,14 +4,15 @@ import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"log"
 	"net/http"
-	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,17 +24,17 @@ type PostCommentRequest struct {
 }
 
 type PostCommentResponse struct {
-	CommentId       int64                 `json:"commentId"`
-	Content         string                `json:"content"`
-	IsRecomment     bool                  `json:"isRecomment"`
-	ParentCommentId int64                 `json:"parentCommentId"`
-	PostId          int64                 `json:"postId"`
-	MemberId        int64                 `json:"memberId"`
-	Nickname        string                `json:"nickname"`
-	CreatedAt       time.Time             `json:"createdAt"`
-	Likes           int                   `json:"likes"`
-	IsLiked         bool                  `json:"isLiked"`
-	PostRecomments  []PostCommentResponse `json:"postRecomments"`
+	PostCommentId       int64     `json:"postCommentId"`
+	Content             string    `json:"content"`
+	IsRecomment         bool      `json:"isRecomment"`
+	ParentPostCommentId int64     `json:"parentPostCommentId"`
+	PostId              int64     `json:"postId"`
+	MemberId            int64     `json:"memberId"`
+	Nickname            string    `json:"nickname"`
+	CreatedAt           time.Time `json:"createdAt"`
+	Likes               int       `json:"likes"`
+	IsLiked             bool      `json:"isLiked"`
+	PostRecommentCount  int       `json:"postRecommentsCount"`
 }
 
 // CommentOnPost godoc
@@ -80,16 +81,16 @@ func CommentOnPost(db *sql.DB) gin.HandlerFunc {
 		}
 
 		commentResponse := PostCommentResponse{
-			CommentId:       m.PostCommentID,
-			ParentCommentId: m.ParentPostCommentID.Int64,
-			PostId:          m.PostID,
-			Content:         m.Content.String,
-			IsRecomment:     m.IsRecomment.Bool,
-			MemberId:        m.MemberID,
-			Nickname:        member.Nickname.String,
-			CreatedAt:       m.CreatedAt.Time,
-			Likes:           m.Likes,
-			PostRecomments:  []PostCommentResponse{},
+			PostCommentId:       m.PostCommentID,
+			ParentPostCommentId: m.ParentPostCommentID.Int64,
+			PostId:              m.PostID,
+			Content:             m.Content.String,
+			IsRecomment:         m.IsRecomment.Bool,
+			MemberId:            m.MemberID,
+			Nickname:            member.Nickname.String,
+			CreatedAt:           m.CreatedAt.Time,
+			Likes:               m.Likes,
+			PostRecommentCount:  0,
 		}
 
 		// 댓글 달기 성공시 댓글 정보 반환
@@ -100,7 +101,14 @@ func CommentOnPost(db *sql.DB) gin.HandlerFunc {
 type GetPostCommentResponse struct {
 	TotalPostCommentCount int                   `json:"totalPostCommentCount"`
 	PostComments          []PostCommentResponse `json:"postComments"`
-	NextPage              int                   `json:"nextPage"`
+	LastCursor            int64                 `json:"lastCursor"`
+}
+
+// PostCommentWithCounts 구조체 정의
+type PostCommentWithCounts struct {
+	mysql.PostComment             // PostComment 구조체
+	NickName          null.String // 닉네임
+	ReplyCount        int         // 대댓글 수
 }
 
 // GetCommentOnPost godoc
@@ -110,7 +118,7 @@ type GetPostCommentResponse struct {
 // @Accept       json
 // @Produce      json
 // @Param        postId   path     int  true  "Post ID"
-// @Param        page query int false "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
+// @Param        cursor query int false "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
 // @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=GetPostCommentResponse} "Success"
 // @Router       /v1/posts/{postId}/comments [get]
@@ -132,15 +140,12 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		pageStr := c.DefaultQuery("page", defaultPage)
-		pageInt, err := strconv.Atoi(pageStr)
-		if err != nil || pageInt < 0 {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+		cursorStr := c.DefaultQuery("cursor", "0") //int64 최소값
+		cursorInt, err := strconv.Atoi(cursorStr)
+		if err != nil || cursorInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
 		}
-
-		// OFFSET 계산
-		offset := (pageInt - 1) * sizeInt
 
 		blockerId, exists := c.Get("memberId")
 		if !exists {
@@ -161,19 +166,69 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
 		}
 
-		// Retrieve comments for the specified songId
-		postComments, err := mysql.PostComments(
-			qm.Load(mysql.PostCommentRels.Member),
-			qm.LeftOuterJoin("member ON member.member_id = post_comment.member_id"),
-			qm.Where("post_comment.post_id = ? AND post_comment.deleted_at IS NULL", postId),
-			qm.WhereNotIn("post_comment.member_id NOT IN ?", blockedMemberIds...), // 블랙리스트 제외
-			qm.Limit(sizeInt), // limit은 가져올 댓글 수
-			qm.Offset(offset), // offset은 몇 번째부터 시작할지
-			qm.OrderBy("post_comment.created_at DESC"),
-		).All(c.Request.Context(), db)
+		// blockedMemberIds가 빈 슬라이스가 아닐 경우 쿼리에서 사용하기 위해 변환
+		blockedMemberIdsPlaceholder := "0" // 기본적으로 차단된 사용자가 없는 경우
+		if len(blockedMemberIds) > 0 {
+			// blockedMemberIds 슬라이스를 콤마로 구분된 문자열로 변환
+			ids := make([]string, len(blockedMemberIds))
+			for i, id := range blockedMemberIds {
+				ids[i] = fmt.Sprintf("%v", id)
+			}
+			blockedMemberIdsPlaceholder = strings.Join(ids, ",")
+		}
+
+		// 쿼리 작성
+		query := fmt.Sprintf(`
+			SELECT post_comment.*,
+			       member.nickname as nickname,
+				   COUNT(replies.post_comment_id) AS reply_count
+			FROM post_comment
+			LEFT JOIN member ON member.member_id = post_comment.member_id
+			LEFT JOIN post_comment AS replies 
+				ON replies.parent_post_comment_id = post_comment.post_comment_id 
+				AND replies.is_recomment = true
+			WHERE post_comment.post_id = ? 
+				AND post_comment.deleted_at IS NULL 
+				AND post_comment.is_recomment = FALSE
+				AND post_comment.post_comment_id > ?
+				AND post_comment.member_id NOT IN (%s) -- 블록된 사용자 제외
+			GROUP BY post_comment.post_comment_id
+			ORDER BY post_comment.created_at ASC
+			LIMIT ?
+		`, blockedMemberIdsPlaceholder)
+
+		// Query 실행
+		rows, err := db.Query(query, postId, cursorInt, sizeInt)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
+		}
+		defer rows.Close()
+
+		var postComments []PostCommentWithCounts
+
+		// 조회 결과를 반복하면서 값을 스캔
+		for rows.Next() {
+			var postComment PostCommentWithCounts
+			err := rows.Scan(
+				&postComment.PostComment.PostCommentID,
+				&postComment.PostComment.PostID,
+				&postComment.PostComment.MemberID,
+				&postComment.PostComment.Content,
+				&postComment.PostComment.Likes,
+				&postComment.PostComment.IsRecomment,
+				&postComment.PostComment.ParentPostCommentID,
+				&postComment.PostComment.CreatedAt,
+				&postComment.PostComment.UpdatedAt,
+				&postComment.PostComment.DeletedAt,
+				&postComment.NickName,
+				&postComment.ReplyCount, // 대댓글 수
+			)
+			if err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+			postComments = append(postComments, postComment)
 		}
 
 		// 전체 댓글 수를 가져오는 쿼리
@@ -184,7 +239,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 
 		// 결과가 없는 경우 빈 리스트 반환
 		if len(postComments) == 0 {
-			pkg.BaseResponse(c, http.StatusOK, "success", GetPostCommentResponse{TotalPostCommentCount: int(totalCommentsCount), PostComments: []PostCommentResponse{}, NextPage: pageInt})
+			pkg.BaseResponse(c, http.StatusOK, "success", GetPostCommentResponse{TotalPostCommentCount: int(totalCommentsCount), PostComments: []PostCommentResponse{}, LastCursor: 0})
 			return
 		}
 
@@ -212,7 +267,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Initialize a slice to hold all comments
-		var topLevelComments []PostCommentResponse
+		topLevelComments := make([]PostCommentResponse, 0, sizeInt)
 
 		// Add all top-level comments (those without parent comments) to the slice
 		for _, comment := range postComments {
@@ -221,63 +276,35 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 				}
 				// Top-level comment, add to slice
 				topLevelComments = append(topLevelComments, PostCommentResponse{
-					CommentId:       comment.PostCommentID,
-					Content:         comment.Content.String,
-					IsRecomment:     comment.IsRecomment.Bool,
-					ParentCommentId: comment.ParentPostCommentID.Int64,
-					PostId:          comment.PostID,
-					MemberId:        comment.MemberID,
-					Nickname:        comment.R.Member.Nickname.String,
-					CreatedAt:       comment.CreatedAt.Time,
-					Likes:           comment.Likes,
-					IsLiked:         likedCommentMap[comment.PostCommentID],
-					PostRecomments:  []PostCommentResponse{},
+					PostCommentId:       comment.PostCommentID,
+					Content:             comment.Content.String,
+					IsRecomment:         comment.IsRecomment.Bool,
+					ParentPostCommentId: comment.ParentPostCommentID.Int64,
+					PostId:              comment.PostID,
+					MemberId:            comment.MemberID,
+					Nickname:            comment.NickName.String,
+					CreatedAt:           comment.CreatedAt.Time,
+					Likes:               comment.Likes,
+					IsLiked:             likedCommentMap[comment.PostCommentID],
+					PostRecommentCount:  comment.ReplyCount,
 				})
 			}
 		}
 
-		// Add reComments to their respective parent comments in the slice
-		for _, comment := range postComments {
-			if comment.IsRecomment.Bool {
-				// Find the parent comment in the topLevelComments slice and append the recomment
-				for i := range topLevelComments {
-					if topLevelComments[i].CommentId == comment.ParentPostCommentID.Int64 {
-						reComment := PostCommentResponse{
-							CommentId:       comment.PostCommentID,
-							Content:         comment.Content.String,
-							IsRecomment:     comment.IsRecomment.Bool,
-							ParentCommentId: comment.ParentPostCommentID.Int64,
-							MemberId:        comment.MemberID,
-							Nickname:        comment.R.Member.Nickname.String,
-							CreatedAt:       comment.CreatedAt.Time,
-							PostId:          comment.PostID,
-							Likes:           comment.Likes,
-							IsLiked:         likedCommentMap[comment.PostCommentID],
-							PostRecomments:  []PostCommentResponse{},
-						}
-						topLevelComments[i].PostRecomments = append(topLevelComments[i].PostRecomments, reComment)
-						break
-					}
-				}
-			}
-		}
-
-		// Sort reComments by CreatedAt within each top-level comment
-		for i := range topLevelComments {
-			sort.Slice(topLevelComments[i].PostRecomments, func(j, k int) bool {
-				return topLevelComments[i].PostRecomments[j].CreatedAt.Before(topLevelComments[i].PostRecomments[k].CreatedAt)
-			})
+		// 다음 페이지를 위한 커서 값 설정
+		var lastCursor int64 = 0
+		if len(topLevelComments) > 0 {
+			lastCursor = topLevelComments[len(topLevelComments)-1].PostCommentId
 		}
 
 		// Return comments as part of the response
-		pkg.BaseResponse(c, http.StatusOK, "success", GetPostCommentResponse{TotalPostCommentCount: int(totalCommentsCount), PostComments: topLevelComments, NextPage: pageInt + 1})
+		pkg.BaseResponse(c, http.StatusOK, "success", GetPostCommentResponse{TotalPostCommentCount: int(totalCommentsCount), PostComments: topLevelComments, LastCursor: lastCursor})
 	}
 }
 
 type GetPostReCommentResponse struct {
-	TotalPostReCommentCount int                   `json:"totalPostReCommentCount"`
-	PostReComments          []PostCommentResponse `json:"postReComments"`
-	NextPage                int                   `json:"nextPage"`
+	PostReComments []PostCommentResponse `json:"postReComments"`
+	LastCursor     int64                 `json:"lastCursor"`
 }
 
 // GetReCommentOnPost 댓글에 대한 대댓글 정보 보기
@@ -287,7 +314,7 @@ type GetPostReCommentResponse struct {
 // @Accept       json
 // @Produce      json
 // @Param        postCommentId path string true "postCommentId"
-// @Param        page query int false "현재 조회할 게시글 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
+// @Param        cursor query int false "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
 // @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=GetPostReCommentResponse} "Success"
 // @Router       /v1/posts/comments/{postCommentId}/recomments [get]
@@ -310,15 +337,12 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		pageStr := c.DefaultQuery("page", defaultPage)
-		pageInt, err := strconv.Atoi(pageStr)
-		if err != nil || pageInt < 0 {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+		cursorStr := c.DefaultQuery("cursor", "0") //int64 최소값
+		cursorInt, err := strconv.Atoi(cursorStr)
+		if err != nil || cursorInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
 		}
-
-		// OFFSET 계산
-		offset := (pageInt - 1) * sizeInt
 
 		blockerId, exists := c.Get("memberId")
 		if !exists {
@@ -343,9 +367,9 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			qm.Load(mysql.CommentRels.Member),
 			qm.LeftOuterJoin("member on member.member_id = post_comment.member_id"),
 			qm.Where("post_comment.parent_post_comment_id = ? and post_comment.deleted_at is null", postCommentId),
+			qm.Where("post_comment.post_comment_id > ?", cursorInt),
 			qm.WhereNotIn("post_comment.member_id not IN ?", blockedMemberIds...), // 블랙리스트 제외
 			qm.Limit(sizeInt),
-			qm.Offset(offset),
 			qm.OrderBy("post_comment.created_at ASC"),
 		).All(c.Request.Context(), db)
 		if err != nil {
@@ -354,36 +378,59 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		}
 
 		if len(reComments) == 0 {
-			pkg.BaseResponse(c, http.StatusOK, "success", GetPostReCommentResponse{TotalPostReCommentCount: 0, PostReComments: []PostCommentResponse{}, NextPage: pageInt})
+			pkg.BaseResponse(c, http.StatusOK, "success", GetPostReCommentResponse{PostReComments: []PostCommentResponse{}, LastCursor: 0})
 			return
+		}
+
+		// comment_id들만 추출
+		postCommentIDs := make([]interface{}, len(reComments))
+		for i, postComment := range reComments {
+			postCommentIDs[i] = postComment.PostCommentID
+		}
+
+		// 해당 song_id와 member_id에 대한 모든 좋아요를 가져오기
+		likes, err := mysql.PostCommentLikes(
+			qm.WhereIn("post_comment_id IN ?", postCommentIDs...),
+			qm.And("member_id = ?", blockerId),
+		).All(c.Request.Context(), db)
+
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		// 좋아요를 누른 comment_id를 맵으로 저장 (빠른 조회를 위해)
+		likedCommentMap := make(map[int64]bool)
+		for _, like := range likes {
+			likedCommentMap[like.PostCommentID] = true
 		}
 
 		// Prepare the final data list directly in the order retrieved
 		data := make([]PostCommentResponse, 0, len(reComments))
 		for _, recomment := range reComments {
 			data = append(data, PostCommentResponse{
-				CommentId:       recomment.PostCommentID,
-				Content:         recomment.Content.String,
-				IsRecomment:     recomment.IsRecomment.Bool,
-				ParentCommentId: recomment.ParentPostCommentID.Int64,
-				PostId:          recomment.PostID,
-				MemberId:        recomment.MemberID,
-				Nickname:        recomment.R.Member.Nickname.String,
-				Likes:           recomment.Likes,
-				CreatedAt:       recomment.CreatedAt.Time,
+				PostCommentId:       recomment.PostCommentID,
+				Content:             recomment.Content.String,
+				IsRecomment:         recomment.IsRecomment.Bool,
+				ParentPostCommentId: recomment.ParentPostCommentID.Int64,
+				PostId:              recomment.PostID,
+				MemberId:            recomment.MemberID,
+				Nickname:            recomment.R.Member.Nickname.String,
+				Likes:               recomment.Likes,
+				IsLiked:             likedCommentMap[recomment.PostCommentID],
+				CreatedAt:           recomment.CreatedAt.Time,
 			})
 		}
 
-		// 전체 댓글 수를 가져오는 쿼리
-		totalReCommentsCount, err := mysql.PostComments(
-			qm.Where("post_comment.parent_comment_id = ? AND post_comment.is_recomment = true AND post_comment.deleted_at IS NULL", postCommentId),
-			qm.WhereNotIn("post_comment.member_id NOT IN ?", blockedMemberIds...), // 블랙리스트 제외
-		).Count(c.Request.Context(), db)
+		// 다음 페이지를 위한 커서 값 설정
+		var lastCursor int64 = 0
+		if len(data) > 0 {
+			lastCursor = data[len(data)-1].PostCommentId
+		}
 
 		postRecommendResponse := GetPostReCommentResponse{
-			TotalPostReCommentCount: int(totalReCommentsCount),
-			PostReComments:          data,
-			NextPage:                pageInt + 1,
+			PostReComments: data,
+			LastCursor:     lastCursor,
 		}
 
 		// Return the response with the data list
