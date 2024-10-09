@@ -38,7 +38,7 @@ type newSongInfoResponse struct {
 // @Accept       json
 // @Produce      json
 // @Param        cursor query int false "마지막에 조회했던 커서의 songId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신곡부터 조회"
-// @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
+// @Param        size query int false "한번에 가져욜 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=newSongInfoResponse} "성공"
 // @Failure      400 "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
 // @Failure      500 "서버 에러일 경우 500 실패"
@@ -78,6 +78,11 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		songInfoInterface := make([]interface{}, len(songInfos))
+		for i, v := range songInfos {
+			songInfoInterface[i] = v.SongInfoID
+		}
+
 		// Keep 여부 가져오기
 		keepLists, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c.Request.Context(), db)
 		if err != nil {
@@ -87,11 +92,6 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 		keepListInterface := make([]interface{}, len(keepLists))
 		for i, v := range keepLists {
 			keepListInterface[i] = v.KeepListID
-		}
-		// []int64를 []interface{}로 변환
-		songInfoInterface := make([]interface{}, len(songInfos))
-		for i, v := range songInfos {
-			songInfoInterface[i] = v.SongInfoID
 		}
 		keepSongs, err := mysql.KeepSongs(
 			qm.WhereIn("keep_list_id = ?", keepListInterface...),
@@ -105,23 +105,44 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 			keepMap[keepSong.SongInfoID] = true
 		}
 
+		// Comments 수 가져오기
+		commentsCounts, err := mysql.Comments(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error comments - "+err.Error(), nil)
+			return
+		}
+		// Keep 수 가져오기
+		keepCounts, err := mysql.KeepSongs(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error keepsongs- "+err.Error(), nil)
+			return
+		}
+
+		commentCountMap := make(map[int64]int)
+		keepCountMap := make(map[int64]int)
+		for _, comment := range commentsCounts {
+			commentCountMap[comment.SongInfoID]++
+		}
+
+		for _, keep := range keepCounts {
+			keepCountMap[keep.SongInfoID]++
+		}
+
 		newSongs := make([]newSongInfo, 0, sizeInt)
 		sevenDaysAgo := time.Now().AddDate(0, 0, -7)
 
 		for _, song := range songInfos {
-			isKeep := keepMap[song.SongInfoID]
-
 			newSongs = append(newSongs, newSongInfo{
 				SongNumber:        song.SongNumber,
 				SongName:          song.SongName,
 				SingerName:        song.ArtistName,
 				Album:             song.Album.String,
-				IsKeep:            isKeep,
+				IsKeep:            keepMap[song.SongInfoID],
 				SongInfoId:        song.SongInfoID,
 				IsMr:              song.IsMR.Bool,
 				IsLive:            song.IsLive.Bool,
-				KeepCount:         0, //todo
-				CommentCount:      0, //todo
+				KeepCount:         keepCountMap[song.SongInfoID],
+				CommentCount:      commentCountMap[song.SongInfoID],
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
 				IsRecentlyUpdated: song.CreatedAt.Time.After(sevenDaysAgo), //song.CreatedAt이 7일 이내인지
 			})
