@@ -85,6 +85,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		songs.DELETE("/:songId/reviews", middleware.AuthMiddleware(db), handler.DeleteSongReview(db))
 		songs.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSong(db, idxConnection))
 		songs.GET("/:songId/link", handler.GetLinkBySongInfoId(db))
+		songs.GET("/new", middleware.AuthMiddleware(db), handler.ListNewSongs(db))
 	}
 
 	songsV2 := r.Group("/api/v2/songs")
