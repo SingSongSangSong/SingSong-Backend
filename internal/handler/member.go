@@ -47,7 +47,7 @@ func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 
 		// JSON response
 		memberResponse := MemberResponse{
-			Email:     member.Email.String,
+			Email:     member.Email,
 			Nickname:  member.Nickname.String,
 			Birthyear: member.Birthyear.Int,
 			Gender:    member.Gender.String,
@@ -98,7 +98,7 @@ func UpdateNickname(db *sql.DB) gin.HandlerFunc {
 
 		// JSON response
 		memberResponse := MemberResponse{
-			Email:     member.Email.String,
+			Email:     member.Email,
 			Nickname:  member.Nickname.String,
 			Birthyear: member.Birthyear.Int,
 			Gender:    member.Gender.String,

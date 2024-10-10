@@ -898,7 +898,7 @@ func (o *PostSong) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			postSongAllColumns,
 			postSongColumnsWithDefault,
 			postSongColumnsWithoutDefault,
@@ -914,7 +914,8 @@ func (o *PostSong) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 			return errors.New("mysql: unable to upsert post_song, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(postSongAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`post_song`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `post_song` WHERE %s",

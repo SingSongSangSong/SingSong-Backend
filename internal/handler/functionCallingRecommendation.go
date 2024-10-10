@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/grpc"
 	"log"
@@ -80,6 +81,14 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 			MemberId: memberIdInt,
 			Command:  llmRequest.UserInput,
 		}
+
+		go func() {
+			llmSearch := mysql.LLMSearchLog{MemberID: memberIdInt, SearchText: llmRequest.UserInput}
+			err = llmSearch.Insert(c.Request.Context(), db, boil.Infer())
+			if err != nil {
+				log.Printf("Error inserting LLM Search Log: %v", err)
+			}
+		}()
 
 		// gRPC 요청 보내기
 		response, err := client.GetFunctionCallingRecommendation(context.Background(), rpcRequest)

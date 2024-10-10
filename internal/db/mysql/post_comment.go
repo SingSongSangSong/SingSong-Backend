@@ -115,18 +115,15 @@ var PostCommentWhere = struct {
 
 // PostCommentRels is where relationship names are stored.
 var PostCommentRels = struct {
-	Member           string
 	Post             string
 	PostCommentSongs string
 }{
-	Member:           "Member",
 	Post:             "Post",
 	PostCommentSongs: "PostCommentSongs",
 }
 
 // postCommentR is where relationships are stored.
 type postCommentR struct {
-	Member           *Member              `boil:"Member" json:"Member" toml:"Member" yaml:"Member"`
 	Post             *Post                `boil:"Post" json:"Post" toml:"Post" yaml:"Post"`
 	PostCommentSongs PostCommentSongSlice `boil:"PostCommentSongs" json:"PostCommentSongs" toml:"PostCommentSongs" yaml:"PostCommentSongs"`
 }
@@ -134,13 +131,6 @@ type postCommentR struct {
 // NewStruct creates a new relationship struct
 func (*postCommentR) NewStruct() *postCommentR {
 	return &postCommentR{}
-}
-
-func (r *postCommentR) GetMember() *Member {
-	if r == nil {
-		return nil
-	}
-	return r.Member
 }
 
 func (r *postCommentR) GetPost() *Post {
@@ -446,17 +436,6 @@ func (q postCommentQuery) Exists(ctx context.Context, exec boil.ContextExecutor)
 	return count > 0, nil
 }
 
-// Member pointed to by the foreign key.
-func (o *PostComment) Member(mods ...qm.QueryMod) memberQuery {
-	queryMods := []qm.QueryMod{
-		qm.Where("`member_id` = ?", o.MemberID),
-	}
-
-	queryMods = append(queryMods, mods...)
-
-	return Members(queryMods...)
-}
-
 // Post pointed to by the foreign key.
 func (o *PostComment) Post(mods ...qm.QueryMod) postQuery {
 	queryMods := []qm.QueryMod{
@@ -480,126 +459,6 @@ func (o *PostComment) PostCommentSongs(mods ...qm.QueryMod) postCommentSongQuery
 	)
 
 	return PostCommentSongs(queryMods...)
-}
-
-// LoadMember allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for an N-1 relationship.
-func (postCommentL) LoadMember(ctx context.Context, e boil.ContextExecutor, singular bool, maybePostComment interface{}, mods queries.Applicator) error {
-	var slice []*PostComment
-	var object *PostComment
-
-	if singular {
-		var ok bool
-		object, ok = maybePostComment.(*PostComment)
-		if !ok {
-			object = new(PostComment)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybePostComment)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybePostComment))
-			}
-		}
-	} else {
-		s, ok := maybePostComment.(*[]*PostComment)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybePostComment)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybePostComment))
-			}
-		}
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &postCommentR{}
-		}
-		args = append(args, object.MemberID)
-
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &postCommentR{}
-			}
-
-			for _, a := range args {
-				if a == obj.MemberID {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.MemberID)
-
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`member`),
-		qm.WhereIn(`member.member_id in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load Member")
-	}
-
-	var resultSlice []*Member
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice Member")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for member")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for member")
-	}
-
-	if len(memberAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-
-	if len(resultSlice) == 0 {
-		return nil
-	}
-
-	if singular {
-		foreign := resultSlice[0]
-		object.R.Member = foreign
-		if foreign.R == nil {
-			foreign.R = &memberR{}
-		}
-		foreign.R.PostComments = append(foreign.R.PostComments, object)
-		return nil
-	}
-
-	for _, local := range slice {
-		for _, foreign := range resultSlice {
-			if local.MemberID == foreign.MemberID {
-				local.R.Member = foreign
-				if foreign.R == nil {
-					foreign.R = &memberR{}
-				}
-				foreign.R.PostComments = append(foreign.R.PostComments, local)
-				break
-			}
-		}
-	}
-
-	return nil
 }
 
 // LoadPost allows an eager lookup of values, cached into the
@@ -831,53 +690,6 @@ func (postCommentL) LoadPostCommentSongs(ctx context.Context, e boil.ContextExec
 				break
 			}
 		}
-	}
-
-	return nil
-}
-
-// SetMember of the postComment to the related item.
-// Sets o.R.Member to related.
-// Adds o to related.R.PostComments.
-func (o *PostComment) SetMember(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Member) error {
-	var err error
-	if insert {
-		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
-			return errors.Wrap(err, "failed to insert into foreign table")
-		}
-	}
-
-	updateQuery := fmt.Sprintf(
-		"UPDATE `post_comment` SET %s WHERE %s",
-		strmangle.SetParamNames("`", "`", 0, []string{"member_id"}),
-		strmangle.WhereClause("`", "`", 0, postCommentPrimaryKeyColumns),
-	)
-	values := []interface{}{related.MemberID, o.PostCommentID}
-
-	if boil.IsDebug(ctx) {
-		writer := boil.DebugWriterFrom(ctx)
-		fmt.Fprintln(writer, updateQuery)
-		fmt.Fprintln(writer, values)
-	}
-	if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-		return errors.Wrap(err, "failed to update local table")
-	}
-
-	o.MemberID = related.MemberID
-	if o.R == nil {
-		o.R = &postCommentR{
-			Member: related,
-		}
-	} else {
-		o.R.Member = related
-	}
-
-	if related.R == nil {
-		related.R = &memberR{
-			PostComments: PostCommentSlice{o},
-		}
-	} else {
-		related.R.PostComments = append(related.R.PostComments, o)
 	}
 
 	return nil
@@ -1305,7 +1117,7 @@ func (o *PostComment) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			postCommentAllColumns,
 			postCommentColumnsWithDefault,
 			postCommentColumnsWithoutDefault,
@@ -1321,7 +1133,8 @@ func (o *PostComment) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 			return errors.New("mysql: unable to upsert post_comment, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(postCommentAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`post_comment`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `post_comment` WHERE %s",

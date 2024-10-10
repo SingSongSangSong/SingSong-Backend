@@ -26,7 +26,7 @@ import (
 type Member struct {
 	MemberID    int64       `boil:"member_id" json:"member_id" toml:"member_id" yaml:"member_id"`
 	Nickname    null.String `boil:"nickname" json:"nickname,omitempty" toml:"nickname" yaml:"nickname,omitempty"`
-	Email       null.String `boil:"email" json:"email,omitempty" toml:"email" yaml:"email,omitempty"`
+	Email       string      `boil:"email" json:"email" toml:"email" yaml:"email"`
 	Gender      null.String `boil:"gender" json:"gender,omitempty" toml:"gender" yaml:"gender,omitempty"`
 	Birthyear   null.Int    `boil:"birthyear" json:"birthyear,omitempty" toml:"birthyear" yaml:"birthyear,omitempty"`
 	Provider    string      `boil:"provider" json:"provider" toml:"provider" yaml:"provider"`
@@ -92,7 +92,7 @@ var MemberTableColumns = struct {
 var MemberWhere = struct {
 	MemberID    whereHelperint64
 	Nickname    whereHelpernull_String
-	Email       whereHelpernull_String
+	Email       whereHelperstring
 	Gender      whereHelpernull_String
 	Birthyear   whereHelpernull_Int
 	Provider    whereHelperstring
@@ -103,7 +103,7 @@ var MemberWhere = struct {
 }{
 	MemberID:    whereHelperint64{field: "`member`.`member_id`"},
 	Nickname:    whereHelpernull_String{field: "`member`.`nickname`"},
-	Email:       whereHelpernull_String{field: "`member`.`email`"},
+	Email:       whereHelperstring{field: "`member`.`email`"},
 	Gender:      whereHelpernull_String{field: "`member`.`gender`"},
 	Birthyear:   whereHelpernull_Int{field: "`member`.`birthyear`"},
 	Provider:    whereHelperstring{field: "`member`.`provider`"},
@@ -115,20 +115,17 @@ var MemberWhere = struct {
 
 // MemberRels is where relationship names are stored.
 var MemberRels = struct {
-	Comments     string
-	Posts        string
-	PostComments string
+	Comments      string
+	LLMSearchLogs string
 }{
-	Comments:     "Comments",
-	Posts:        "Posts",
-	PostComments: "PostComments",
+	Comments:      "Comments",
+	LLMSearchLogs: "LLMSearchLogs",
 }
 
 // memberR is where relationships are stored.
 type memberR struct {
-	Comments     CommentSlice     `boil:"Comments" json:"Comments" toml:"Comments" yaml:"Comments"`
-	Posts        PostSlice        `boil:"Posts" json:"Posts" toml:"Posts" yaml:"Posts"`
-	PostComments PostCommentSlice `boil:"PostComments" json:"PostComments" toml:"PostComments" yaml:"PostComments"`
+	Comments      CommentSlice      `boil:"Comments" json:"Comments" toml:"Comments" yaml:"Comments"`
+	LLMSearchLogs LLMSearchLogSlice `boil:"LLMSearchLogs" json:"LLMSearchLogs" toml:"LLMSearchLogs" yaml:"LLMSearchLogs"`
 }
 
 // NewStruct creates a new relationship struct
@@ -143,18 +140,11 @@ func (r *memberR) GetComments() CommentSlice {
 	return r.Comments
 }
 
-func (r *memberR) GetPosts() PostSlice {
+func (r *memberR) GetLLMSearchLogs() LLMSearchLogSlice {
 	if r == nil {
 		return nil
 	}
-	return r.Posts
-}
-
-func (r *memberR) GetPostComments() PostCommentSlice {
-	if r == nil {
-		return nil
-	}
-	return r.PostComments
+	return r.LLMSearchLogs
 }
 
 // memberL is where Load methods for each relationship are stored.
@@ -165,7 +155,7 @@ var (
 	memberColumnsWithoutDefault = []string{"nickname", "email", "gender", "birthyear", "provider", "deleted_at"}
 	memberColumnsWithDefault    = []string{"member_id", "created_at", "updated_at", "not_archived"}
 	memberPrimaryKeyColumns     = []string{"member_id"}
-	memberGeneratedColumns      = []string{"not_archived"}
+	memberGeneratedColumns      = []string{}
 )
 
 type (
@@ -460,32 +450,18 @@ func (o *Member) Comments(mods ...qm.QueryMod) commentQuery {
 	return Comments(queryMods...)
 }
 
-// Posts retrieves all the post's Posts with an executor.
-func (o *Member) Posts(mods ...qm.QueryMod) postQuery {
+// LLMSearchLogs retrieves all the llm_search_log's LLMSearchLogs with an executor.
+func (o *Member) LLMSearchLogs(mods ...qm.QueryMod) llmSearchLogQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("`post`.`member_id`=?", o.MemberID),
+		qm.Where("`llm_search_log`.`member_id`=?", o.MemberID),
 	)
 
-	return Posts(queryMods...)
-}
-
-// PostComments retrieves all the post_comment's PostComments with an executor.
-func (o *Member) PostComments(mods ...qm.QueryMod) postCommentQuery {
-	var queryMods []qm.QueryMod
-	if len(mods) != 0 {
-		queryMods = append(queryMods, mods...)
-	}
-
-	queryMods = append(queryMods,
-		qm.Where("`post_comment`.`member_id`=?", o.MemberID),
-	)
-
-	return PostComments(queryMods...)
+	return LLMSearchLogs(queryMods...)
 }
 
 // LoadComments allows an eager lookup of values, cached into the
@@ -602,9 +578,9 @@ func (memberL) LoadComments(ctx context.Context, e boil.ContextExecutor, singula
 	return nil
 }
 
-// LoadPosts allows an eager lookup of values, cached into the
+// LoadLLMSearchLogs allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (memberL) LoadPosts(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMember interface{}, mods queries.Applicator) error {
+func (memberL) LoadLLMSearchLogs(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMember interface{}, mods queries.Applicator) error {
 	var slice []*Member
 	var object *Member
 
@@ -658,8 +634,8 @@ func (memberL) LoadPosts(ctx context.Context, e boil.ContextExecutor, singular b
 	}
 
 	query := NewQuery(
-		qm.From(`post`),
-		qm.WhereIn(`post.member_id in ?`, args...),
+		qm.From(`llm_search_log`),
+		qm.WhereIn(`llm_search_log.member_id in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -667,22 +643,22 @@ func (memberL) LoadPosts(ctx context.Context, e boil.ContextExecutor, singular b
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load post")
+		return errors.Wrap(err, "failed to eager load llm_search_log")
 	}
 
-	var resultSlice []*Post
+	var resultSlice []*LLMSearchLog
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice post")
+		return errors.Wrap(err, "failed to bind eager loaded slice llm_search_log")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on post")
+		return errors.Wrap(err, "failed to close results in eager load on llm_search_log")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for post")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for llm_search_log")
 	}
 
-	if len(postAfterSelectHooks) != 0 {
+	if len(llmSearchLogAfterSelectHooks) != 0 {
 		for _, obj := range resultSlice {
 			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
 				return err
@@ -690,10 +666,10 @@ func (memberL) LoadPosts(ctx context.Context, e boil.ContextExecutor, singular b
 		}
 	}
 	if singular {
-		object.R.Posts = resultSlice
+		object.R.LLMSearchLogs = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
-				foreign.R = &postR{}
+				foreign.R = &llmSearchLogR{}
 			}
 			foreign.R.Member = object
 		}
@@ -703,123 +679,9 @@ func (memberL) LoadPosts(ctx context.Context, e boil.ContextExecutor, singular b
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
 			if local.MemberID == foreign.MemberID {
-				local.R.Posts = append(local.R.Posts, foreign)
+				local.R.LLMSearchLogs = append(local.R.LLMSearchLogs, foreign)
 				if foreign.R == nil {
-					foreign.R = &postR{}
-				}
-				foreign.R.Member = local
-				break
-			}
-		}
-	}
-
-	return nil
-}
-
-// LoadPostComments allows an eager lookup of values, cached into the
-// loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (memberL) LoadPostComments(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMember interface{}, mods queries.Applicator) error {
-	var slice []*Member
-	var object *Member
-
-	if singular {
-		var ok bool
-		object, ok = maybeMember.(*Member)
-		if !ok {
-			object = new(Member)
-			ok = queries.SetFromEmbeddedStruct(&object, &maybeMember)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeMember))
-			}
-		}
-	} else {
-		s, ok := maybeMember.(*[]*Member)
-		if ok {
-			slice = *s
-		} else {
-			ok = queries.SetFromEmbeddedStruct(&slice, maybeMember)
-			if !ok {
-				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeMember))
-			}
-		}
-	}
-
-	args := make([]interface{}, 0, 1)
-	if singular {
-		if object.R == nil {
-			object.R = &memberR{}
-		}
-		args = append(args, object.MemberID)
-	} else {
-	Outer:
-		for _, obj := range slice {
-			if obj.R == nil {
-				obj.R = &memberR{}
-			}
-
-			for _, a := range args {
-				if a == obj.MemberID {
-					continue Outer
-				}
-			}
-
-			args = append(args, obj.MemberID)
-		}
-	}
-
-	if len(args) == 0 {
-		return nil
-	}
-
-	query := NewQuery(
-		qm.From(`post_comment`),
-		qm.WhereIn(`post_comment.member_id in ?`, args...),
-	)
-	if mods != nil {
-		mods.Apply(query)
-	}
-
-	results, err := query.QueryContext(ctx, e)
-	if err != nil {
-		return errors.Wrap(err, "failed to eager load post_comment")
-	}
-
-	var resultSlice []*PostComment
-	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice post_comment")
-	}
-
-	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results in eager load on post_comment")
-	}
-	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for post_comment")
-	}
-
-	if len(postCommentAfterSelectHooks) != 0 {
-		for _, obj := range resultSlice {
-			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
-				return err
-			}
-		}
-	}
-	if singular {
-		object.R.PostComments = resultSlice
-		for _, foreign := range resultSlice {
-			if foreign.R == nil {
-				foreign.R = &postCommentR{}
-			}
-			foreign.R.Member = object
-		}
-		return nil
-	}
-
-	for _, foreign := range resultSlice {
-		for _, local := range slice {
-			if local.MemberID == foreign.MemberID {
-				local.R.PostComments = append(local.R.PostComments, foreign)
-				if foreign.R == nil {
-					foreign.R = &postCommentR{}
+					foreign.R = &llmSearchLogR{}
 				}
 				foreign.R.Member = local
 				break
@@ -883,11 +745,11 @@ func (o *Member) AddComments(ctx context.Context, exec boil.ContextExecutor, ins
 	return nil
 }
 
-// AddPosts adds the given related objects to the existing relationships
+// AddLLMSearchLogs adds the given related objects to the existing relationships
 // of the member, optionally inserting them as new records.
-// Appends related to o.R.Posts.
+// Appends related to o.R.LLMSearchLogs.
 // Sets related.R.Member appropriately.
-func (o *Member) AddPosts(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Post) error {
+func (o *Member) AddLLMSearchLogs(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*LLMSearchLog) error {
 	var err error
 	for _, rel := range related {
 		if insert {
@@ -897,11 +759,11 @@ func (o *Member) AddPosts(ctx context.Context, exec boil.ContextExecutor, insert
 			}
 		} else {
 			updateQuery := fmt.Sprintf(
-				"UPDATE `post` SET %s WHERE %s",
+				"UPDATE `llm_search_log` SET %s WHERE %s",
 				strmangle.SetParamNames("`", "`", 0, []string{"member_id"}),
-				strmangle.WhereClause("`", "`", 0, postPrimaryKeyColumns),
+				strmangle.WhereClause("`", "`", 0, llmSearchLogPrimaryKeyColumns),
 			)
-			values := []interface{}{o.MemberID, rel.PostID}
+			values := []interface{}{o.MemberID, rel.LLMSearchLogID}
 
 			if boil.IsDebug(ctx) {
 				writer := boil.DebugWriterFrom(ctx)
@@ -918,68 +780,15 @@ func (o *Member) AddPosts(ctx context.Context, exec boil.ContextExecutor, insert
 
 	if o.R == nil {
 		o.R = &memberR{
-			Posts: related,
+			LLMSearchLogs: related,
 		}
 	} else {
-		o.R.Posts = append(o.R.Posts, related...)
+		o.R.LLMSearchLogs = append(o.R.LLMSearchLogs, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
-			rel.R = &postR{
-				Member: o,
-			}
-		} else {
-			rel.R.Member = o
-		}
-	}
-	return nil
-}
-
-// AddPostComments adds the given related objects to the existing relationships
-// of the member, optionally inserting them as new records.
-// Appends related to o.R.PostComments.
-// Sets related.R.Member appropriately.
-func (o *Member) AddPostComments(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*PostComment) error {
-	var err error
-	for _, rel := range related {
-		if insert {
-			rel.MemberID = o.MemberID
-			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
-				return errors.Wrap(err, "failed to insert into foreign table")
-			}
-		} else {
-			updateQuery := fmt.Sprintf(
-				"UPDATE `post_comment` SET %s WHERE %s",
-				strmangle.SetParamNames("`", "`", 0, []string{"member_id"}),
-				strmangle.WhereClause("`", "`", 0, postCommentPrimaryKeyColumns),
-			)
-			values := []interface{}{o.MemberID, rel.PostCommentID}
-
-			if boil.IsDebug(ctx) {
-				writer := boil.DebugWriterFrom(ctx)
-				fmt.Fprintln(writer, updateQuery)
-				fmt.Fprintln(writer, values)
-			}
-			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
-				return errors.Wrap(err, "failed to update foreign table")
-			}
-
-			rel.MemberID = o.MemberID
-		}
-	}
-
-	if o.R == nil {
-		o.R = &memberR{
-			PostComments: related,
-		}
-	} else {
-		o.R.PostComments = append(o.R.PostComments, related...)
-	}
-
-	for _, rel := range related {
-		if rel.R == nil {
-			rel.R = &postCommentR{
+			rel.R = &llmSearchLogR{
 				Member: o,
 			}
 		} else {
@@ -1057,7 +866,6 @@ func (o *Member) Insert(ctx context.Context, exec boil.ContextExecutor, columns 
 			memberColumnsWithoutDefault,
 			nzDefaults,
 		)
-		wl = strmangle.SetComplement(wl, memberGeneratedColumns)
 
 		cache.valueMapping, err = queries.BindMapping(memberType, memberMapping, wl)
 		if err != nil {
@@ -1155,8 +963,6 @@ func (o *Member) Update(ctx context.Context, exec boil.ContextExecutor, columns 
 			memberAllColumns,
 			memberPrimaryKeyColumns,
 		)
-		wl = strmangle.SetComplement(wl, memberGeneratedColumns)
-
 		if len(wl) == 0 {
 			return 0, errors.New("mysql: unable to update member, could not build whitelist")
 		}
@@ -1314,7 +1120,7 @@ func (o *Member) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			memberAllColumns,
 			memberColumnsWithDefault,
 			memberColumnsWithoutDefault,
@@ -1326,14 +1132,12 @@ func (o *Member) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 			memberPrimaryKeyColumns,
 		)
 
-		insert = strmangle.SetComplement(insert, memberGeneratedColumns)
-		update = strmangle.SetComplement(update, memberGeneratedColumns)
-
 		if !updateColumns.IsNone() && len(update) == 0 {
 			return errors.New("mysql: unable to upsert member, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(memberAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`member`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `member` WHERE %s",
