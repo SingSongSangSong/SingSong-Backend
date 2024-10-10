@@ -3052,6 +3052,12 @@ const docTemplate = `{
                 },
                 "postId": {
                     "type": "integer"
+                },
+                "songIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -3090,6 +3096,12 @@ const docTemplate = `{
                 },
                 "postRecommentsCount": {
                     "type": "integer"
+                },
+                "songOnPostComment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongOnPost"
+                    }
                 }
             }
         },

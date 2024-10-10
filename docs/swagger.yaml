@@ -224,6 +224,10 @@ definitions:
         type: integer
       postId:
         type: integer
+      songIds:
+        items:
+          type: integer
+        type: array
     type: object
   handler.PostCommentResponse:
     properties:
@@ -249,6 +253,10 @@ definitions:
         type: integer
       postRecommentsCount:
         type: integer
+      songOnPostComment:
+        items:
+          $ref: '#/definitions/handler.SongOnPost'
+        type: array
     type: object
   handler.PostDetailsResponse:
     properties:
