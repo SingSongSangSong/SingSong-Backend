@@ -1166,7 +1166,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "description": "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 먼저 작성된 댓글부터 조회",
                         "name": "cursor",
                         "in": "query"
                     },
@@ -1326,7 +1326,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "description": "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 먼저 작성된 댓글부터 조회",
                         "name": "cursor",
                         "in": "query"
                     },
@@ -2174,7 +2174,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "description": "한번에 가져욜 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회",
                         "name": "size",
                         "in": "query"
                     }
@@ -2867,9 +2867,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.PostCommentResponse"
                     }
-                },
-                "totalPostReCommentCount": {
-                    "type": "integer"
                 }
             }
         },
@@ -3046,6 +3043,12 @@ const docTemplate = `{
                 },
                 "postId": {
                     "type": "integer"
+                },
+                "songIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -3084,6 +3087,12 @@ const docTemplate = `{
                 },
                 "postRecommentsCount": {
                     "type": "integer"
+                },
+                "songOnPostComment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongOnPost"
+                    }
                 }
             }
         },
