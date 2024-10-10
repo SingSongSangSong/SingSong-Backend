@@ -2805,11 +2805,20 @@ const docTemplate = `{
                 "album": {
                     "type": "string"
                 },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "isKeep": {
+                    "type": "boolean"
+                },
                 "isLive": {
                     "type": "boolean"
                 },
                 "isMr": {
                     "type": "boolean"
+                },
+                "keepCount": {
+                    "type": "integer"
                 },
                 "melonLink": {
                     "type": "string"

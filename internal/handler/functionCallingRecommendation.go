@@ -6,22 +6,27 @@ import (
 	pb "SingSong-Server/proto/functionCallingRecommend"
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/grpc"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type FunctionCallingDetailResponse struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	SongInfoId int64  `json:"songId"`
-	Album      string `json:"album"`
-	IsMr       bool   `json:"isMr"`
-	IsLive     bool   `json:"isLive"`
-	MelonLink  string `json:"melonLink"`
+	SongNumber   int    `json:"songNumber"`
+	SongName     string `json:"songName"`
+	SingerName   string `json:"singerName"`
+	SongInfoId   int64  `json:"songId"`
+	Album        string `json:"album"`
+	IsMr         bool   `json:"isMr"`
+	IsLive       bool   `json:"isLive"`
+	MelonLink    string `json:"melonLink"`
+	IsKeep       bool   `json:"isKeep"`
+	KeepCount    int    `json:"keepCount"`
+	CommentCount int    `json:"commentCount"`
 }
 
 type FunctionCallingResponse struct {
@@ -110,23 +115,108 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// MelonSongId를 저장하는 맵 생성
+		// Song정보를 저장하는 맵 생성
 		songInfoMap := make(map[int64]*mysql.SongInfo)
 		for _, songInfo := range songInfos {
 			songInfoMap[songInfo.SongInfoID] = songInfo
 		}
 
+		keepList, err := mysql.KeepLists(
+			qm.Where("member_id = ?", memberIdInt),
+		).One(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongs, err := mysql.KeepSongs(
+			qm.Where("keep_list_id = ?", keepList.KeepListID),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongMap := make(map[int64]bool)
+		for _, keepSong := range keepSongs {
+			keepSongMap[keepSong.SongInfoID] = true
+		}
+
+		// songInfoInterface 배열을 "?, ?, ?" 형식으로 변환
+		inClause := strings.TrimSuffix(strings.Repeat("?,", len(songInfoInterface)), ",")
+
+		// 쿼리 작성 (KeepCount)
+		keepCountQuery := fmt.Sprintf(`
+			SELECT keep_song.song_info_id, COUNT(keep_song.keep_song_id) AS song_count
+			FROM keep_song
+			WHERE keep_song.song_info_id IN (%s)
+			AND keep_song.deleted_at IS NULL
+			GROUP BY keep_song.song_info_id
+		`, inClause)
+
+		// 쿼리 실행 (KeepCount)
+		rows, err := db.QueryContext(c.Request.Context(), keepCountQuery, songInfoInterface...)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		defer rows.Close() // 쿼리 종료 후 닫음
+
+		// 결과를 저장할 맵 생성 (KeepCount)
+		keepCountMap := make(map[int64]int)
+		for rows.Next() {
+			var songInfoId int64
+			var songCount int
+			if err := rows.Scan(&songInfoId, &songCount); err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+			keepCountMap[songInfoId] = songCount
+		}
+
+		// commentCount Query 작성
+		commentCountQuery := fmt.Sprintf(`
+			SELECT comment.song_info_id, COUNT(comment_id) AS comment_count
+			FROM comment
+			WHERE comment.song_info_id IN (%s)
+			AND comment.deleted_at IS NULL
+			GROUP BY comment.song_info_id
+		`, inClause)
+
+		// 쿼리 실행 (CommentCount)
+		commentRows, err := db.QueryContext(c.Request.Context(), commentCountQuery, songInfoInterface...)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		defer commentRows.Close() // 쿼리 종료 후 닫음
+
+		// 결과를 저장할 맵 생성 (CommentCount)
+		commentCountMap := make(map[int64]int)
+		for commentRows.Next() {
+			var songInfoId int64
+			var commentCount int
+			if err := commentRows.Scan(&songInfoId, &commentCount); err != nil {
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
+			commentCountMap[songInfoId] = commentCount
+		}
+
 		// Loop through the gRPC response to populate songResponse
 		for _, item := range response.SongInfoId {
 			functionCallingResponse.Songs = append(functionCallingResponse.Songs, FunctionCallingDetailResponse{
-				SongNumber: songInfoMap[item].SongNumber,
-				SongName:   songInfoMap[item].SongName,
-				SingerName: songInfoMap[item].ArtistName,
-				SongInfoId: songInfoMap[item].SongInfoID,
-				Album:      songInfoMap[item].Album.String,
-				IsMr:       songInfoMap[item].IsMR.Bool,
-				IsLive:     songInfoMap[item].IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(songInfoMap[item].MelonSongID),
+				SongNumber:   songInfoMap[item].SongNumber,
+				SongName:     songInfoMap[item].SongName,
+				SingerName:   songInfoMap[item].ArtistName,
+				SongInfoId:   songInfoMap[item].SongInfoID,
+				Album:        songInfoMap[item].Album.String,
+				IsMr:         songInfoMap[item].IsMR.Bool,
+				IsLive:       songInfoMap[item].IsLive.Bool,
+				IsKeep:       keepSongMap[songInfoMap[item].SongInfoID],
+				KeepCount:    keepCountMap[songInfoMap[item].SongInfoID],
+				CommentCount: commentCountMap[songInfoMap[item].SongInfoID],
+				MelonLink:    CreateMelonLinkByMelonSongId(songInfoMap[item].MelonSongID),
 			})
 		}
 
