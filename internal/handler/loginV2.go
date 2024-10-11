@@ -130,7 +130,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 }
 
 type LoginV2ExtraInfoRequest struct {
-	BirthYear int    `json:"birthYear"`
+	BirthYear string `json:"birthYear"`
 	Gender    string `json:"gender"`
 }
 
@@ -141,27 +141,33 @@ type LoginV2ExtraInfoRequest struct {
 // @Accept json
 // @Produce json
 // @Param loginV2 body LoginV2ExtraInfoRequest true "로그인 요청"
-// @Success 200 pkg.BaseResponseStruct{data=nil}  "로그인 성공"
+// @Success 200 {object} pkg.BaseResponseStruct{data=nil}  "로그인 성공"
 // @Router  /v2/member/login/extra [post]
 // @Security BearerAuth
 func LoginV2ExtraInfoRequired(db *sql.DB) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		loginExtraInfoRequest := &LoginV2ExtraInfoRequest{}
 		if err := c.ShouldBindJSON(&loginExtraInfoRequest); err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		birthYearInt, err := strconv.Atoi(loginExtraInfoRequest.BirthYear)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		// soft delete
-		_, err := mysql.Members(
+		_, err = mysql.Members(
 			qm.Where("member_id = ?", memberId), qm.And("deleted_at IS NULL"),
-		).UpdateAll(c.Request.Context(), db, mysql.M{"birthyear": null.IntFrom(loginExtraInfoRequest.BirthYear), "gender": null.StringFrom(loginExtraInfoRequest.Gender)})
+		).UpdateAll(c.Request.Context(), db, mysql.M{"birthyear": null.IntFrom(birthYearInt), "gender": null.StringFrom(loginExtraInfoRequest.Gender)})
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return

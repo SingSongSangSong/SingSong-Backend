@@ -344,3 +344,16 @@ CREATE TABLE llm_search_log (
 ALTER TABLE llm_search_log
     ADD CONSTRAINT fk_llm_search_log_member_id
     FOREIGN KEY (member_id) REFERENCES member(member_id);
+
+CREATE TABALE user_device_token (
+    user_device_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    device_token VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+ALTER TABLE user_device_token
+    ADD CONSTRAINT fk_member_id
+    FOREIGN KEY (member_id) REFERENCES member(member_id)
