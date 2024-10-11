@@ -83,6 +83,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		keep.DELETE("", middleware.AuthMiddleware(db), handler.DeleteSongsFromPlaylist(db))
 	}
 
+	keepV2 := r.Group("/api/v2/keep")
+	{
+		keepV2.GET("", middleware.AuthMiddleware(db), handler.GetSongsFromPlaylistV2(db))
+	}
+
 	// 노래 상세
 	songs := r.Group("/api/v1/songs")
 	{
