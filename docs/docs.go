@@ -3113,7 +3113,7 @@ const docTemplate = `{
                 "lastCursor": {
                     "type": "integer"
                 },
-                "playListResponse": {
+                "songs": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/handler.PlaylistAddResponse"
