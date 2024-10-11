@@ -148,19 +148,19 @@ func LoginV2ExtraInfoRequired(db *sql.DB) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		loginExtraInfoRequest := &LoginV2ExtraInfoRequest{}
 		if err := c.ShouldBindJSON(&loginExtraInfoRequest); err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		birthYearInt, err := strconv.Atoi(loginExtraInfoRequest.BirthYear)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
