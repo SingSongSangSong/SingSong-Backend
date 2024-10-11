@@ -69,6 +69,12 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		member.PATCH("/nickname", middleware.AuthMiddleware(db), handler.UpdateNickname(db))
 	}
 
+	memberV2 := r.Group("/api/v2/member")
+	{
+		memberV2.POST("/login", handler.LoginV2(rdb, db))
+		memberV2.POST("/login/extra", middleware.AuthMiddleware(db), handler.LoginV2ExtraInfoRequired(db))
+	}
+
 	// 태그 엔드포인트 설정
 	keep := r.Group("/api/v1/keep")
 	{

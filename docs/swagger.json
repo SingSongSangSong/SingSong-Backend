@@ -2763,8 +2763,7 @@
                         "type": "string",
                         "description": "필터",
                         "name": "filter",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
@@ -2796,6 +2795,79 @@
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/member/login": {
+            "post": {
+                "description": "로그인 API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "로그인 API",
+                "parameters": [
+                    {
+                        "description": "로그인 요청",
+                        "name": "loginV2",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginV2Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "로그인 성공",
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginV2Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/member/login/extra": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "로그인 성별 및 연령 정보 받는 API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용",
+                "parameters": [
+                    {
+                        "description": "로그인 요청",
+                        "name": "loginV2",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginV2ExtraInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "로그인 성공",
+                        "schema": {
+                            "type": ""
                         }
                     }
                 }
@@ -3124,6 +3196,42 @@
             "properties": {
                 "accessToken": {
                     "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginV2ExtraInfoRequest": {
+            "type": "object",
+            "properties": {
+                "birthYear": {
+                    "type": "integer"
+                },
+                "gender": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginV2Request": {
+            "type": "object",
+            "properties": {
+                "idToken": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginV2Response": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "isInfoRequired": {
+                    "type": "boolean"
                 },
                 "refreshToken": {
                     "type": "string"

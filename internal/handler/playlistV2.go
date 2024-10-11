@@ -4,7 +4,9 @@ import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strconv"
@@ -15,13 +17,24 @@ type GetPlayListV2Response struct {
 	LastCursor       int64                 `json:"lastCursor"`
 }
 
+type KeepSongsWithSongName struct {
+	SongNumber  int         `json:"songNumber"`
+	SongName    string      `json:"songName"`
+	ArtistName  string      `json:"artistName"`
+	SongInfoId  int64       `json:"songInfoId"`
+	Album       null.String `json:"album"`
+	IsMr        null.Bool   `json:"isMr"`
+	IsLive      null.Bool   `json:"isLive"`
+	MelonSongId null.String `json:"melonSongId"`
+}
+
 // GetSongsFromPlaylistV2 godoc
 // @Summary      플레이리스트에 노래를 여러가지 필터로 가져온다 (커서기반 페이징)
 // @Description  플레이리스트에 있는 노래들을 가나다순/최신추가순/오래된순(alphabet/recent/old) 으로 가져온다. 기본값은 recent이다
 // @Tags         Playlist
 // @Accept       json
 // @Produce      json
-// @Param        filter query string true "필터"
+// @Param        filter query string false "필터"
 // @Param        cursor query int false "마지막에 조회했던 커서의 songId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
 // @Param        size query int false "한번에 조회할 노래의 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=GetPlayListV2Response} "성공"
@@ -57,100 +70,97 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		var all mysql.KeepSongSlice
-		var err2 error
+		// 기본 커서 값 및 정렬 기준 설정
+		var orderClause, cursorCondition string
+		var cursorInt int64
+		cursorStr := c.DefaultQuery("cursor", "0") // 기본값으로 0
+		cursorInt, err = strconv.ParseInt(cursorStr, 10, 64)
+		if err != nil || cursorInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
+			return
+		}
 
-		if filter == "alphabet" {
-			cursorStr := c.DefaultQuery("cursor", "0") //int64 최대값
-			cursorInt, err := strconv.Atoi(cursorStr)
-			if err != nil || cursorInt <= 0 {
+		// 필터에 따른 정렬 및 커서 처리
+		switch filter {
+		case "alphabet":
+			orderClause = "ORDER BY song_info.song_name ASC"
+			cursorCondition = "AND song_info.song_info_id > ?"
+		case "recent":
+			cursorStr = c.DefaultQuery("cursor", "9223372036854775807") // int64 최대값
+			cursorInt, err = strconv.ParseInt(cursorStr, 10, 64)
+			if err != nil || cursorInt < 0 {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 				return
 			}
-
-			result := mysql.KeepSongs(
-				qm.Where("keep_list_id = ? AND deleted_at IS NULL AND song_info_id > ?", playlistInfo.KeepListID, cursorInt),
-				qm.OrderBy("song_name ASC"),
-				qm.Limit(sizeInt),
-			)
-			all, err2 = result.All(c.Request.Context(), db)
-			if err2 != nil {
-				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err2.Error(), nil)
-				return
-			}
-		} else if filter == "recent" {
-			cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
-			cursorInt, err := strconv.Atoi(cursorStr)
-			if err != nil || cursorInt <= 0 {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
-				return
-			}
-
-			result := mysql.KeepSongs(
-				qm.Where("keep_list_id = ? AND deleted_at IS NULL AND song_info_id < ?", playlistInfo.KeepListID, cursorInt),
-				qm.OrderBy("created_at DESC"),
-				qm.Limit(sizeInt),
-			)
-			all, err2 = result.All(c.Request.Context(), db)
-			if err2 != nil {
-				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err2.Error(), nil)
-				return
-			}
-		} else if filter == "old" {
-			cursorStr := c.DefaultQuery("cursor", "0") //int64 최대값
-			cursorInt, err := strconv.Atoi(cursorStr)
-			if err != nil || cursorInt <= 0 {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
-				return
-			}
-
-			result := mysql.KeepSongs(
-				qm.Where("keep_list_id = ? AND deleted_at IS NULL AND song_info_id > ?", playlistInfo.KeepListID, cursorInt),
-				qm.OrderBy("created_at ASC"),
-				qm.Limit(sizeInt),
-			)
-			all, err2 = result.All(c.Request.Context(), db)
-			if err2 != nil {
-				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err2.Error(), nil)
-				return
-			}
-		} else {
+			orderClause = "ORDER BY keep_song.created_at DESC"
+			cursorCondition = "AND song_info.song_info_id < ?"
+		case "old":
+			orderClause = "ORDER BY keep_song.created_at ASC"
+			cursorCondition = "AND song_info.song_info_id > ?"
+		default:
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid filter parameter", nil)
 			return
 		}
 
-		// 다음 페이지를 위한 커서 값 설정
-		var lastCursor int64 = 0
-		if len(all) > 0 {
-			lastCursor = all[len(all)-1].SongInfoID
+		// 공통 쿼리 생성
+		query := fmt.Sprintf(`
+			SELECT song_info.song_number, song_info.song_name, song_info.artist_name, song_info.song_info_id, song_info.album, song_info.is_mr, song_info.is_live, song_info.melon_song_id
+			FROM keep_song
+			LEFT JOIN song_info ON keep_song.song_info_id = song_info.song_info_id
+			WHERE keep_song.keep_list_id = ? AND keep_song.deleted_at IS NULL %s %s
+			LIMIT ?
+		`, cursorCondition, orderClause)
+
+		// Query 실행
+		rows, err := db.Query(query, playlistInfo.KeepListID, cursorInt, sizeInt)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
 		}
+		defer rows.Close()
 
-		// PlaylistAddResponseList 초기화
-		playlistAddResponseList := make([]PlaylistAddResponse, 0)
+		// 결과를 담을 구조체 슬라이스 생성
+		keepSongs := make([]PlaylistAddResponse, 0, sizeInt)
 
-		// all을 순회하며 필요한 정보 추출
-		for _, v := range all {
-			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
-			row, err := tempSong.One(c.Request.Context(), db)
+		// 조회 결과를 반복하면서 값을 스캔
+		for rows.Next() {
+			var keepSong KeepSongsWithSongName
+			err := rows.Scan(
+				&keepSong.SongNumber,
+				&keepSong.SongName,
+				&keepSong.ArtistName,
+				&keepSong.SongInfoId,
+				&keepSong.Album,
+				&keepSong.IsMr,
+				&keepSong.IsLive,
+				&keepSong.MelonSongId,
+			)
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{
-				SongName:   row.SongName,
-				SingerName: row.ArtistName,
-				SongNumber: row.SongNumber,
-				SongInfoId: row.SongInfoID,
-				Album:      row.Album.String,
-				IsMr:       row.IsMR.Bool,
-				IsLive:     row.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(row.MelonSongID),
+
+			playlistAddResponse := PlaylistAddResponse{
+				SongNumber: keepSong.SongNumber,
+				SongName:   keepSong.SongName,
+				SingerName: keepSong.ArtistName,
+				SongInfoId: keepSong.SongInfoId,
+				Album:      keepSong.Album.String,
+				IsMr:       keepSong.IsMr.Bool,
+				IsLive:     keepSong.IsLive.Bool,
+				MelonLink:  CreateMelonLinkByMelonSongId(null.StringFrom(keepSong.MelonSongId.String)),
 			}
-			playlistAddResponseList = append(playlistAddResponseList, response)
+			keepSongs = append(keepSongs, playlistAddResponse)
+		}
+
+		// 다음 페이지를 위한 커서 값 설정
+		var lastCursor int64 = 0
+		if len(keepSongs) > 0 {
+			lastCursor = keepSongs[len(keepSongs)-1].SongInfoId
 		}
 
 		getPlayListV2Response := GetPlayListV2Response{
-			PlayListResponse: playlistAddResponseList,
+			PlayListResponse: keepSongs,
 			LastCursor:       lastCursor,
 		}
 

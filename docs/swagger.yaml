@@ -173,6 +173,29 @@ definitions:
       refreshToken:
         type: string
     type: object
+  handler.LoginV2ExtraInfoRequest:
+    properties:
+      birthYear:
+        type: integer
+      gender:
+        type: string
+    type: object
+  handler.LoginV2Request:
+    properties:
+      idToken:
+        type: string
+      provider:
+        type: string
+    type: object
+  handler.LoginV2Response:
+    properties:
+      accessToken:
+        type: string
+      isInfoRequired:
+        type: boolean
+      refreshToken:
+        type: string
+    type: object
   handler.MemberResponse:
     properties:
       birthYear:
@@ -2457,7 +2480,6 @@ paths:
       - description: 필터
         in: query
         name: filter
-        required: true
         type: string
       - description: 마지막에 조회했던 커서의 songId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
           가장 최신 글부터 조회
@@ -2485,6 +2507,52 @@ paths:
       summary: 플레이리스트에 노래를 여러가지 필터로 가져온다 (커서기반 페이징)
       tags:
       - Playlist
+  /v2/member/login:
+    post:
+      consumes:
+      - application/json
+      description: 로그인 API
+      parameters:
+      - description: 로그인 요청
+        in: body
+        name: loginV2
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginV2Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 로그인 성공
+          schema:
+            $ref: '#/definitions/handler.LoginV2Response'
+      summary: 로그인 API
+      tags:
+      - Auth
+  /v2/member/login/extra:
+    post:
+      consumes:
+      - application/json
+      description: 로그인 성별 및 연령 정보 받는 API
+      parameters:
+      - description: 로그인 요청
+        in: body
+        name: loginV2
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginV2ExtraInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 로그인 성공
+          schema:
+            type: ""
+      security:
+      - BearerAuth: []
+      summary: 로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용
+      tags:
+      - Auth
   /v2/songs/{songId}/related:
     get:
       consumes:
