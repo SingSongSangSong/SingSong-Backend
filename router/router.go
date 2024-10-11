@@ -134,6 +134,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		search.GET("/artist-name", handler.SearchSongsByArist(db))
 		search.GET("/song-name", handler.SearchSongsBySongName(db))
 		search.GET("/song-number", handler.SearchSongsBySongNumber(db))
+		search.GET("/posts", handler.SearchPosts(db))
 	}
 
 	post := r.Group("/api/v1/posts")
