@@ -32,7 +32,7 @@ type LoginV2Response struct {
 // @Accept json
 // @Produce json
 // @Param loginV2 body LoginV2Request true "로그인 요청"
-// @Success 200 {object} LoginV2Response "로그인 성공"
+// @Success 200 {object} pkg.BaseResponseStruct{data=LoginV2Response} "로그인 성공"
 // @Router  /v2/member/login [post]
 func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 	return func(c *gin.Context) {
@@ -141,7 +141,7 @@ type LoginV2ExtraInfoRequest struct {
 // @Accept json
 // @Produce json
 // @Param loginV2 body LoginV2ExtraInfoRequest true "로그인 요청"
-// @Success 200 {}  "로그인 성공"
+// @Success 200 pkg.BaseResponseStruct{data=nil}  "로그인 성공"
 // @Router  /v2/member/login/extra [post]
 // @Security BearerAuth
 func LoginV2ExtraInfoRequired(db *sql.DB) func(c *gin.Context) {

@@ -142,8 +142,11 @@ func GetChartV2(rdb *redis.Client) gin.HandlerFunc {
 			if err != nil {
 				log.Printf("Redis GET error for key %s: %v", redisKeyFormat, err)
 
-				for index := range V2ChartKey {
-					wholeCharts = append(wholeCharts, V2ChartOfKey{ChartKey: V2ChartKey[index], Songs: []V2ChartSong{}})
+				for index2 := index; index2 < len(V2ChartKey); index2++ {
+					wholeCharts = append(wholeCharts, V2ChartOfKey{
+						ChartKey: V2ChartKey[index2],
+						Songs:    []V2ChartSong{},
+					})
 				}
 
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot find chart", wholeCharts)
