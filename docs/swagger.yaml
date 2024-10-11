@@ -95,7 +95,7 @@ definitions:
     properties:
       lastCursor:
         type: integer
-      playListResponse:
+      songs:
         items:
           $ref: '#/definitions/handler.PlaylistAddResponse'
         type: array

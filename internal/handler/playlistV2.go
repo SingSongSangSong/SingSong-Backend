@@ -13,7 +13,7 @@ import (
 )
 
 type GetPlayListV2Response struct {
-	PlayListResponse []PlaylistAddResponse `json:"playListResponse"`
+	PlayListResponse []PlaylistAddResponse `json:"songs"`
 	LastCursor       int64                 `json:"lastCursor"`
 }
 
