@@ -573,8 +573,8 @@ func LikePost(db *sql.DB) gin.HandlerFunc {
 // @Param        keyword query string true "검색 키워드"
 // @Param        cursor query int false "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
 // @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
-// @Success      200 {object} pkg.BaseResponseStruct{data=PostDetailsResponse} "성공"
-// @Failure      400 "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
+// @Success      200 {object} pkg.BaseResponseStruct{data=postPageResponse} "성공"
+// @Failure      400 "query param 값이 들어왔는데, 비어있다면 400 실패"
 // @Failure      500 "서버 에러일 경우 500 실패"
 // @Router       /v1/search/posts [get]
 func SearchPosts(db *sql.DB) gin.HandlerFunc {

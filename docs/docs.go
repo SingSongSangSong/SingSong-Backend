@@ -1916,7 +1916,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.PostDetailsResponse"
+                                            "$ref": "#/definitions/handler.postPageResponse"
                                         }
                                     }
                                 }
@@ -1924,7 +1924,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
+                        "description": "query param 값이 들어왔는데, 비어있다면 400 실패"
                     },
                     "500": {
                         "description": "서버 에러일 경우 500 실패"
