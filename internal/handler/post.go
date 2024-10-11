@@ -153,7 +153,7 @@ type PostDetailsResponse struct {
 	IsWriter    bool         `json:"isWriter"`
 	Nickname    string       `json:"nickname"`
 	IsLiked     bool         `json:"isLiked"`
-	CreatedAt   string       `json:"createdAt"`
+	CreatedAt   time.Time    `json:"createdAt"`
 	SongsOnPost []SongOnPost `json:"songs"`
 }
 
@@ -260,7 +260,7 @@ func GetPost(db *sql.DB) gin.HandlerFunc {
 			IsWriter:    one.MemberID == memberId,
 			IsLiked:     isLiked,
 			Nickname:    writer.Nickname.String,
-			CreatedAt:   one.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+			CreatedAt:   one.CreatedAt.Time,
 			SongsOnPost: songsOnPost,
 		}
 
