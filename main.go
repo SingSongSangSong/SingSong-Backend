@@ -27,6 +27,13 @@ import (
 // @in header
 // @name Authorization
 func main() {
+	// 한국 표준시(KST)를 로드하여 전역으로 설정
+	loc, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		log.Fatalf("Failed to load location: %v", err)
+	}
+	time.Local = loc // 서버 전역에서 KST로 처리
+
 	if conf.Env == conf.ProductionMode {
 		currentDate := time.Now().Format("2006-01-02")
 		gitCommit := os.Getenv("GIT_SHA")
