@@ -2337,6 +2337,29 @@ paths:
       summary: 인기차트 조회(Version2)
       tags:
       - Chart
+  /v2/comment/{commentId}:
+    delete:
+      consumes:
+      - application/json
+      description: 해당하는 댓글 삭제하기
+      parameters:
+      - description: Comment ID
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글 삭제하기
+      tags:
+      - Comment
   /v2/songs/{songId}/related:
     get:
       consumes:
