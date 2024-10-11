@@ -113,6 +113,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	commentV2 := r.Group("/api/v2/comment")
 	{
 		commentV2.DELETE("/:commentId", middleware.AuthMiddleware(db), handler.DeleteComment(db))
+		commentV2.GET("/my", middleware.AuthMiddleware(db), handler.GetMyComment(db))
 	}
 
 	blacklist := r.Group("/api/v1/blacklist")
