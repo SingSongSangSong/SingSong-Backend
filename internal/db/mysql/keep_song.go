@@ -739,7 +739,7 @@ func (o *KeepSong) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			keepSongAllColumns,
 			keepSongColumnsWithDefault,
 			keepSongColumnsWithoutDefault,
@@ -755,7 +755,8 @@ func (o *KeepSong) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 			return errors.New("mysql: unable to upsert keep_song, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(keepSongAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`keep_song`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `keep_song` WHERE %s",

@@ -24,26 +24,27 @@ import (
 
 // TempSongInfo is an object representing the database table.
 type TempSongInfo struct {
-	TempSongInfoID int64       `boil:"temp_song_info_id" json:"temp_song_info_id" toml:"temp_song_info_id" yaml:"temp_song_info_id"`
 	SongInfoID     int64       `boil:"song_info_id" json:"song_info_id" toml:"song_info_id" yaml:"song_info_id"`
-	SongNumber     int         `boil:"song_number" json:"song_number" toml:"song_number" yaml:"song_number"`
-	SongName       null.String `boil:"song_name" json:"song_name,omitempty" toml:"song_name" yaml:"song_name,omitempty"`
-	ArtistName     null.String `boil:"artist_name" json:"artist_name,omitempty" toml:"artist_name" yaml:"artist_name,omitempty"`
+	SongName       string      `boil:"song_name" json:"song_name" toml:"song_name" yaml:"song_name"`
+	ArtistID       null.Int64  `boil:"artist_id" json:"artist_id,omitempty" toml:"artist_id" yaml:"artist_id,omitempty"`
+	ArtistName     string      `boil:"artist_name" json:"artist_name" toml:"artist_name" yaml:"artist_name"`
 	ArtistType     null.String `boil:"artist_type" json:"artist_type,omitempty" toml:"artist_type" yaml:"artist_type,omitempty"`
 	IsMR           null.Bool   `boil:"is_mr" json:"is_mr,omitempty" toml:"is_mr" yaml:"is_mr,omitempty"`
 	IsChosen22000  null.Bool   `boil:"is_chosen_22000" json:"is_chosen_22000,omitempty" toml:"is_chosen_22000" yaml:"is_chosen_22000,omitempty"`
+	RelatedArtists null.String `boil:"related_artists" json:"related_artists,omitempty" toml:"related_artists" yaml:"related_artists,omitempty"`
 	Country        null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
 	Album          null.String `boil:"album" json:"album,omitempty" toml:"album" yaml:"album,omitempty"`
-	OctaveCrawling null.String `boil:"octave_crawling" json:"octave_crawling,omitempty" toml:"octave_crawling" yaml:"octave_crawling,omitempty"`
-	OctaveLibrosa  null.String `boil:"octave_librosa" json:"octave_librosa,omitempty" toml:"octave_librosa" yaml:"octave_librosa,omitempty"`
-	VideoLink      null.String `boil:"video_link" json:"video_link,omitempty" toml:"video_link" yaml:"video_link,omitempty"`
-	MelonSongID    null.String `boil:"melon_song_id" json:"melon_song_id,omitempty" toml:"melon_song_id" yaml:"melon_song_id,omitempty"`
-	IsLive         null.Bool   `boil:"is_live" json:"is_live,omitempty" toml:"is_live" yaml:"is_live,omitempty"`
+	SongNumber     int         `boil:"song_number" json:"song_number" toml:"song_number" yaml:"song_number"`
+	Octave         null.String `boil:"octave" json:"octave,omitempty" toml:"octave" yaml:"octave,omitempty"`
+	TJLink         null.String `boil:"tj_link" json:"tj_link,omitempty" toml:"tj_link" yaml:"tj_link,omitempty"`
+	Tags           null.String `boil:"tags" json:"tags,omitempty" toml:"tags" yaml:"tags,omitempty"`
 	CreatedAt      null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 	UpdatedAt      null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 	DeletedAt      null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
-	HighTag        null.Bool   `boil:"high_tag" json:"high_tag,omitempty" toml:"high_tag" yaml:"high_tag,omitempty"`
-	LowTag         null.Bool   `boil:"low_tag" json:"low_tag,omitempty" toml:"low_tag" yaml:"low_tag,omitempty"`
+	MelonSongID    null.String `boil:"melon_song_id" json:"melon_song_id,omitempty" toml:"melon_song_id" yaml:"melon_song_id,omitempty"`
+	IsLive         null.Bool   `boil:"is_live" json:"is_live,omitempty" toml:"is_live" yaml:"is_live,omitempty"`
+	TempSongInfoID int         `boil:"temp_song_info_id" json:"temp_song_info_id" toml:"temp_song_info_id" yaml:"temp_song_info_id"`
+	VideoLink      null.String `boil:"video_link" json:"video_link,omitempty" toml:"video_link" yaml:"video_link,omitempty"`
 	AudioFileURL   null.String `boil:"audio_file_url" json:"audio_file_url,omitempty" toml:"audio_file_url" yaml:"audio_file_url,omitempty"`
 
 	R *tempSongInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -51,142 +52,148 @@ type TempSongInfo struct {
 }
 
 var TempSongInfoColumns = struct {
-	TempSongInfoID string
 	SongInfoID     string
-	SongNumber     string
 	SongName       string
+	ArtistID       string
 	ArtistName     string
 	ArtistType     string
 	IsMR           string
 	IsChosen22000  string
+	RelatedArtists string
 	Country        string
 	Album          string
-	OctaveCrawling string
-	OctaveLibrosa  string
-	VideoLink      string
-	MelonSongID    string
-	IsLive         string
+	SongNumber     string
+	Octave         string
+	TJLink         string
+	Tags           string
 	CreatedAt      string
 	UpdatedAt      string
 	DeletedAt      string
-	HighTag        string
-	LowTag         string
+	MelonSongID    string
+	IsLive         string
+	TempSongInfoID string
+	VideoLink      string
 	AudioFileURL   string
 }{
-	TempSongInfoID: "temp_song_info_id",
 	SongInfoID:     "song_info_id",
-	SongNumber:     "song_number",
 	SongName:       "song_name",
+	ArtistID:       "artist_id",
 	ArtistName:     "artist_name",
 	ArtistType:     "artist_type",
 	IsMR:           "is_mr",
 	IsChosen22000:  "is_chosen_22000",
+	RelatedArtists: "related_artists",
 	Country:        "country",
 	Album:          "album",
-	OctaveCrawling: "octave_crawling",
-	OctaveLibrosa:  "octave_librosa",
-	VideoLink:      "video_link",
-	MelonSongID:    "melon_song_id",
-	IsLive:         "is_live",
+	SongNumber:     "song_number",
+	Octave:         "octave",
+	TJLink:         "tj_link",
+	Tags:           "tags",
 	CreatedAt:      "created_at",
 	UpdatedAt:      "updated_at",
 	DeletedAt:      "deleted_at",
-	HighTag:        "high_tag",
-	LowTag:         "low_tag",
+	MelonSongID:    "melon_song_id",
+	IsLive:         "is_live",
+	TempSongInfoID: "temp_song_info_id",
+	VideoLink:      "video_link",
 	AudioFileURL:   "audio_file_url",
 }
 
 var TempSongInfoTableColumns = struct {
-	TempSongInfoID string
 	SongInfoID     string
-	SongNumber     string
 	SongName       string
+	ArtistID       string
 	ArtistName     string
 	ArtistType     string
 	IsMR           string
 	IsChosen22000  string
+	RelatedArtists string
 	Country        string
 	Album          string
-	OctaveCrawling string
-	OctaveLibrosa  string
-	VideoLink      string
-	MelonSongID    string
-	IsLive         string
+	SongNumber     string
+	Octave         string
+	TJLink         string
+	Tags           string
 	CreatedAt      string
 	UpdatedAt      string
 	DeletedAt      string
-	HighTag        string
-	LowTag         string
+	MelonSongID    string
+	IsLive         string
+	TempSongInfoID string
+	VideoLink      string
 	AudioFileURL   string
 }{
-	TempSongInfoID: "temp_song_info.temp_song_info_id",
 	SongInfoID:     "temp_song_info.song_info_id",
-	SongNumber:     "temp_song_info.song_number",
 	SongName:       "temp_song_info.song_name",
+	ArtistID:       "temp_song_info.artist_id",
 	ArtistName:     "temp_song_info.artist_name",
 	ArtistType:     "temp_song_info.artist_type",
 	IsMR:           "temp_song_info.is_mr",
 	IsChosen22000:  "temp_song_info.is_chosen_22000",
+	RelatedArtists: "temp_song_info.related_artists",
 	Country:        "temp_song_info.country",
 	Album:          "temp_song_info.album",
-	OctaveCrawling: "temp_song_info.octave_crawling",
-	OctaveLibrosa:  "temp_song_info.octave_librosa",
-	VideoLink:      "temp_song_info.video_link",
-	MelonSongID:    "temp_song_info.melon_song_id",
-	IsLive:         "temp_song_info.is_live",
+	SongNumber:     "temp_song_info.song_number",
+	Octave:         "temp_song_info.octave",
+	TJLink:         "temp_song_info.tj_link",
+	Tags:           "temp_song_info.tags",
 	CreatedAt:      "temp_song_info.created_at",
 	UpdatedAt:      "temp_song_info.updated_at",
 	DeletedAt:      "temp_song_info.deleted_at",
-	HighTag:        "temp_song_info.high_tag",
-	LowTag:         "temp_song_info.low_tag",
+	MelonSongID:    "temp_song_info.melon_song_id",
+	IsLive:         "temp_song_info.is_live",
+	TempSongInfoID: "temp_song_info.temp_song_info_id",
+	VideoLink:      "temp_song_info.video_link",
 	AudioFileURL:   "temp_song_info.audio_file_url",
 }
 
 // Generated where
 
 var TempSongInfoWhere = struct {
-	TempSongInfoID whereHelperint64
 	SongInfoID     whereHelperint64
-	SongNumber     whereHelperint
-	SongName       whereHelpernull_String
-	ArtistName     whereHelpernull_String
+	SongName       whereHelperstring
+	ArtistID       whereHelpernull_Int64
+	ArtistName     whereHelperstring
 	ArtistType     whereHelpernull_String
 	IsMR           whereHelpernull_Bool
 	IsChosen22000  whereHelpernull_Bool
+	RelatedArtists whereHelpernull_String
 	Country        whereHelpernull_String
 	Album          whereHelpernull_String
-	OctaveCrawling whereHelpernull_String
-	OctaveLibrosa  whereHelpernull_String
-	VideoLink      whereHelpernull_String
-	MelonSongID    whereHelpernull_String
-	IsLive         whereHelpernull_Bool
+	SongNumber     whereHelperint
+	Octave         whereHelpernull_String
+	TJLink         whereHelpernull_String
+	Tags           whereHelpernull_String
 	CreatedAt      whereHelpernull_Time
 	UpdatedAt      whereHelpernull_Time
 	DeletedAt      whereHelpernull_Time
-	HighTag        whereHelpernull_Bool
-	LowTag         whereHelpernull_Bool
+	MelonSongID    whereHelpernull_String
+	IsLive         whereHelpernull_Bool
+	TempSongInfoID whereHelperint
+	VideoLink      whereHelpernull_String
 	AudioFileURL   whereHelpernull_String
 }{
-	TempSongInfoID: whereHelperint64{field: "`temp_song_info`.`temp_song_info_id`"},
 	SongInfoID:     whereHelperint64{field: "`temp_song_info`.`song_info_id`"},
-	SongNumber:     whereHelperint{field: "`temp_song_info`.`song_number`"},
-	SongName:       whereHelpernull_String{field: "`temp_song_info`.`song_name`"},
-	ArtistName:     whereHelpernull_String{field: "`temp_song_info`.`artist_name`"},
+	SongName:       whereHelperstring{field: "`temp_song_info`.`song_name`"},
+	ArtistID:       whereHelpernull_Int64{field: "`temp_song_info`.`artist_id`"},
+	ArtistName:     whereHelperstring{field: "`temp_song_info`.`artist_name`"},
 	ArtistType:     whereHelpernull_String{field: "`temp_song_info`.`artist_type`"},
 	IsMR:           whereHelpernull_Bool{field: "`temp_song_info`.`is_mr`"},
 	IsChosen22000:  whereHelpernull_Bool{field: "`temp_song_info`.`is_chosen_22000`"},
+	RelatedArtists: whereHelpernull_String{field: "`temp_song_info`.`related_artists`"},
 	Country:        whereHelpernull_String{field: "`temp_song_info`.`country`"},
 	Album:          whereHelpernull_String{field: "`temp_song_info`.`album`"},
-	OctaveCrawling: whereHelpernull_String{field: "`temp_song_info`.`octave_crawling`"},
-	OctaveLibrosa:  whereHelpernull_String{field: "`temp_song_info`.`octave_librosa`"},
-	VideoLink:      whereHelpernull_String{field: "`temp_song_info`.`video_link`"},
-	MelonSongID:    whereHelpernull_String{field: "`temp_song_info`.`melon_song_id`"},
-	IsLive:         whereHelpernull_Bool{field: "`temp_song_info`.`is_live`"},
+	SongNumber:     whereHelperint{field: "`temp_song_info`.`song_number`"},
+	Octave:         whereHelpernull_String{field: "`temp_song_info`.`octave`"},
+	TJLink:         whereHelpernull_String{field: "`temp_song_info`.`tj_link`"},
+	Tags:           whereHelpernull_String{field: "`temp_song_info`.`tags`"},
 	CreatedAt:      whereHelpernull_Time{field: "`temp_song_info`.`created_at`"},
 	UpdatedAt:      whereHelpernull_Time{field: "`temp_song_info`.`updated_at`"},
 	DeletedAt:      whereHelpernull_Time{field: "`temp_song_info`.`deleted_at`"},
-	HighTag:        whereHelpernull_Bool{field: "`temp_song_info`.`high_tag`"},
-	LowTag:         whereHelpernull_Bool{field: "`temp_song_info`.`low_tag`"},
+	MelonSongID:    whereHelpernull_String{field: "`temp_song_info`.`melon_song_id`"},
+	IsLive:         whereHelpernull_Bool{field: "`temp_song_info`.`is_live`"},
+	TempSongInfoID: whereHelperint{field: "`temp_song_info`.`temp_song_info_id`"},
+	VideoLink:      whereHelpernull_String{field: "`temp_song_info`.`video_link`"},
 	AudioFileURL:   whereHelpernull_String{field: "`temp_song_info`.`audio_file_url`"},
 }
 
@@ -207,9 +214,9 @@ func (*tempSongInfoR) NewStruct() *tempSongInfoR {
 type tempSongInfoL struct{}
 
 var (
-	tempSongInfoAllColumns            = []string{"temp_song_info_id", "song_info_id", "song_number", "song_name", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "country", "album", "octave_crawling", "octave_librosa", "video_link", "melon_song_id", "is_live", "created_at", "updated_at", "deleted_at", "high_tag", "low_tag", "audio_file_url"}
-	tempSongInfoColumnsWithoutDefault = []string{"song_info_id", "song_number", "song_name", "artist_name", "artist_type", "country", "album", "octave_crawling", "octave_librosa", "video_link", "melon_song_id", "deleted_at", "audio_file_url"}
-	tempSongInfoColumnsWithDefault    = []string{"temp_song_info_id", "is_mr", "is_chosen_22000", "is_live", "created_at", "updated_at", "high_tag", "low_tag"}
+	tempSongInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at", "melon_song_id", "is_live", "temp_song_info_id", "video_link", "audio_file_url"}
+	tempSongInfoColumnsWithoutDefault = []string{"song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "deleted_at", "melon_song_id", "video_link", "audio_file_url"}
+	tempSongInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at", "is_live", "temp_song_info_id"}
 	tempSongInfoPrimaryKeyColumns     = []string{"temp_song_info_id"}
 	tempSongInfoGeneratedColumns      = []string{}
 )
@@ -505,7 +512,7 @@ func TempSongInfos(mods ...qm.QueryMod) tempSongInfoQuery {
 
 // FindTempSongInfo retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindTempSongInfo(ctx context.Context, exec boil.ContextExecutor, tempSongInfoID int64, selectCols ...string) (*TempSongInfo, error) {
+func FindTempSongInfo(ctx context.Context, exec boil.ContextExecutor, tempSongInfoID int, selectCols ...string) (*TempSongInfo, error) {
 	tempSongInfoObj := &TempSongInfo{}
 
 	sel := "*"
@@ -610,7 +617,7 @@ func (o *TempSongInfo) Insert(ctx context.Context, exec boil.ContextExecutor, co
 		return ErrSyncFail
 	}
 
-	o.TempSongInfoID = int64(lastID)
+	o.TempSongInfoID = int(lastID)
 	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == tempSongInfoMapping["temp_song_info_id"] {
 		goto CacheNoHooks
 	}
@@ -814,7 +821,7 @@ func (o *TempSongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, up
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			tempSongInfoAllColumns,
 			tempSongInfoColumnsWithDefault,
 			tempSongInfoColumnsWithoutDefault,
@@ -830,7 +837,8 @@ func (o *TempSongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, up
 			return errors.New("mysql: unable to upsert temp_song_info, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(tempSongInfoAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`temp_song_info`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `temp_song_info` WHERE %s",
@@ -881,7 +889,7 @@ func (o *TempSongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, up
 		return ErrSyncFail
 	}
 
-	o.TempSongInfoID = int64(lastID)
+	o.TempSongInfoID = int(lastID)
 	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == tempSongInfoMapping["temp_song_info_id"] {
 		goto CacheNoHooks
 	}
@@ -1060,7 +1068,7 @@ func (o *TempSongInfoSlice) ReloadAll(ctx context.Context, exec boil.ContextExec
 }
 
 // TempSongInfoExists checks if the TempSongInfo row exists.
-func TempSongInfoExists(ctx context.Context, exec boil.ContextExecutor, tempSongInfoID int64) (bool, error) {
+func TempSongInfoExists(ctx context.Context, exec boil.ContextExecutor, tempSongInfoID int) (bool, error) {
 	var exists bool
 	sql := "select exists(select 1 from `temp_song_info` where `temp_song_info_id`=? limit 1)"
 

@@ -50,6 +50,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		recommend.POST("/recommendation/llm", middleware.AuthMiddleware(db), handler.LlmHandler(db))
 		recommend.POST("/recommendation/langchainAgent", middleware.AuthMiddleware(db), handler.LangchainAgentRecommedation(db))
 		recommend.POST("/recommendation/functionCalling", middleware.AuthMiddleware(db), handler.FunctionCallingRecommedation(db))
+		recommend.GET("/recommendation/searchLog", middleware.AuthMiddleware(db), handler.GetSearchResultsForLLM(db))
 	}
 
 	// 태그 엔드포인트 설정
@@ -66,6 +67,12 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		member.POST("/withdraw", middleware.AuthMiddleware(db), handler.Withdraw(db, rdb))
 		member.POST("/logout", middleware.AuthMiddleware(db), handler.Logout(rdb))
 		member.PATCH("/nickname", middleware.AuthMiddleware(db), handler.UpdateNickname(db))
+	}
+
+	memberV2 := r.Group("/api/v2/member")
+	{
+		memberV2.POST("/login", handler.LoginV2(rdb, db))
+		memberV2.POST("/login/extra", middleware.AuthMiddleware(db), handler.LoginV2ExtraInfoRequired(db))
 	}
 
 	// 태그 엔드포인트 설정
@@ -133,6 +140,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		search.GET("/artist-name", handler.SearchSongsByArist(db))
 		search.GET("/song-name", handler.SearchSongsBySongName(db))
 		search.GET("/song-number", handler.SearchSongsBySongNumber(db))
+		search.GET("/posts", handler.SearchPosts(db))
 	}
 
 	post := r.Group("/api/v1/posts")

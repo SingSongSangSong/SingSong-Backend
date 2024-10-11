@@ -702,7 +702,7 @@ func (o *Board) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCol
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			boardAllColumns,
 			boardColumnsWithDefault,
 			boardColumnsWithoutDefault,
@@ -718,7 +718,8 @@ func (o *Board) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCol
 			return errors.New("mysql: unable to upsert board, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(boardAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`board`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `board` WHERE %s",

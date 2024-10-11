@@ -917,7 +917,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.PostDetailsResponse"
+                                            "$ref": "#/definitions/handler.postPageResponse"
                                         }
                                     }
                                 }
@@ -1694,6 +1694,46 @@
                 }
             }
         },
+        "/v1/recommend/recommendation/searchLog": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get Recent 10 Search Results and provide Random 3 Search Texts for LLM",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Get 3 Recent Search Results for LLM",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SearchResultForLLMResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/recommend/recommendation/{pageId}": {
             "get": {
                 "security": [
@@ -1858,6 +1898,68 @@
                                 }
                             ]
                         }
+                    }
+                }
+            }
+        },
+        "/v1/search/posts": {
+            "get": {
+                "description": "게시글 검색 및 조회 (커서 기반 페이징)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "게시글 검색 및 조회 (커서 기반 페이징)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.postPageResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "query param 값이 들어왔는데, 비어있다면 400 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
                     }
                 }
             }
@@ -2638,6 +2740,79 @@
                 }
             }
         },
+        "/v2/member/login": {
+            "post": {
+                "description": "로그인 API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "로그인 API",
+                "parameters": [
+                    {
+                        "description": "로그인 요청",
+                        "name": "loginV2",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginV2Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "로그인 성공",
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginV2Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/member/login/extra": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "로그인 성별 및 연령 정보 받는 API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용",
+                "parameters": [
+                    {
+                        "description": "로그인 요청",
+                        "name": "loginV2",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginV2ExtraInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "로그인 성공",
+                        "schema": {
+                            "type": ""
+                        }
+                    }
+                }
+            }
+        },
         "/v2/songs/{songId}/related": {
             "get": {
                 "security": [
@@ -2953,6 +3128,42 @@
                 }
             }
         },
+        "handler.LoginV2ExtraInfoRequest": {
+            "type": "object",
+            "properties": {
+                "birthYear": {
+                    "type": "integer"
+                },
+                "gender": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginV2Request": {
+            "type": "object",
+            "properties": {
+                "idToken": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginV2Response": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "isInfoRequired": {
+                    "type": "boolean"
+                },
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.MemberResponse": {
             "type": "object",
             "properties": {
@@ -3213,6 +3424,17 @@
                 },
                 "subjectMemberId": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.SearchResultForLLMResponse": {
+            "type": "object",
+            "properties": {
+                "searchTexts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -3526,6 +3748,43 @@
                     "items": {
                         "$ref": "#/definitions/handler.newSongInfo"
                     }
+                }
+            }
+        },
+        "handler.postPageResponse": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.postPreviewResponse"
+                    }
+                }
+            }
+        },
+        "handler.postPreviewResponse": {
+            "type": "object",
+            "properties": {
+                "commentCount": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "postId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },
