@@ -92,6 +92,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	songsV2 := r.Group("/api/v2/songs")
 	{
 		songsV2.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSongV2(db, milvusClient))
+		songsV2.GET("/:songId/comments", middleware.AuthMiddleware(db), handler.GetCommentsOnSongV2(db))
 	}
 
 	// 노래 리뷰 선택지 추가/조회
