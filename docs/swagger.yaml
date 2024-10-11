@@ -164,6 +164,29 @@ definitions:
       refreshToken:
         type: string
     type: object
+  handler.LoginV2ExtraInfoRequest:
+    properties:
+      birthYear:
+        type: integer
+      gender:
+        type: string
+    type: object
+  handler.LoginV2Request:
+    properties:
+      idToken:
+        type: string
+      provider:
+        type: string
+    type: object
+  handler.LoginV2Response:
+    properties:
+      accessToken:
+        type: string
+      isInfoRequired:
+        type: boolean
+      refreshToken:
+        type: string
+    type: object
   handler.MemberResponse:
     properties:
       birthYear:
@@ -2438,6 +2461,52 @@ paths:
       summary: 인기차트 조회(Version2)
       tags:
       - Chart
+  /v2/member/login:
+    post:
+      consumes:
+      - application/json
+      description: 로그인 API
+      parameters:
+      - description: 로그인 요청
+        in: body
+        name: loginV2
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginV2Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 로그인 성공
+          schema:
+            $ref: '#/definitions/handler.LoginV2Response'
+      summary: 로그인 API
+      tags:
+      - Auth
+  /v2/member/login/extra:
+    post:
+      consumes:
+      - application/json
+      description: 로그인 성별 및 연령 정보 받는 API
+      parameters:
+      - description: 로그인 요청
+        in: body
+        name: loginV2
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginV2ExtraInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 로그인 성공
+          schema:
+            type: ""
+      security:
+      - BearerAuth: []
+      summary: 로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용
+      tags:
+      - Auth
   /v2/songs/{songId}/related:
     get:
       consumes:
