@@ -28,7 +28,7 @@ type LoginV2Response struct {
 // LoginV2 로그인 API
 // @Summary 로그인 API
 // @Description 로그인 API
-// @Tags Auth
+// @Tags Signup and Login
 // @Accept json
 // @Produce json
 // @Param loginV2 body LoginV2Request true "로그인 요청"
@@ -137,7 +137,7 @@ type LoginV2ExtraInfoRequest struct {
 // LoginV2ExtraInfoRequired
 // @Summary 로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용
 // @Description 로그인 성별 및 연령 정보 받는 API
-// @Tags Auth
+// @Tags Signup and Login
 // @Accept json
 // @Produce json
 // @Param loginV2 body LoginV2ExtraInfoRequest true "로그인 요청"

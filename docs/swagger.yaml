@@ -2528,7 +2528,7 @@ paths:
             $ref: '#/definitions/handler.LoginV2Response'
       summary: 로그인 API
       tags:
-      - Auth
+      - Signup and Login
   /v2/member/login/extra:
     post:
       consumes:
@@ -2552,7 +2552,7 @@ paths:
       - BearerAuth: []
       summary: 로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용
       tags:
-      - Auth
+      - Signup and Login
   /v2/songs/{songId}/related:
     get:
       consumes:

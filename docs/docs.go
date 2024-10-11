@@ -2818,7 +2818,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Signup and Login"
                 ],
                 "summary": "로그인 API",
                 "parameters": [
@@ -2857,7 +2857,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Signup and Login"
                 ],
                 "summary": "로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용",
                 "parameters": [
