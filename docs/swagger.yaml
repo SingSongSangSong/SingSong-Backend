@@ -335,6 +335,13 @@ definitions:
       subjectMemberId:
         type: integer
     type: object
+  handler.SearchResultForLLMResponse:
+    properties:
+      searchTexts:
+        items:
+          type: string
+        type: array
+    type: object
   handler.SongDeleteFromPlaylistRequest:
     properties:
       songIds:
@@ -1793,6 +1800,29 @@ paths:
       security:
       - BearerAuth: []
       summary: LLM으로 검색하기
+      tags:
+      - Recommendation
+  /v1/recommend/recommendation/searchLog:
+    get:
+      consumes:
+      - application/json
+      description: Get Recent 10 Search Results and provide Random 3 Search Texts
+        for LLM
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.SearchResultForLLMResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get 3 Recent Search Results for LLM
       tags:
       - Recommendation
   /v1/recommend/refresh:

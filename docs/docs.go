@@ -1702,6 +1702,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/recommend/recommendation/searchLog": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get Recent 10 Search Results and provide Random 3 Search Texts for LLM",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Get 3 Recent Search Results for LLM",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SearchResultForLLMResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/recommend/recommendation/{pageId}": {
             "get": {
                 "security": [
@@ -3221,6 +3261,17 @@ const docTemplate = `{
                 },
                 "subjectMemberId": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.SearchResultForLLMResponse": {
+            "type": "object",
+            "properties": {
+                "searchTexts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
