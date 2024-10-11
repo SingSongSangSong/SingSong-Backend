@@ -2836,7 +2836,19 @@ const docTemplate = `{
                     "200": {
                         "description": "로그인 성공",
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginV2Response"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.LoginV2Response"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -2875,7 +2887,19 @@ const docTemplate = `{
                     "200": {
                         "description": "로그인 성공",
                         "schema": {
-                            "type": ""
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -3214,7 +3238,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "birthYear": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "gender": {
                     "type": "string"
