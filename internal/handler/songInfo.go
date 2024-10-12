@@ -9,6 +9,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type songInfoResponse struct {
@@ -166,4 +167,16 @@ func GetMelonLink(c *gin.Context, songInfoId string, db *sql.DB) string {
 		link = "https://www.melon.com/song/detail.htm?songId=" + one.MelonSongID.String
 	}
 	return link
+}
+
+type HotCommentResponse struct {
+	CommentId       int64     `json:"commentId"`
+	Content         string    `json:"content"`
+	IsRecomment     bool      `json:"isRecomment"`
+	ParentCommentId int64     `json:"parentCommentId"`
+	MemberId        int64     `json:"memberId"`
+	Nickname        string    `json:"nickname"`
+	CreatedAt       time.Time `json:"createdAt"`
+	Likes           int       `json:"likes"`
+	IsLiked         bool      `json:"isLiked"`
 }

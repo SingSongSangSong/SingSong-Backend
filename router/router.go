@@ -98,6 +98,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		songs.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSong(db, idxConnection))
 		songs.GET("/:songId/link", handler.GetLinkBySongInfoId(db))
 		songs.GET("/new", middleware.AuthMiddleware(db), handler.ListNewSongs(db))
+		songs.GET("/:songId/hot-comment", middleware.AuthMiddleware(db), handler.GetHotCommentOfSong(db))
 	}
 
 	songsV2 := r.Group("/api/v2/songs")
@@ -120,6 +121,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		comment.GET("/recomment/:commentId", middleware.AuthMiddleware(db), handler.GetReCommentOnSong(db))
 		comment.POST("/:commentId/like", middleware.AuthMiddleware(db), handler.LikeComment(db))
 		comment.GET("/latest", middleware.AuthMiddleware(db), handler.GetLatestComments(db))
+		comment.DELETE("/:commentId", middleware.AuthMiddleware(db), handler.DeleteComment(db))
+		comment.GET("/my", middleware.AuthMiddleware(db), handler.GetMySongComment(db))
 	}
 
 	blacklist := r.Group("/api/v1/blacklist")

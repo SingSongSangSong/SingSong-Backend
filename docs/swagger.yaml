@@ -207,6 +207,34 @@ definitions:
       nickname:
         type: string
     type: object
+  handler.MyComment:
+    properties:
+      commentId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      parentCommentId:
+        type: integer
+      song:
+        $ref: '#/definitions/handler.SongOfMyComment'
+    type: object
+  handler.MyCommentPageResponse:
+    properties:
+      comments:
+        items:
+          $ref: '#/definitions/handler.MyComment'
+        type: array
+      lastCursor:
+        type: integer
+    type: object
   handler.PlaylistAddRequest:
     properties:
       songId:
@@ -382,6 +410,25 @@ definitions:
         type: array
     type: object
   handler.SongOfLatestComment:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
+  handler.SongOfMyComment:
     properties:
       album:
         type: string
@@ -976,6 +1023,29 @@ paths:
       summary: SongId에 댓글 달기
       tags:
       - Comment
+  /v1/comment/{commentId}:
+    delete:
+      consumes:
+      - application/json
+      description: 해당하는 댓글 삭제하기
+      parameters:
+      - description: commentId
+        in: path
+        name: commentId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      security:
+      - BearerAuth: []
+      summary: 해당하는 댓글 삭제하기
+      tags:
+      - Comment
   /v1/comment/{commentId}/like:
     post:
       consumes:
@@ -1056,6 +1126,37 @@ paths:
       security:
       - BearerAuth: []
       summary: 홈화면 최신 댓글 가져오기
+      tags:
+      - Comment
+  /v1/comment/my:
+    get:
+      consumes:
+      - application/json
+      description: 내가 쓴 댓글 모아보기
+      parameters:
+      - description: size
+        in: query
+        name: size
+        type: integer
+      - description: cursor
+        in: query
+        name: cursor
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.MyCommentPageResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 내가 쓴 댓글 모아보기
       tags:
       - Comment
   /v1/comment/recomment/{commentId}:
@@ -2192,6 +2293,34 @@ paths:
       summary: 노래 상세 정보를 조회합니다
       tags:
       - Songs
+  /v1/songs/{songId}/hot-comment:
+    get:
+      consumes:
+      - application/json
+      description: 특정 노래의 핫 댓글 한개 가져오기. 댓글이 없으면 data가 null로 갑니다.
+      parameters:
+      - description: songId
+        in: path
+        name: songId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.MyCommentPageResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 특정 노래의 핫 댓글 한개 가져오기
+      tags:
+      - Comment
   /v1/songs/{songId}/link:
     get:
       consumes:
