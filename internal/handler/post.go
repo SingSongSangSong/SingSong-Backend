@@ -334,12 +334,13 @@ type postPageResponse struct {
 }
 
 type postPreviewResponse struct {
-	PostId       int64  `json:"postId"`
-	Title        string `json:"title"`
-	Content      string `json:"content"`
-	Nickname     string `json:"nickname"`
-	Likes        int    `json:"likes"`
-	CommentCount int    `json:"commentCount"`
+	PostId       int64     `json:"postId"`
+	Title        string    `json:"title"`
+	Content      string    `json:"content"`
+	Nickname     string    `json:"nickname"`
+	Likes        int       `json:"likes"`
+	CommentCount int       `json:"commentCount"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 // ListPosts godoc
@@ -354,8 +355,15 @@ type postPreviewResponse struct {
 // @Failure      400 "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
 // @Failure      500 "서버 에러일 경우 500 실패"
 // @Router       /v1/posts [get]
+// @Security BearerAuth
 func ListPosts(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
 		sizeStr := c.DefaultQuery("size", defaultSize)
 		sizeInt, err := strconv.Atoi(sizeStr)
 		if err != nil || sizeInt < 0 {
@@ -364,10 +372,21 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 		}
 
 		cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
-		cursorInt, err := strconv.Atoi(cursorStr)
-		if err != nil || cursorInt <= 0 {
+		cursorInt, err := strconv.ParseInt(cursorStr, 10, 64)
+		if err != nil || cursorInt < 0 {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
+		}
+
+		//차단 유저 제외
+		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", memberId)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		blockedMemberIds := make([]interface{}, 0, len(blacklists))
+		for _, blacklist := range blacklists {
+			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
 		}
 
 		// 페이징 처리된 게시글 가져오기
@@ -377,6 +396,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			qm.Load(mysql.PostRels.Member),
 			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
 			qm.Where("post.post_id < ?", cursorInt),
+			qm.WhereNotIn("post.member_id not IN ?", blockedMemberIds...),
 			qm.OrderBy("post.post_id DESC"),
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
@@ -396,6 +416,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 				Nickname:     post.R.Member.Nickname.String,
 				Likes:        post.Likes,
 				CommentCount: len(comments),
+				CreatedAt:    post.CreatedAt.Time,
 			})
 		}
 
@@ -577,8 +598,15 @@ func LikePost(db *sql.DB) gin.HandlerFunc {
 // @Failure      400 "query param 값이 들어왔는데, 비어있다면 400 실패"
 // @Failure      500 "서버 에러일 경우 500 실패"
 // @Router       /v1/search/posts [get]
+// @Security BearerAuth
 func SearchPosts(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
 		// 검색어를 쿼리 파라미터에서 가져오기
 		searchKeyword := c.Query("keyword")
 		if searchKeyword == "" {
@@ -594,10 +622,21 @@ func SearchPosts(db *sql.DB) gin.HandlerFunc {
 		}
 
 		cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
-		cursorInt, err := strconv.Atoi(cursorStr)
-		if err != nil || cursorInt <= 0 {
+		cursorInt, err := strconv.ParseInt(cursorStr, 10, 64)
+		if err != nil || cursorInt < 0 {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
+		}
+
+		//차단 유저 제외
+		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", memberId)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		blockedMemberIds := make([]interface{}, 0, len(blacklists))
+		for _, blacklist := range blacklists {
+			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
 		}
 
 		// 페이징 처리된 게시글 가져오기
@@ -607,6 +646,7 @@ func SearchPosts(db *sql.DB) gin.HandlerFunc {
 			qm.Load(mysql.PostRels.Member),
 			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
 			qm.Where("post.post_id < ? AND (post.title LIKE ? OR post.content LIKE ?)", cursorInt, "%"+searchKeyword+"%", "%"+searchKeyword+"%"),
+			qm.WhereNotIn("post.member_id not IN ?", blockedMemberIds...),
 			qm.OrderBy("post.post_id DESC"),
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
