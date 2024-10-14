@@ -979,6 +979,11 @@ const docTemplate = `{
         },
         "/v1/posts": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "게시글 전체 조회 (커서 기반 페이징)",
                 "consumes": [
                     "application/json"
@@ -2003,6 +2008,11 @@ const docTemplate = `{
         },
         "/v1/search/posts": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "게시글 검색 및 조회 (커서 기반 페이징)",
                 "consumes": [
                     "application/json"
