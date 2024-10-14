@@ -3045,7 +3045,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v2/recommend/recommendation/AI": {
+        "/v2/recommend/recommendation/ai": {
             "get": {
                 "security": [
                     {

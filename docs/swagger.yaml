@@ -2720,7 +2720,7 @@ paths:
       summary: AI가 골랐송 Without GRPC
       tags:
       - Recommendation
-  /v2/recommend/recommendation/AI:
+  /v2/recommend/recommendation/ai:
     get:
       consumes:
       - application/json

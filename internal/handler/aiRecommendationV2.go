@@ -54,7 +54,7 @@ func NewSearchParam() *SearchParam {
 // @Produce      json
 // @Param        pageId path int true "Page ID"
 // @Success      200 {object} pkg.BaseResponseStruct{data=UserProfileResponse} "성공"
-// @Router       /v2/recommend/recommendation/AI [get]
+// @Router       /v2/recommend/recommendation/ai [get]
 // @Router       /v2/recommend/recommendation/{pageId} [get]
 // @Security BearerAuth
 func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.Client) gin.HandlerFunc {
@@ -84,6 +84,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 		// 유저 프로필 벡터 가져오기
 		userVector, err := getUserProfile(milvus, memberIdInt)
 		if err != nil || userVector == nil || len(userVector.GetFloatVector().Data) == 0 {
+			log.Printf("No profile found for memberId %d fetching Gender Profile", memberIdInt)
 			userVector, err = fetchGenderProfile(milvus, gender.(string))
 			if err != nil || userVector == nil || len(userVector.GetFloatVector().Data) == 0 {
 				pkg.BaseResponse(c, http.StatusOK, "success", UserProfileResponse{Songs: []SongResponse{}})
@@ -177,7 +178,9 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 			if album.Valid {
 				song.Album = album.String
 			}
-			song.MelonLink = CreateMelonLinkByMelonSongId(null.StringFrom(song.MelonLink))
+
+			tempMelonLink := null.StringFrom(song.MelonLink)
+			song.MelonLink = CreateMelonLinkByMelonSongId(tempMelonLink)
 			songs = append(songs, song)
 		}
 

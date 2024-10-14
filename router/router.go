@@ -55,7 +55,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 
 	recommendV2 := r.Group("/api/v2/recommend")
 	{
-		recommendV2.GET("recommendation/AI", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
+		recommendV2.GET("recommendation/ai", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
 	}
 
 	// 태그 엔드포인트 설정
