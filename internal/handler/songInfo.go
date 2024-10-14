@@ -117,7 +117,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 }
 
 func CreateMelonLinkByMelonSongId(melonSongId null.String) string {
-	if melonSongId.Valid {
+	if melonSongId.Valid && melonSongId.String != "" {
 		return "https://www.melon.com/song/detail.htm?songId=" + melonSongId.String
 	}
 	return "https://www.melon.com/"

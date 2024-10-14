@@ -286,7 +286,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 
 		// 결과가 없는 경우 빈 리스트 반환
 		if len(postComments) == 0 {
-			pkg.BaseResponse(c, http.StatusOK, "success", GetPostCommentResponse{TotalPostCommentCount: int(totalCommentsCount), PostComments: []PostCommentResponse{}, LastCursor: 0})
+			pkg.BaseResponse(c, http.StatusOK, "success", GetPostCommentResponse{TotalPostCommentCount: int(totalCommentsCount), PostComments: []PostCommentResponse{}, LastCursor: int64(cursorInt)}) //마지막(가장 최근 id) 커서값, 없으면 0
 			return
 		}
 
@@ -415,7 +415,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 다음 페이지를 위한 커서 값 설정
-		var lastCursor int64 = 0
+		lastCursor := int64(cursorInt)
 		if len(topLevelComments) > 0 {
 			lastCursor = topLevelComments[len(topLevelComments)-1].PostCommentId
 		}
@@ -501,7 +501,7 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		}
 
 		if len(reComments) == 0 {
-			pkg.BaseResponse(c, http.StatusOK, "success", GetPostReCommentResponse{PostReComments: []PostCommentResponse{}, LastCursor: 0})
+			pkg.BaseResponse(c, http.StatusOK, "success", GetPostReCommentResponse{PostReComments: []PostCommentResponse{}, LastCursor: int64(cursorInt)})
 			return
 		}
 
@@ -546,7 +546,7 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 다음 페이지를 위한 커서 값 설정
-		var lastCursor int64 = 0
+		lastCursor := int64(cursorInt)
 		if len(data) > 0 {
 			lastCursor = data[len(data)-1].PostCommentId
 		}

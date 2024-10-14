@@ -372,8 +372,8 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 		}
 
 		cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
-		cursorInt, err := strconv.Atoi(cursorStr)
-		if err != nil || cursorInt <= 0 {
+		cursorInt, err := strconv.ParseInt(cursorStr, 10, 64)
+		if err != nil || cursorInt < 0 {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
 		}
@@ -622,8 +622,8 @@ func SearchPosts(db *sql.DB) gin.HandlerFunc {
 		}
 
 		cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
-		cursorInt, err := strconv.Atoi(cursorStr)
-		if err != nil || cursorInt <= 0 {
+		cursorInt, err := strconv.ParseInt(cursorStr, 10, 64)
+		if err != nil || cursorInt < 0 {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
 		}
