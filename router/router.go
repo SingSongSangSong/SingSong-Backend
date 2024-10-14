@@ -53,6 +53,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		recommend.GET("/recommendation/searchLog", middleware.AuthMiddleware(db), handler.GetSearchResultsForLLM(db))
 	}
 
+	recommendV2 := r.Group("/api/v2/recommend")
+	{
+		recommendV2.GET("recommendation/AI", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
+	}
+
 	// 태그 엔드포인트 설정
 	tags := r.Group("/api/v1/tags")
 	{

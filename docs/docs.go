@@ -1630,7 +1630,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userProfileResponse"
+                                            "$ref": "#/definitions/handler.UserProfileResponse"
                                         }
                                     }
                                 }
@@ -1783,7 +1783,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userProfileResponse"
+                                            "$ref": "#/definitions/handler.UserProfileResponse"
                                         }
                                     }
                                 }
@@ -1863,7 +1863,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.userProfileResponse"
+                                            "$ref": "#/definitions/handler.UserProfileResponse"
                                         }
                                     }
                                 }
@@ -3045,6 +3045,95 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/recommend/recommendation/AI": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "AI가 골랐송 Without GRPC",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.UserProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/recommend/recommendation/{pageId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "AI가 골랐송 Without GRPC",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page ID",
+                        "name": "pageId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.UserProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v2/songs/{songId}/related": {
             "get": {
                 "security": [
@@ -3825,6 +3914,44 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.SongResponse": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "keepCount": {
+                    "type": "integer"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.TotalChartResponse": {
             "type": "object",
             "properties": {
@@ -3853,6 +3980,17 @@ const docTemplate = `{
             "properties": {
                 "nickname": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.UserProfileResponse": {
+            "type": "object",
+            "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongResponse"
+                    }
                 }
             }
         },
@@ -4277,44 +4415,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.songResponse": {
-            "type": "object",
-            "properties": {
-                "album": {
-                    "type": "string"
-                },
-                "commentCount": {
-                    "type": "integer"
-                },
-                "isKeep": {
-                    "type": "boolean"
-                },
-                "isLive": {
-                    "type": "boolean"
-                },
-                "isMr": {
-                    "type": "boolean"
-                },
-                "keepCount": {
-                    "type": "integer"
-                },
-                "melonLink": {
-                    "type": "string"
-                },
-                "singerName": {
-                    "type": "string"
-                },
-                "songId": {
-                    "type": "integer"
-                },
-                "songName": {
-                    "type": "string"
-                },
-                "songNumber": {
-                    "type": "integer"
-                }
-            }
-        },
         "handler.songReviewOptionAddRequest": {
             "type": "object",
             "properties": {
@@ -4446,17 +4546,6 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
-                }
-            }
-        },
-        "handler.userProfileResponse": {
-            "type": "object",
-            "properties": {
-                "songs": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.songResponse"
-                    }
                 }
             }
         },
