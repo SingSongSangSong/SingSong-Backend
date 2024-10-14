@@ -164,11 +164,12 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 		var songs []SongResponse
 		for rows.Next() {
 			var song SongResponse
-			var album sql.NullString
+			var melonLinkId null.String
+			var album null.String
 
 			err := rows.Scan(
 				&song.SongInfoId, &song.SongNumber, &song.SongName, &song.SingerName,
-				&album, &song.IsMr, &song.IsLive, &song.MelonLink,
+				album, &song.IsMr, &song.IsLive, melonLinkId,
 				&song.CommentCount, &song.KeepCount, &song.IsKeep,
 			)
 			if err != nil {
@@ -179,8 +180,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 				song.Album = album.String
 			}
 
-			tempMelonLink := null.StringFrom(song.MelonLink)
-			song.MelonLink = CreateMelonLinkByMelonSongId(tempMelonLink)
+			song.MelonLink = CreateMelonLinkByMelonSongId(melonLinkId)
 			songs = append(songs, song)
 		}
 
