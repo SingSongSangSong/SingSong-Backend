@@ -92,11 +92,11 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 				return
 			}
-			orderClause = "ORDER BY keep_song.created_at DESC"
-			cursorCondition = "AND song_info.song_info_id < ?"
+			orderClause = "ORDER BY keep_song.keep_song_id DESC"
+			cursorCondition = "AND keep_song.keep_song_id < ?"
 		case "old":
-			orderClause = "ORDER BY keep_song.created_at ASC"
-			cursorCondition = "AND song_info.song_info_id > ?"
+			orderClause = "ORDER BY keep_song.keep_song_id ASC"
+			cursorCondition = "AND keep_song.keep_song_id > ?"
 		default:
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid filter parameter", nil)
 			return
