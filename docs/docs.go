@@ -4092,6 +4092,9 @@ const docTemplate = `{
                 "content": {
                     "type": "string"
                 },
+                "createdAt": {
+                    "type": "string"
+                },
                 "likes": {
                     "type": "integer"
                 },

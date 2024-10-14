@@ -334,12 +334,13 @@ type postPageResponse struct {
 }
 
 type postPreviewResponse struct {
-	PostId       int64  `json:"postId"`
-	Title        string `json:"title"`
-	Content      string `json:"content"`
-	Nickname     string `json:"nickname"`
-	Likes        int    `json:"likes"`
-	CommentCount int    `json:"commentCount"`
+	PostId       int64     `json:"postId"`
+	Title        string    `json:"title"`
+	Content      string    `json:"content"`
+	Nickname     string    `json:"nickname"`
+	Likes        int       `json:"likes"`
+	CommentCount int       `json:"commentCount"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 // ListPosts godoc
@@ -396,6 +397,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 				Nickname:     post.R.Member.Nickname.String,
 				Likes:        post.Likes,
 				CommentCount: len(comments),
+				CreatedAt:    post.CreatedAt.Time,
 			})
 		}
 
