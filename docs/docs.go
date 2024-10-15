@@ -3582,6 +3582,10 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "keepSongId": {
+                    "description": "마지막 커서 값을 저장하기 위해 추가",
+                    "type": "integer"
+                },
                 "melonLink": {
                     "type": "string"
                 },
