@@ -284,6 +284,8 @@ definitions:
         type: boolean
       isMr:
         type: boolean
+      keepSongId:
+        type: integer
       melonLink:
         type: string
       singerName:
@@ -500,6 +502,31 @@ definitions:
       songNumber:
         type: integer
     type: object
+  handler.SongResponse:
+    properties:
+      album:
+        type: string
+      commentCount:
+        type: integer
+      isKeep:
+        type: boolean
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      keepCount:
+        type: integer
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
   handler.TotalChartResponse:
     properties:
       female:
@@ -519,6 +546,13 @@ definitions:
     properties:
       nickname:
         type: string
+    type: object
+  handler.UserProfileResponse:
+    properties:
+      songs:
+        items:
+          $ref: '#/definitions/handler.SongResponse'
+        type: array
     type: object
   handler.V2ChartOfKey:
     properties:
@@ -796,31 +830,6 @@ definitions:
           type: string
         type: array
     type: object
-  handler.songResponse:
-    properties:
-      album:
-        type: string
-      commentCount:
-        type: integer
-      isKeep:
-        type: boolean
-      isLive:
-        type: boolean
-      isMr:
-        type: boolean
-      keepCount:
-        type: integer
-      melonLink:
-        type: string
-      singerName:
-        type: string
-      songId:
-        type: integer
-      songName:
-        type: string
-      songNumber:
-        type: integer
-    type: object
   handler.songReviewOptionAddRequest:
     properties:
       enum:
@@ -907,13 +916,6 @@ definitions:
         type: string
       songNumber:
         type: integer
-    type: object
-  handler.userProfileResponse:
-    properties:
-      songs:
-        items:
-          $ref: '#/definitions/handler.songResponse'
-        type: array
     type: object
   handler.versionCheckRequest:
     properties:
@@ -1881,7 +1883,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.userProfileResponse'
+                  $ref: '#/definitions/handler.UserProfileResponse'
               type: object
       security:
       - BearerAuth: []
@@ -1903,7 +1905,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.userProfileResponse'
+                  $ref: '#/definitions/handler.UserProfileResponse'
               type: object
       security:
       - BearerAuth: []
@@ -1990,7 +1992,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.userProfileResponse'
+                  $ref: '#/definitions/handler.UserProfileResponse'
               type: object
       security:
       - BearerAuth: []
@@ -2738,6 +2740,56 @@ paths:
       summary: 로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용
       tags:
       - Signup and Login
+  /v2/recommend/recommendation/{pageId}:
+    get:
+      consumes:
+      - application/json
+      description: 사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.
+      parameters:
+      - description: Page ID
+        in: path
+        name: pageId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.UserProfileResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: AI가 골랐송 Without GRPC
+      tags:
+      - Recommendation
+  /v2/recommend/recommendation/ai:
+    get:
+      consumes:
+      - application/json
+      description: 사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.UserProfileResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: AI가 골랐송 Without GRPC
+      tags:
+      - Recommendation
   /v2/songs/{songId}/comments:
     get:
       consumes:
