@@ -153,7 +153,7 @@ type PostDetailsResponse struct {
 	IsWriter    bool         `json:"isWriter"`
 	Nickname    string       `json:"nickname"`
 	IsLiked     bool         `json:"isLiked"`
-	CreatedAt   string       `json:"createdAt"`
+	CreatedAt   time.Time    `json:"createdAt"`
 	SongsOnPost []SongOnPost `json:"songs"`
 }
 
@@ -260,7 +260,7 @@ func GetPost(db *sql.DB) gin.HandlerFunc {
 			IsWriter:    one.MemberID == memberId,
 			IsLiked:     isLiked,
 			Nickname:    writer.Nickname.String,
-			CreatedAt:   one.CreatedAt.Time.Format("2006-01-02 15:04:05"),
+			CreatedAt:   one.CreatedAt.Time,
 			SongsOnPost: songsOnPost,
 		}
 
@@ -334,12 +334,13 @@ type postPageResponse struct {
 }
 
 type postPreviewResponse struct {
-	PostId       int64  `json:"postId"`
-	Title        string `json:"title"`
-	Content      string `json:"content"`
-	Nickname     string `json:"nickname"`
-	Likes        int    `json:"likes"`
-	CommentCount int    `json:"commentCount"`
+	PostId       int64     `json:"postId"`
+	Title        string    `json:"title"`
+	Content      string    `json:"content"`
+	Nickname     string    `json:"nickname"`
+	Likes        int       `json:"likes"`
+	CommentCount int       `json:"commentCount"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 // ListPosts godoc
@@ -350,12 +351,19 @@ type postPreviewResponse struct {
 // @Produce      json
 // @Param        cursor query int false "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
 // @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
-// @Success      200 {object} pkg.BaseResponseStruct{data=PostDetailsResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=postPageResponse} "성공"
 // @Failure      400 "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
 // @Failure      500 "서버 에러일 경우 500 실패"
 // @Router       /v1/posts [get]
+// @Security BearerAuth
 func ListPosts(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
 		sizeStr := c.DefaultQuery("size", defaultSize)
 		sizeInt, err := strconv.Atoi(sizeStr)
 		if err != nil || sizeInt < 0 {
@@ -364,10 +372,21 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 		}
 
 		cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
-		cursorInt, err := strconv.Atoi(cursorStr)
-		if err != nil || cursorInt <= 0 {
+		cursorInt, err := strconv.ParseInt(cursorStr, 10, 64)
+		if err != nil || cursorInt < 0 {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
+		}
+
+		//차단 유저 제외
+		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", memberId)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		blockedMemberIds := make([]interface{}, 0, len(blacklists))
+		for _, blacklist := range blacklists {
+			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
 		}
 
 		// 페이징 처리된 게시글 가져오기
@@ -377,6 +396,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			qm.Load(mysql.PostRels.Member),
 			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
 			qm.Where("post.post_id < ?", cursorInt),
+			qm.WhereNotIn("post.member_id not IN ?", blockedMemberIds...),
 			qm.OrderBy("post.post_id DESC"),
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
@@ -396,6 +416,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 				Nickname:     post.R.Member.Nickname.String,
 				Likes:        post.Likes,
 				CommentCount: len(comments),
+				CreatedAt:    post.CreatedAt.Time,
 			})
 		}
 
@@ -561,5 +582,105 @@ func LikePost(db *sql.DB) gin.HandlerFunc {
 
 		pkg.BaseResponse(c, http.StatusOK, "success", post.Likes)
 		return
+	}
+}
+
+// SearchPosts godoc
+// @Summary      게시글 검색 및 조회 (커서 기반 페이징)
+// @Description  게시글 검색 및 조회 (커서 기반 페이징)
+// @Tags         Search
+// @Accept       json
+// @Produce      json
+// @Param        keyword query string true "검색 키워드"
+// @Param        cursor query int false "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회"
+// @Param        size query int false "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회"
+// @Success      200 {object} pkg.BaseResponseStruct{data=postPageResponse} "성공"
+// @Failure      400 "query param 값이 들어왔는데, 비어있다면 400 실패"
+// @Failure      500 "서버 에러일 경우 500 실패"
+// @Router       /v1/search/posts [get]
+// @Security BearerAuth
+func SearchPosts(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
+		// 검색어를 쿼리 파라미터에서 가져오기
+		searchKeyword := c.Query("keyword")
+		if searchKeyword == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find keyword in query", nil)
+			return
+		}
+
+		sizeStr := c.DefaultQuery("size", defaultSearchSize)
+		sizeInt, err := strconv.Atoi(sizeStr)
+		if err != nil || sizeInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+			return
+		}
+
+		cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
+		cursorInt, err := strconv.ParseInt(cursorStr, 10, 64)
+		if err != nil || cursorInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
+			return
+		}
+
+		//차단 유저 제외
+		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", memberId)).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		blockedMemberIds := make([]interface{}, 0, len(blacklists))
+		for _, blacklist := range blacklists {
+			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
+		}
+
+		// 페이징 처리된 게시글 가져오기
+		posts, err := mysql.Posts(
+			qm.Select("DISTINCT post.*"), // 중복된 게시글 제거
+			qm.Load(mysql.PostRels.PostComments),
+			qm.Load(mysql.PostRels.Member),
+			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
+			qm.Where("post.post_id < ? AND (post.title LIKE ? OR post.content LIKE ?)", cursorInt, "%"+searchKeyword+"%", "%"+searchKeyword+"%"),
+			qm.WhereNotIn("post.member_id not IN ?", blockedMemberIds...),
+			qm.OrderBy("post.post_id DESC"),
+			qm.Limit(sizeInt),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		previews := make([]postPreviewResponse, 0, sizeInt)
+
+		for _, post := range posts {
+			comments := post.R.PostComments
+			previews = append(previews, postPreviewResponse{
+				PostId:       post.PostID,
+				Title:        post.Title,
+				Content:      post.Content.String,
+				Nickname:     post.R.Member.Nickname.String,
+				Likes:        post.Likes,
+				CommentCount: len(comments),
+			})
+		}
+
+		// 다음 페이지를 위한 커서 값 설정
+		var lastCursor int64 = 0
+		if len(previews) > 0 {
+			lastCursor = previews[len(previews)-1].PostId
+		}
+
+		response := postPageResponse{
+			Posts:      previews,
+			LastCursor: lastCursor,
+		}
+
+		// 응답 반환
+		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/null/v8"
-	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"time"
@@ -47,7 +46,7 @@ func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 
 		// JSON response
 		memberResponse := MemberResponse{
-			Email:     member.Email.String,
+			Email:     member.Email,
 			Nickname:  member.Nickname.String,
 			Birthyear: member.Birthyear.Int,
 			Gender:    member.Gender.String,
@@ -87,10 +86,10 @@ func UpdateNickname(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Find a pilot and update his name
-		member, _ := mysql.FindMember(c.Request.Context(), db, memberId.(int64))
-		member.Nickname = null.StringFrom(updateNicknameRequest.Nickname)
-		_, err := member.Update(c.Request.Context(), db, boil.Infer())
+		// soft delete
+		_, err := mysql.Members(
+			qm.Where("member_id = ?", memberId), qm.And("deleted_at IS NULL"),
+		).UpdateAll(c.Request.Context(), db, mysql.M{"nickname": null.StringFrom(updateNicknameRequest.Nickname)})
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -98,10 +97,7 @@ func UpdateNickname(db *sql.DB) gin.HandlerFunc {
 
 		// JSON response
 		memberResponse := MemberResponse{
-			Email:     member.Email.String,
-			Nickname:  member.Nickname.String,
-			Birthyear: member.Birthyear.Int,
-			Gender:    member.Gender.String,
+			Nickname: updateNicknameRequest.Nickname,
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "success", memberResponse)

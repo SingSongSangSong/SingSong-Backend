@@ -9,6 +9,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
+	"time"
 )
 
 type blacklistRequest struct {
@@ -111,9 +112,9 @@ func DeleteBlacklist(db *sql.DB) gin.HandlerFunc {
 }
 
 type blacklistResponse struct {
-	MemberId  int64  `json:"memberId"`
-	Nickname  string `json:"nickname"`
-	BlockDate string `json:"blockDate"`
+	MemberId  int64     `json:"memberId"`
+	Nickname  string    `json:"nickname"`
+	BlockDate time.Time `json:"blockDate"`
 }
 
 // GetBlacklist godoc
@@ -165,7 +166,7 @@ func GetBlacklist(db *sql.DB) gin.HandlerFunc {
 			responses = append(responses, blacklistResponse{
 				MemberId:  member.MemberID,
 				Nickname:  member.Nickname.String,
-				BlockDate: blockedDateMap[member.MemberID].Time.Format("2006-01-02 15:04:05"),
+				BlockDate: blockedDateMap[member.MemberID].Time,
 			})
 		}
 

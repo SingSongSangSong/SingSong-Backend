@@ -428,7 +428,7 @@ func validateSignature(idToken string, signingKey *rsa.PublicKey, issuer, audien
 }
 
 func joinForAnonymous(c *gin.Context, payload *Claims, year int, gender string, provider string, db *sql.DB) (*mysql.Member, error) {
-	m := &mysql.Member{Provider: provider, Email: null.StringFrom(payload.Email), Nickname: null.StringFrom("Anonymous"), Birthyear: null.IntFrom(year), Gender: null.StringFrom(gender)}
+	m := &mysql.Member{Provider: provider, Email: payload.Email, Nickname: null.StringFrom("Anonymous"), Birthyear: null.IntFrom(year), Gender: null.StringFrom(gender)}
 	err := m.Insert(c.Request.Context(), db, boil.Infer())
 	if err != nil {
 		return nil, errors.New("error inserting member - " + err.Error())
@@ -452,7 +452,7 @@ func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.
 	nullBrithyear := null.IntFrom(birthYearInt)
 	nullGender := null.StringFrom(loginRequest.Gender)
 
-	m = &mysql.Member{Provider: loginRequest.Provider, Email: null.StringFrom(payload.Email), Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
+	m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
 	err = m.Insert(c.Request.Context(), db, boil.Infer())
 	if err != nil {
 		//pkg.BaseResponse(c, http.StatusBadRequest, "error inserting member - "+err.Error(), nil)

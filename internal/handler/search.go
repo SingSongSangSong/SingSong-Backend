@@ -158,14 +158,8 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find keyword in query", nil)
 			return
 		}
-		pageValue := c.Query("page")
-		if pageValue == "" {
-			pageValue = defaultSearchPage
-		}
-		sizeValue := c.Query("size")
-		if sizeValue == "" {
-			sizeValue = defaultSearchSize
-		}
+		pageValue := c.DefaultQuery("page", defaultSearchPage)
+		sizeValue := c.DefaultQuery("size", defaultSearchSize)
 
 		//page, size를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)

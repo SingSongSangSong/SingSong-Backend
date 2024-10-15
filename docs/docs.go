@@ -979,6 +979,11 @@ const docTemplate = `{
         },
         "/v1/posts": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "게시글 전체 조회 (커서 기반 페이징)",
                 "consumes": [
                     "application/json"
@@ -1016,7 +1021,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.PostDetailsResponse"
+                                            "$ref": "#/definitions/handler.postPageResponse"
                                         }
                                     }
                                 }
@@ -1793,6 +1798,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/recommend/recommendation/searchLog": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get Recent 10 Search Results and provide Random 3 Search Texts for LLM",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Get 3 Recent Search Results for LLM",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SearchResultForLLMResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/recommend/recommendation/{pageId}": {
             "get": {
                 "security": [
@@ -1957,6 +2002,73 @@ const docTemplate = `{
                                 }
                             ]
                         }
+                    }
+                }
+            }
+        },
+        "/v1/search/posts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 검색 및 조회 (커서 기반 페이징)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "게시글 검색 및 조회 (커서 기반 페이징)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "마지막에 조회했던 커서의 postId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.postPageResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "query param 값이 들어왔는데, 비어있다면 400 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
                     }
                 }
             }
@@ -2786,14 +2898,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/v2/songs/{songId}/comments": {
+        "/v2/keep": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순, 추천순, 커서페이징 적용) - query param이 없으면 디폴트는 최신순 입니다.",
+                "description": "플레이리스트에 있는 노래들을 가나다순/최신추가순/오래된순(alphabet/recent/old) 으로 가져온다. 기본값은 recent이다",
                 "consumes": [
                     "application/json"
                 ],
@@ -2801,34 +2913,27 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Comment"
+                    "Playlist"
                 ],
-                "summary": "특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순, 추천순, 커서페이징 적용)",
+                "summary": "플레이리스트에 노래를 여러가지 필터로 가져온다 (커서기반 페이징)",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "정렬 기준. 최신순(디폴트)=recent, 오래된순=old, 추천순=best",
+                        "description": "필터",
                         "name": "filter",
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "description": "한번에 조회할 댓글의 개수. 디폴트값은 20",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 댓글부터 줌",
+                        "type": "integer",
+                        "description": "마지막에 조회했던 커서의 songId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 글부터 조회",
                         "name": "cursor",
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "description": "songId",
-                        "name": "songId",
-                        "in": "path",
-                        "required": true
+                        "type": "integer",
+                        "description": "한번에 조회할 노래의 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2843,7 +2948,104 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.CommentPageResponse"
+                                            "$ref": "#/definitions/handler.GetPlayListV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/member/login": {
+            "post": {
+                "description": "로그인 API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Signup and Login"
+                ],
+                "summary": "로그인 API",
+                "parameters": [
+                    {
+                        "description": "로그인 요청",
+                        "name": "loginV2",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginV2Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "로그인 성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.LoginV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/member/login/extra": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "로그인 성별 및 연령 정보 받는 API",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Signup and Login"
+                ],
+                "summary": "로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용",
+                "parameters": [
+                    {
+                        "description": "로그인 요청",
+                        "name": "loginV2",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginV2ExtraInfoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "로그인 성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
                                         }
                                     }
                                 }
@@ -2945,20 +3147,6 @@ const docTemplate = `{
                 },
                 "totalScore": {
                     "type": "number"
-                }
-            }
-        },
-        "handler.CommentPageResponse": {
-            "type": "object",
-            "properties": {
-                "comments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.V2CommentResponse"
-                    }
-                },
-                "lastCursor": {
-                    "type": "integer"
                 }
             }
         },
@@ -3065,6 +3253,20 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/handler.FunctionCallingDetailResponse"
+                    }
+                }
+            }
+        },
+        "handler.GetPlayListV2Response": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PlaylistAddResponse"
                     }
                 }
             }
@@ -3176,6 +3378,42 @@ const docTemplate = `{
             "properties": {
                 "accessToken": {
                     "type": "string"
+                },
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginV2ExtraInfoRequest": {
+            "type": "object",
+            "properties": {
+                "birthYear": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginV2Request": {
+            "type": "object",
+            "properties": {
+                "idToken": {
+                    "type": "string"
+                },
+                "provider": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginV2Response": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "isInfoRequired": {
+                    "type": "boolean"
                 },
                 "refreshToken": {
                     "type": "string"
@@ -3316,6 +3554,12 @@ const docTemplate = `{
                 },
                 "postId": {
                     "type": "integer"
+                },
+                "songIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -3354,6 +3598,12 @@ const docTemplate = `{
                 },
                 "postRecommentsCount": {
                     "type": "integer"
+                },
+                "songOnPostComment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongOnPost"
+                    }
                 }
             }
         },
@@ -3473,6 +3723,17 @@ const docTemplate = `{
                 },
                 "subjectMemberId": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.SearchResultForLLMResponse": {
+            "type": "object",
+            "properties": {
+                "searchTexts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -3660,44 +3921,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.V2CommentResponse": {
-            "type": "object",
-            "properties": {
-                "commentId": {
-                    "type": "integer"
-                },
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "isLiked": {
-                    "type": "boolean"
-                },
-                "isRecomment": {
-                    "type": "boolean"
-                },
-                "likes": {
-                    "type": "integer"
-                },
-                "memberId": {
-                    "type": "integer"
-                },
-                "nickname": {
-                    "type": "string"
-                },
-                "parentCommentId": {
-                    "type": "integer"
-                },
-                "recommentsCount": {
-                    "type": "integer"
-                },
-                "songId": {
-                    "type": "integer"
-                }
-            }
-        },
         "handler.V2TotalChartResponse": {
             "type": "object",
             "properties": {
@@ -3853,6 +4076,46 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.newSongInfo"
                     }
+                }
+            }
+        },
+        "handler.postPageResponse": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.postPreviewResponse"
+                    }
+                }
+            }
+        },
+        "handler.postPreviewResponse": {
+            "type": "object",
+            "properties": {
+                "commentCount": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "postId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },
