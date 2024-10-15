@@ -98,6 +98,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		songs.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSong(db, idxConnection))
 		songs.GET("/:songId/link", handler.GetLinkBySongInfoId(db))
 		songs.GET("/new", middleware.AuthMiddleware(db), handler.ListNewSongs(db))
+		songs.GET("/:songId/hot-comment", middleware.AuthMiddleware(db), handler.GetHotCommentOfSong(db))
 	}
 
 	songsV2 := r.Group("/api/v2/songs")
@@ -120,6 +121,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		comment.GET("/recomment/:commentId", middleware.AuthMiddleware(db), handler.GetReCommentOnSong(db))
 		comment.POST("/:commentId/like", middleware.AuthMiddleware(db), handler.LikeComment(db))
 		comment.GET("/latest", middleware.AuthMiddleware(db), handler.GetLatestComments(db))
+		comment.DELETE("/:commentId", middleware.AuthMiddleware(db), handler.DeleteComment(db))
+		comment.GET("/my", middleware.AuthMiddleware(db), handler.GetMySongComment(db))
 	}
 
 	blacklist := r.Group("/api/v1/blacklist")
@@ -145,13 +148,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		search.GET("/artist-name", handler.SearchSongsByArist(db))
 		search.GET("/song-name", handler.SearchSongsBySongName(db))
 		search.GET("/song-number", handler.SearchSongsBySongNumber(db))
-		search.GET("/posts", handler.SearchPosts(db))
+		search.GET("/posts", middleware.AuthMiddleware(db), handler.SearchPosts(db))
 	}
 
 	post := r.Group("/api/v1/posts")
 	{
 		post.POST("", middleware.AuthMiddleware(db), handler.CreatePost(db))
-		post.GET("", handler.ListPosts(db))
+		post.GET("", middleware.AuthMiddleware(db), handler.ListPosts(db))
 		post.GET("/:postId", middleware.AuthMiddleware(db), handler.GetPost(db))
 		post.DELETE("/:postId", middleware.AuthMiddleware(db), handler.DeletePost(db))
 		post.POST("/:postId/reports", middleware.AuthMiddleware(db), handler.ReportPost(db))
