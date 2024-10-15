@@ -24,7 +24,7 @@ type LlmRequest struct {
 // @Accept       json
 // @Produce      json
 // @Param        input   body      LlmRequest  true  "인풋"
-// @Success      200 {object} pkg.BaseResponseStruct{data=userProfileResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=UserProfileResponse} "성공"
 // @Router       /v1/recommend/recommendation/llm [post]
 // @Security BearerAuth
 func LlmHandler(db *sql.DB) gin.HandlerFunc {
@@ -74,8 +74,8 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Populate the userProfileResponse with gRPC response data
-		userProfileRes := userProfileResponse{
-			Songs: []songResponse{},
+		userProfileRes := UserProfileResponse{
+			Songs: []SongResponse{},
 		}
 
 		// SongInfoId 리스트를 담을 빈 리스트 생성
@@ -107,7 +107,7 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 
 		// Loop through the gRPC response to populate songResponse
 		for _, item := range response.SimilarItems {
-			userProfileRes.Songs = append(userProfileRes.Songs, songResponse{
+			userProfileRes.Songs = append(userProfileRes.Songs, SongResponse{
 				SongNumber: int(item.SongNumber),
 				SongName:   item.SongName,
 				SingerName: item.SingerName,
