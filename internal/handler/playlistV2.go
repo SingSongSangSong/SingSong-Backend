@@ -163,7 +163,9 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 		} else if len(keepSongs) > 0 && (filter == "recent" || filter == "old") {
 			lastCursor = keepSongs[len(keepSongs)-1].KeepSongId
 		}
-
+		if len(keepSongs) == 0 && filter == "alphabet" || filter == "old" {
+			lastCursor = cursorInt
+		}
 		getPlayListV2Response := GetPlayListV2Response{
 			PlayListResponse: keepSongs,
 			LastCursor:       lastCursor,
