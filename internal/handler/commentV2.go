@@ -8,35 +8,20 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type CommentPageResponse struct {
-	Comments   []V2CommentResponse `json:"comments"`
-	LastCursor int64               `json:"lastCursor"`
-}
-
-type V2CommentResponse struct {
-	CommentId       int64     `json:"commentId"`
-	Content         string    `json:"content"`
-	IsRecomment     bool      `json:"isRecomment"`
-	ParentCommentId int64     `json:"parentCommentId"`
-	SongInfoId      int64     `json:"songId"`
-	MemberId        int64     `json:"memberId"`
-	Nickname        string    `json:"nickname"`
-	CreatedAt       time.Time `json:"createdAt"`
-	Likes           int       `json:"likes"`
-	IsLiked         bool      `json:"isLiked"`
-	RecommentsCount int       `json:"recommentsCount"`
+	Comments   []CommentWithRecommentsCountResponse `json:"comments"`
+	LastCursor int64                                `json:"lastCursor"`
 }
 
 // GetCommentsOnSongV2 godoc
-// @Summary      특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순, 추천순, 커서페이징 적용)
-// @Description  특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순, 추천순, 커서페이징 적용) - query param이 없으면 디폴트는 최신순 입니다.
+// @Summary      특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순 커서페이징 적용)
+// @Description  특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순 커서페이징 적용) - query param이 없으면 디폴트는 최신순 입니다.
 // @Tags         Comment
 // @Accept       json
 // @Produce      json
-// @Param        filter query string false "정렬 기준. 최신순(디폴트)=recent, 오래된순=old, 추천순=best"
+// @Param        filter query string false "정렬 기준. 최신순(디폴트)=recent, 오래된순=old"
 // @Param        size query string false "한번에 조회할 댓글의 개수. 디폴트값은 20"
 // @Param        cursor query string false "마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 댓글부터 줌"
 // @Param        songId path string true "songId"
@@ -113,7 +98,7 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 
 		if len(comments) == 0 {
 			pkg.BaseResponse(c, http.StatusOK, "success", CommentPageResponse{
-				[]V2CommentResponse{},
+				[]CommentWithRecommentsCountResponse{},
 				0,
 			})
 			return
@@ -144,11 +129,11 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Initialize a slice to hold all comments
-		var topLevelComments []V2CommentResponse
+		var topLevelComments []CommentWithRecommentsCountResponse
 
 		// Add all top-level comments (those without parent comments) to the slice
 		for _, comment := range comments {
-			topLevelComments = append(topLevelComments, V2CommentResponse{
+			topLevelComments = append(topLevelComments, CommentWithRecommentsCountResponse{
 				CommentId:       comment.CommentID,
 				Content:         comment.Content.String,
 				IsRecomment:     comment.IsRecomment.Bool,

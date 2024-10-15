@@ -812,14 +812,29 @@ func DeleteComment(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
+type CommentWithRecommentsCountResponse struct {
+	CommentId       int64     `json:"commentId"`
+	Content         string    `json:"content"`
+	IsRecomment     bool      `json:"isRecomment"`
+	ParentCommentId int64     `json:"parentCommentId"`
+	SongInfoId      int64     `json:"songId"`
+	MemberId        int64     `json:"memberId"`
+	Nickname        string    `json:"nickname"`
+	CreatedAt       time.Time `json:"createdAt"`
+	Likes           int       `json:"likes"`
+	IsLiked         bool      `json:"isLiked"`
+	RecommentsCount int       `json:"recommentsCount"`
+}
+
 // GetHotComment godoc
 // @Summary      특정 노래의 핫 댓글 한개 가져오기
 // @Description  특정 노래의 핫 댓글 한개 가져오기. 댓글이 없으면 data가 null로 갑니다.
 // @Tags         Comment
 // @Accept       json
 // @Produce      json
+// @Param        size query string false "조회할 hot 댓글의 개수. 입력하지 않는다면 기본값은 1"
 // @Param        songId path string true "songId"
-// @Success      200 {object} pkg.BaseResponseStruct{data=MyCommentPageResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=[]CommentWithRecommentsCountResponse} "성공"
 // @Router       /v1/songs/{songId}/hot-comment [get]
 // @Security BearerAuth
 func GetHotCommentOfSong(db *sql.DB) gin.HandlerFunc {
@@ -833,6 +848,13 @@ func GetHotCommentOfSong(db *sql.DB) gin.HandlerFunc {
 		songInfoId := c.Param("songId")
 		if songInfoId == "" {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find songId in path variable", nil)
+			return
+		}
+
+		sizeStr := c.DefaultQuery("size", "1")
+		sizeInt, err := strconv.Atoi(sizeStr)
+		if err != nil || sizeInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
 			return
 		}
 
@@ -856,44 +878,60 @@ func GetHotCommentOfSong(db *sql.DB) gin.HandlerFunc {
 			qm.Where("comment.deleted_at is null"),
 			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...),
 			qm.OrderBy("likes desc"),
-			qm.Limit(1),
+			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		//댓글이 없다면
+		// 댓글이 없다면 빈 리스트 반환
 		if len(comments) == 0 {
-			pkg.BaseResponse(c, http.StatusOK, "ok", nil)
+			pkg.BaseResponse(c, http.StatusOK, "ok", []CommentWithRecommentsCountResponse{})
 			return
 		}
 
-		// 댓글이 있다면 comments의 첫 번째를 사용
-		comment := comments[0]
+		// 댓글 ID 리스트 생성
+		commentIDs := make([]interface{}, 0, len(comments))
+		for _, comment := range comments {
+			commentIDs = append(commentIDs, comment.CommentID)
+		}
 
-		// 댓글 좋아요 여부 조회
-		isLiked, err := mysql.CommentLikes(
-			qm.Where("comment_id = ?", comment.CommentID),
+		// 모든 댓글의 좋아요 여부를 한 번에 조회
+		likesMap := make(map[int64]bool)
+		likedComments, err := mysql.CommentLikes(
+			qm.WhereIn("comment_id IN ?", commentIDs...),
 			qm.And("member_id = ?", memberId),
 			qm.Where("deleted_at is null"),
-		).Exists(c.Request.Context(), db)
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		response := HotCommentResponse{
-			CommentId:       comment.CommentID,
-			Content:         comment.Content.String,
-			IsRecomment:     comment.IsRecomment.Bool,
-			ParentCommentId: comment.ParentCommentID.Int64,
-			MemberId:        comment.MemberID,
-			Nickname:        comment.R.Member.Nickname.String,
-			CreatedAt:       comment.CreatedAt.Time,
-			Likes:           comment.Likes.Int,
-			IsLiked:         isLiked,
+		for _, likedComment := range likedComments {
+			likesMap[likedComment.CommentID] = true
 		}
+
+		// 댓글 리스트 생성
+		response := make([]CommentWithRecommentsCountResponse, 0, sizeInt)
+		for _, comment := range comments {
+			response = append(response, CommentWithRecommentsCountResponse{
+				CommentId:       comment.CommentID,
+				Content:         comment.Content.String,
+				IsRecomment:     comment.IsRecomment.Bool,
+				ParentCommentId: comment.ParentCommentID.Int64,
+				SongInfoId:      comment.SongInfoID,
+				MemberId:        comment.MemberID,
+				Nickname:        comment.R.Member.Nickname.String,
+				CreatedAt:       comment.CreatedAt.Time,
+				Likes:           comment.Likes.Int,
+				IsLiked:         likesMap[comment.CommentID],
+				RecommentsCount: 0, //todo:
+			})
+		}
+
+		// 댓글 리스트 응답
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }
