@@ -2335,7 +2335,7 @@ paths:
       summary: 노래 상세 정보를 조회합니다
       tags:
       - Songs
-  /v1/songs/{songId}/hot-comment:
+  /v1/songs/{songId}/comments/hot:
     get:
       consumes:
       - application/json

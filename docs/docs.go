@@ -2462,7 +2462,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/songs/{songId}/hot-comment": {
+        "/v1/songs/{songId}/comments/hot": {
             "get": {
                 "security": [
                     {

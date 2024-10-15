@@ -835,7 +835,7 @@ type CommentWithRecommentsCountResponse struct {
 // @Param        size query string false "조회할 hot 댓글의 개수. 입력하지 않는다면 기본값은 1"
 // @Param        songId path string true "songId"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]CommentWithRecommentsCountResponse} "성공"
-// @Router       /v1/songs/{songId}/hot-comment [get]
+// @Router       /v1/songs/{songId}/comments/hot [get]
 // @Security BearerAuth
 func GetHotCommentOfSong(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -913,6 +913,23 @@ func GetHotCommentOfSong(db *sql.DB) gin.HandlerFunc {
 			likesMap[likedComment.CommentID] = true
 		}
 
+		// 모든 댓글의 RecommentsCount를 한 번에 조회
+		recomments, err := mysql.Comments(
+			qm.WhereIn("parent_comment_id IN ?", commentIDs...),
+			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		recommentsCountMap := make(map[int64]int)
+		for _, recomment := range recomments {
+			if recomment.ParentCommentID.Valid {
+				recommentsCountMap[recomment.ParentCommentID.Int64]++
+			}
+		}
+
 		// 댓글 리스트 생성
 		response := make([]CommentWithRecommentsCountResponse, 0, sizeInt)
 		for _, comment := range comments {
@@ -927,7 +944,7 @@ func GetHotCommentOfSong(db *sql.DB) gin.HandlerFunc {
 				CreatedAt:       comment.CreatedAt.Time,
 				Likes:           comment.Likes.Int,
 				IsLiked:         likesMap[comment.CommentID],
-				RecommentsCount: 0, //todo:
+				RecommentsCount: recommentsCountMap[comment.CommentID],
 			})
 		}
 

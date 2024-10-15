@@ -38,7 +38,7 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 		}
 
 		filter := c.DefaultQuery("filter", "recent")
-		if filter == "" || (filter != "recent" && filter != "old" && filter != "best") {
+		if filter == "" || (filter != "recent" && filter != "old") {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid filter in query", nil)
 			return
 		}
@@ -54,7 +54,7 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 		if filter == "old" {
 			cursorStr = c.DefaultQuery("cursor", "0")
 		}
-		cursorInt, err := strconv.Atoi(cursorStr)
+		cursorInt, err := strconv.ParseInt(cursorStr, 10, 64)
 		if err != nil || cursorInt < 0 {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 			return
@@ -77,7 +77,6 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
 		}
 
-		//todo: 인기순
 		// 댓글 가져오기 (최신순/오래된순)
 		orderBy := "comment.comment_id DESC"
 		cursorCondition := "comment.comment_id < ?" //기본은 최신순
@@ -91,15 +90,19 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL", songId),
 			qm.WhereNotIn("comment.member_id NOT IN ?", blockedMemberIds...),
 			qm.And(cursorCondition, cursorInt),
-			qm.And("comment.is_recomment = false"),
+			qm.And("comment.parent_comment_id == 0"),
 			qm.OrderBy(orderBy),
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 
 		if len(comments) == 0 {
+			var lastCursor int64 = 0
+			if filter == "old" {
+				lastCursor = cursorInt
+			}
 			pkg.BaseResponse(c, http.StatusOK, "success", CommentPageResponse{
 				[]CommentWithRecommentsCountResponse{},
-				0,
+				lastCursor,
 			})
 			return
 		}
@@ -128,6 +131,23 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 			likedCommentMap[like.CommentID] = true
 		}
 
+		// 모든 댓글의 RecommentsCount를 한 번에 조회
+		recomments, err := mysql.Comments(
+			qm.WhereIn("parent_comment_id IN ?", commentIDs...),
+			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		recommentsCountMap := make(map[int64]int)
+		for _, recomment := range recomments {
+			if recomment.ParentCommentID.Valid {
+				recommentsCountMap[recomment.ParentCommentID.Int64]++
+			}
+		}
+
 		// Initialize a slice to hold all comments
 		var topLevelComments []CommentWithRecommentsCountResponse
 
@@ -144,7 +164,7 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 				CreatedAt:       comment.CreatedAt.Time,
 				Likes:           comment.Likes.Int,
 				IsLiked:         likedCommentMap[comment.CommentID],
-				RecommentsCount: 0, //todo:
+				RecommentsCount: recommentsCountMap[comment.CommentID],
 			})
 		}
 
