@@ -251,7 +251,6 @@ definitions:
       isMr:
         type: boolean
       keepSongId:
-        description: 마지막 커서 값을 저장하기 위해 추가
         type: integer
       melonLink:
         type: string
@@ -687,6 +686,13 @@ definitions:
     type: object
   handler.refreshRequest:
     properties:
+      tag:
+        type: string
+    type: object
+  handler.refreshRequestV2:
+    properties:
+      page:
+        type: integer
       tag:
         type: string
     type: object
@@ -2751,6 +2757,37 @@ paths:
       summary: AI가 골랐송 Without GRPC
       tags:
       - Recommendation
+  /v2/recommend/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 태그에 해당하는 노래 목록을 보여줍니다.
+      parameters:
+      - description: 태그
+        in: body
+        name: songs
+        required: true
+        schema:
+          $ref: '#/definitions/handler.refreshRequestV2'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.refreshResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 새로고침 노래 추천V2
+      tags:
+      - Recommendation
   /v2/songs/{songId}/related:
     get:
       consumes:
@@ -2789,6 +2826,21 @@ paths:
       summary: 연관된 노래들을 조회합니다
       tags:
       - Songs
+  /v2/tags:
+    get:
+      consumes:
+      - application/json
+      description: ssss 태그 목록을 조회합니다 V2
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: ssss 태그 목록 가져오기 V2
+      tags:
+      - Tags
 securityDefinitions:
   BearerAuth:
     in: header

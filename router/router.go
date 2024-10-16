@@ -56,12 +56,18 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	recommendV2 := r.Group("/api/v2/recommend")
 	{
 		recommendV2.GET("recommendation/ai", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
+		recommendV2.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendationV2(db))
 	}
 
 	// 태그 엔드포인트 설정
 	tags := r.Group("/api/v1/tags")
 	{
 		tags.GET("", handler.ListTags())
+	}
+
+	tagsV2 := r.Group("/api/v2/tags")
+	{
+		tagsV2.GET("", handler.ListTagsV2())
 	}
 
 	member := r.Group("/api/v1/member")
