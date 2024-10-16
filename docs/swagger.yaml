@@ -2761,7 +2761,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 태그에 해당하는 노래 목록을 보여줍니다.
+      description: 태그에 해당하는 노래 목록을 보여줍니다. 첫페이지는 1입니당!
       parameters:
       - description: 태그
         in: body
