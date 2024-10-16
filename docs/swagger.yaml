@@ -2830,7 +2830,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: ssss 태그 목록을 조회합니다 V2
+      description: 태그 목록을 조회합니다 V2
       produces:
       - application/json
       responses:
@@ -2838,7 +2838,7 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/pkg.BaseResponseStruct'
-      summary: ssss 태그 목록 가져오기 V2
+      summary: 태그 목록 가져오기 V2
       tags:
       - Tags
 securityDefinitions:

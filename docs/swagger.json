@@ -3253,7 +3253,7 @@
         },
         "/v2/tags": {
             "get": {
-                "description": "ssss 태그 목록을 조회합니다 V2",
+                "description": "태그 목록을 조회합니다 V2",
                 "consumes": [
                     "application/json"
                 ],
@@ -3263,7 +3263,7 @@
                 "tags": [
                     "Tags"
                 ],
-                "summary": "ssss 태그 목록 가져오기 V2",
+                "summary": "태그 목록 가져오기 V2",
                 "responses": {
                     "200": {
                         "description": "OK",
