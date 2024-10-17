@@ -3144,6 +3144,60 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/recommend/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "태그에 해당하는 노래 목록을 보여줍니다. 첫페이지는 1입니당!",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "새로고침 노래 추천V2",
+                "parameters": [
+                    {
+                        "description": "태그",
+                        "name": "songs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.refreshRequestV2"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.refreshResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v2/songs/{songId}/related": {
             "get": {
                 "security": [
@@ -3200,6 +3254,29 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/tags": {
+            "get": {
+                "description": "태그 목록을 조회합니다 V2",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "태그 목록 가져오기 V2",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
                         }
                     }
                 }
@@ -3593,7 +3670,6 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "keepSongId": {
-                    "description": "마지막 커서 값을 저장하기 위해 추가",
                     "type": "integer"
                 },
                 "melonLink": {
@@ -4264,6 +4340,17 @@ const docTemplate = `{
         "handler.refreshRequest": {
             "type": "object",
             "properties": {
+                "tag": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.refreshRequestV2": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
                 "tag": {
                     "type": "string"
                 }
