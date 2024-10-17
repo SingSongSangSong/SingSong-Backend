@@ -4108,6 +4108,9 @@ const docTemplate = `{
                 "likes": {
                     "type": "integer"
                 },
+                "memberId": {
+                    "type": "integer"
+                },
                 "nickname": {
                     "type": "string"
                 },

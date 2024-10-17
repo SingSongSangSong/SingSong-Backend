@@ -338,6 +338,7 @@ type postPreviewResponse struct {
 	Title        string    `json:"title"`
 	Content      string    `json:"content"`
 	Nickname     string    `json:"nickname"`
+	MemberId     int64     `json:"memberId"`
 	Likes        int       `json:"likes"`
 	CommentCount int       `json:"commentCount"`
 	CreatedAt    time.Time `json:"createdAt"`
@@ -415,6 +416,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 				Title:        post.Title,
 				Content:      post.Content.String,
 				Nickname:     post.R.Member.Nickname.String,
+				MemberId:     post.MemberID,
 				Likes:        post.Likes,
 				CommentCount: len(comments),
 				CreatedAt:    post.CreatedAt.Time,
