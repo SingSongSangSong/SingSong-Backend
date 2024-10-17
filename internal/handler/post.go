@@ -396,6 +396,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			qm.Load(mysql.PostRels.Member),
 			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
 			qm.Where("post.post_id < ?", cursorInt),
+			qm.Where("post.deleted_at is null"),
 			qm.WhereNotIn("post.member_id not IN ?", blockedMemberIds...),
 			qm.OrderBy("post.post_id DESC"),
 			qm.Limit(sizeInt),
