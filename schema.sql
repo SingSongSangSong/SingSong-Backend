@@ -345,19 +345,6 @@ ALTER TABLE llm_search_log
     ADD CONSTRAINT fk_llm_search_log_member_id
     FOREIGN KEY (member_id) REFERENCES member(member_id);
 
-CREATE TABALE user_device_token (
-    user_device_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    member_id BIGINT NOT NULL,
-    device_token VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
-ALTER TABLE user_device_token
-    ADD CONSTRAINT fk_member_id
-    FOREIGN KEY (member_id) REFERENCES member(member_id)
-
 ALTER TABLE song_info
 DROP COLUMN tags,
 DROP COLUMN artist_id,
@@ -389,3 +376,17 @@ ADD COLUMN pop BOOL DEFAULT FALSE,
 ADD COLUMN office BOOL DEFAULT FALSE,
 ADD COLUMN wedding BOOL DEFAULT FALSE,
 ADD COLUMN military BOOL DEFAULT FALSE;
+
+CREATE TABLE member_device_token (
+     member_device_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+     member_id BIGINT NOT NULL,
+     device_token VARCHAR(255) NOT NULL,
+     is_activate BOOL DEFAULT TRUE,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+ALTER TABLE member_device_token
+    ADD CONSTRAINT fk_member_device_token_member_id
+        FOREIGN KEY (member_id) REFERENCES member(member_id);
