@@ -26,7 +26,7 @@ type refreshResponseV2 struct {
 // @Accept       json
 // @Produce      json
 // @Param        songs   body      refreshRequestV2  true  "태그"
-// @Success      200 {object} pkg.BaseResponseStruct{data=[]refreshResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=refreshResponseV2} "성공"
 // @Router       /v2/recommend/refresh [post]
 // @Security BearerAuth
 func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {

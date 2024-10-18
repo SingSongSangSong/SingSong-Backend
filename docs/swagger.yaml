@@ -723,6 +723,15 @@ definitions:
       songNumber:
         type: integer
     type: object
+  handler.refreshResponseV2:
+    properties:
+      nextPage:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/handler.refreshResponse'
+        type: array
+    type: object
   handler.relatedSong:
     properties:
       album:
@@ -2781,9 +2790,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  items:
-                    $ref: '#/definitions/handler.refreshResponse'
-                  type: array
+                  $ref: '#/definitions/handler.refreshResponseV2'
               type: object
       security:
       - BearerAuth: []

@@ -3185,10 +3185,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.refreshResponse"
-                                            }
+                                            "$ref": "#/definitions/handler.refreshResponseV2"
                                         }
                                     }
                                 }
@@ -4394,6 +4391,20 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.refreshResponseV2": {
+            "type": "object",
+            "properties": {
+                "nextPage": {
+                    "type": "integer"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.refreshResponse"
+                    }
                 }
             }
         },
