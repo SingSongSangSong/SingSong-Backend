@@ -18,8 +18,8 @@ import (
 	"time"
 )
 
-// songHomeResponse와 songResponse가 동일한 것으로 가정하고 사용
-type songResponse struct {
+// SongResponse songHomeResponse songResponse가 동일한 것으로 가정하고 사용
+type SongResponse struct {
 	SongNumber   int    `json:"songNumber"`
 	SongName     string `json:"songName"`
 	SingerName   string `json:"singerName"`
@@ -33,8 +33,8 @@ type songResponse struct {
 	MelonLink    string `json:"melonLink"`
 }
 
-type userProfileResponse struct {
-	Songs []songResponse `json:"songs"`
+type UserProfileResponse struct {
+	Songs []SongResponse `json:"songs"`
 }
 
 var (
@@ -47,7 +47,7 @@ var (
 // @Tags         Recommendation
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} pkg.BaseResponseStruct{data=userProfileResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=UserProfileResponse} "성공"
 // @Router       /v1/recommend/recommendation/ai [get]
 // @Router       /v1/recommend/recommendation/{pageId} [get]
 // @Security BearerAuth
@@ -111,8 +111,8 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		}
 
 		// Populate the userProfileResponse with gRPC response data
-		userProfileRes := userProfileResponse{
-			Songs: []songResponse{},
+		userProfileRes := UserProfileResponse{
+			Songs: []SongResponse{},
 		}
 
 		// SongInfoId 리스트를 담을 빈 리스트 생성
@@ -210,7 +210,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 			}
 
 			// userProfileRes.Songs에 추가
-			userProfileRes.Songs = append(userProfileRes.Songs, songResponse{
+			userProfileRes.Songs = append(userProfileRes.Songs, SongResponse{
 				SongNumber:   songInfoMap[item.SongInfoId].SongNumber,
 				SongName:     songInfoMap[item.SongInfoId].SongName,
 				SingerName:   songInfoMap[item.SongInfoId].ArtistName,

@@ -92,11 +92,11 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
 				return
 			}
-			orderClause = "ORDER BY keep_song.created_at DESC"
-			cursorCondition = "AND song_info.song_info_id < ?"
+			orderClause = "ORDER BY keep_song.keep_song_id DESC"
+			cursorCondition = "AND keep_song.keep_song_id < ?"
 		case "old":
-			orderClause = "ORDER BY keep_song.created_at ASC"
-			cursorCondition = "AND song_info.song_info_id > ?"
+			orderClause = "ORDER BY keep_song.keep_song_id ASC"
+			cursorCondition = "AND keep_song.keep_song_id > ?"
 		default:
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid filter parameter", nil)
 			return
@@ -104,7 +104,7 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 
 		// 공통 쿼리 생성
 		query := fmt.Sprintf(`
-			SELECT song_info.song_number, song_info.song_name, song_info.artist_name, song_info.song_info_id, song_info.album, song_info.is_mr, song_info.is_live, song_info.melon_song_id
+			SELECT song_info.song_number, song_info.song_name, song_info.artist_name, song_info.song_info_id, song_info.album, song_info.is_mr, song_info.is_live, song_info.melon_song_id, keep_song.keep_song_id
 			FROM keep_song
 			LEFT JOIN song_info ON keep_song.song_info_id = song_info.song_info_id
 			WHERE keep_song.keep_list_id = ? AND keep_song.deleted_at IS NULL %s %s
@@ -125,6 +125,7 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 		// 조회 결과를 반복하면서 값을 스캔
 		for rows.Next() {
 			var keepSong KeepSongsWithSongName
+			var keepSongId int64
 			err := rows.Scan(
 				&keepSong.SongNumber,
 				&keepSong.SongName,
@@ -134,6 +135,7 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 				&keepSong.IsMr,
 				&keepSong.IsLive,
 				&keepSong.MelonSongId,
+				&keepSongId,
 			)
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
@@ -149,16 +151,21 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 				IsMr:       keepSong.IsMr.Bool,
 				IsLive:     keepSong.IsLive.Bool,
 				MelonLink:  CreateMelonLinkByMelonSongId(null.StringFrom(keepSong.MelonSongId.String)),
+				KeepSongId: keepSongId,
 			}
 			keepSongs = append(keepSongs, playlistAddResponse)
 		}
 
 		// 다음 페이지를 위한 커서 값 설정
 		var lastCursor int64 = 0
-		if len(keepSongs) > 0 {
+		if len(keepSongs) > 0 && filter == "alphabet" {
 			lastCursor = keepSongs[len(keepSongs)-1].SongInfoId
+		} else if len(keepSongs) > 0 && (filter == "recent" || filter == "old") {
+			lastCursor = keepSongs[len(keepSongs)-1].KeepSongId
 		}
-
+		if len(keepSongs) == 0 && (filter == "alphabet" || filter == "old") {
+			lastCursor = cursorInt
+		}
 		getPlayListV2Response := GetPlayListV2Response{
 			PlayListResponse: keepSongs,
 			LastCursor:       lastCursor,

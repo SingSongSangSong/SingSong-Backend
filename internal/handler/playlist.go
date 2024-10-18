@@ -28,6 +28,7 @@ type PlaylistAddResponse struct {
 	IsMr       bool   `json:"isMr"`
 	IsLive     bool   `json:"isLive"`
 	MelonLink  string `json:"melonLink"`
+	KeepSongId int64  `json:"keepSongId"`
 }
 
 // GoRoutine으로 회원가입시에 플레이리스트를 생성한다 (context따로 가져와야함)

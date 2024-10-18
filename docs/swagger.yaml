@@ -250,6 +250,8 @@ definitions:
         type: boolean
       isMr:
         type: boolean
+      keepSongId:
+        type: integer
       melonLink:
         type: string
       singerName:
@@ -466,6 +468,31 @@ definitions:
       songNumber:
         type: integer
     type: object
+  handler.SongResponse:
+    properties:
+      album:
+        type: string
+      commentCount:
+        type: integer
+      isKeep:
+        type: boolean
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      keepCount:
+        type: integer
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
   handler.TotalChartResponse:
     properties:
       female:
@@ -485,6 +512,13 @@ definitions:
     properties:
       nickname:
         type: string
+    type: object
+  handler.UserProfileResponse:
+    properties:
+      songs:
+        items:
+          $ref: '#/definitions/handler.SongResponse'
+        type: array
     type: object
   handler.V2ChartOfKey:
     properties:
@@ -657,6 +691,13 @@ definitions:
       tag:
         type: string
     type: object
+  handler.refreshRequestV2:
+    properties:
+      page:
+        type: integer
+      tag:
+        type: string
+    type: object
   handler.refreshResponse:
     properties:
       album:
@@ -764,31 +805,6 @@ definitions:
           type: string
         type: array
     type: object
-  handler.songResponse:
-    properties:
-      album:
-        type: string
-      commentCount:
-        type: integer
-      isKeep:
-        type: boolean
-      isLive:
-        type: boolean
-      isMr:
-        type: boolean
-      keepCount:
-        type: integer
-      melonLink:
-        type: string
-      singerName:
-        type: string
-      songId:
-        type: integer
-      songName:
-        type: string
-      songNumber:
-        type: integer
-    type: object
   handler.songReviewOptionAddRequest:
     properties:
       enum:
@@ -875,13 +891,6 @@ definitions:
         type: string
       songNumber:
         type: integer
-    type: object
-  handler.userProfileResponse:
-    properties:
-      songs:
-        items:
-          $ref: '#/definitions/handler.songResponse'
-        type: array
     type: object
   handler.versionCheckRequest:
     properties:
@@ -1849,7 +1858,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.userProfileResponse'
+                  $ref: '#/definitions/handler.UserProfileResponse'
               type: object
       security:
       - BearerAuth: []
@@ -1871,7 +1880,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.userProfileResponse'
+                  $ref: '#/definitions/handler.UserProfileResponse'
               type: object
       security:
       - BearerAuth: []
@@ -1958,7 +1967,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.userProfileResponse'
+                  $ref: '#/definitions/handler.UserProfileResponse'
               type: object
       security:
       - BearerAuth: []
@@ -2700,6 +2709,87 @@ paths:
       summary: 로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용
       tags:
       - Signup and Login
+  /v2/recommend/recommendation/{pageId}:
+    get:
+      consumes:
+      - application/json
+      description: 사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.
+      parameters:
+      - description: Page ID
+        in: path
+        name: pageId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.UserProfileResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: AI가 골랐송 Without GRPC
+      tags:
+      - Recommendation
+  /v2/recommend/recommendation/ai:
+    get:
+      consumes:
+      - application/json
+      description: 사용자의 프로필을 기반으로 추천된 노래를 반환합니다. 페이지당 20개의 노래를 반환합니다.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.UserProfileResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: AI가 골랐송 Without GRPC
+      tags:
+      - Recommendation
+  /v2/recommend/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 태그에 해당하는 노래 목록을 보여줍니다. 첫페이지는 1입니당!
+      parameters:
+      - description: 태그
+        in: body
+        name: songs
+        required: true
+        schema:
+          $ref: '#/definitions/handler.refreshRequestV2'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.refreshResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 새로고침 노래 추천V2
+      tags:
+      - Recommendation
   /v2/songs/{songId}/related:
     get:
       consumes:
@@ -2738,6 +2828,21 @@ paths:
       summary: 연관된 노래들을 조회합니다
       tags:
       - Songs
+  /v2/tags:
+    get:
+      consumes:
+      - application/json
+      description: 태그 목록을 조회합니다 V2
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 태그 목록 가져오기 V2
+      tags:
+      - Tags
 securityDefinitions:
   BearerAuth:
     in: header
