@@ -106,13 +106,13 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// Comments 수 가져오기
-		commentsCounts, err := mysql.Comments(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
+		commentsCounts, err := mysql.Comments(qm.WhereIn("song_info_id IN ?", songInfoInterface...), qm.And("deleted_at is null")).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error comments - "+err.Error(), nil)
 			return
 		}
 		// Keep 수 가져오기
-		keepCounts, err := mysql.KeepSongs(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
+		keepCounts, err := mysql.KeepSongs(qm.WhereIn("song_info_id IN ?", songInfoInterface...), qm.And("deleted_at is null")).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error keepsongs- "+err.Error(), nil)
 			return
