@@ -3095,6 +3095,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/recommend/recommendation/functionCallingWithTypes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 20개의 노래를 반환합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "LLM으로 검색하기",
+                "parameters": [
+                    {
+                        "description": "인풋",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LlmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.FunctionCallingWithTypesResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v2/recommend/recommendation/{pageId}": {
             "get": {
                 "security": [
@@ -3412,6 +3463,20 @@ const docTemplate = `{
         "handler.FunctionCallingResponse": {
             "type": "object",
             "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.FunctionCallingDetailResponse"
+                    }
+                }
+            }
+        },
+        "handler.FunctionCallingWithTypesResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
                 "songs": {
                     "type": "array",
                     "items": {
