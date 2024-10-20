@@ -72,7 +72,7 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 			LEFT JOIN keep_song ks ON si.song_info_id = ks.song_info_id AND ks.deleted_at IS NULL
 			WHERE %s = TRUE
 			GROUP BY si.song_info_id
-			ORDER BY (si.tj_score + keep_count + comment_count) desc
+			ORDER BY (si.tj_score + keep_count + comment_count) desc, si.song_info_id desc
 			LIMIT ? OFFSET ?
 		`, column)
 
