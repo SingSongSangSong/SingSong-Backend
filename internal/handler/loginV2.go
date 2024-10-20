@@ -237,6 +237,7 @@ func createAccessTokenAndRefreshTokenV2(c *gin.Context, redis *redis.Client, pay
 	rt := Claims{
 		StandardClaims: jwt.StandardClaims{
 			Audience:  memberIdstr,
+			Id:        memberIdstr,
 			ExpiresAt: refreshTokenExpiresAt,
 			Issuer:    JWT_ISSUER,
 			IssuedAt:  time.Now().Unix(),
