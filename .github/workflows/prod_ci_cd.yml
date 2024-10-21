@@ -77,4 +77,4 @@ jobs:
           task-definition: new-task-definition.json
           service: ${{ env.ECS_SERVICE_NAME }}
           cluster: ${{ env.ECS_CLUSTER_NAME }}
-          wait-for-service-stability: true
+          wait-for-service-stability: false
