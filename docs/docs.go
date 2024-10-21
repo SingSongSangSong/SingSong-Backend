@@ -2462,14 +2462,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/songs/{songId}/hot-comment": {
+        "/v1/songs/{songId}/comments/hot": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "특정 노래의 핫 댓글 한개 가져오기. 댓글이 없으면 data가 null로 갑니다.",
+                "description": "특정 노래의 핫 댓글 가져오기. 댓글이 없으면 data가 null로 갑니다. 기본값은 댓글 1개인데, size 쿼리 조절해서 더 가져올수 있어요.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2479,8 +2479,14 @@ const docTemplate = `{
                 "tags": [
                     "Comment"
                 ],
-                "summary": "특정 노래의 핫 댓글 한개 가져오기",
+                "summary": "특정 노래의 핫 댓글 가져오기(현재 핫 댓글 조건: 따봉이 5개이상 박혀있는 것중에 따봉 가장 높은거)",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "조회할 hot 댓글의 개수. 입력하지 않는다면 기본값은 1",
+                        "name": "size",
+                        "in": "query"
+                    },
                     {
                         "type": "string",
                         "description": "songId",
@@ -2501,7 +2507,10 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.MyCommentPageResponse"
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.CommentWithRecommentsCountResponse"
+                                            }
                                         }
                                     }
                                 }
@@ -3246,6 +3255,73 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/songs/{songId}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순 커서페이징 적용) - query param이 없으면 디폴트는 최신순 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순 커서페이징 적용)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "정렬 기준. 최신순(디폴트)=recent, 오래된순=old",
+                        "name": "filter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "한번에 조회할 댓글의 개수. 디폴트값은 20",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 댓글부터 줌",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.CommentPageResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v2/songs/{songId}/related": {
             "get": {
                 "security": [
@@ -3364,6 +3440,23 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.CommentPageResponse": {
+            "type": "object",
+            "properties": {
+                "commentCount": {
+                    "type": "integer"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CommentWithRecommentsCountResponse"
+                    }
+                },
+                "lastCursor": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.CommentRequest": {
             "type": "object",
             "properties": {
@@ -3416,6 +3509,44 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.CommentResponse"
                     }
+                },
+                "songId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CommentWithRecommentsCountResponse": {
+            "type": "object",
+            "properties": {
+                "commentId": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                },
+                "recommentsCount": {
+                    "type": "integer"
                 },
                 "songId": {
                     "type": "integer"
