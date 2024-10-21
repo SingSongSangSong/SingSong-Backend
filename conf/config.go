@@ -104,8 +104,6 @@ func init() {
 			return "python-gRPC" // 기본값
 		}(),
 	}
-
-	log.Printf("init success")
 }
 
 func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection, milvusClient *client.Client) {
@@ -123,6 +121,7 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err := (*db).Ping(); err != nil {
 		log.Fatalf("Mysql ping 실패: %v", err)
 	}
+
 	// 레디스
 	*rdb = redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_ADDR") + ":" + os.Getenv("REDIS_PORT"),
@@ -139,6 +138,7 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Milvus 연결 실패: %v", err)
 	}
+
 	// Pinecone 연결
 	pineconeApiKey := os.Getenv("PINECONE_API_KEY")
 	if pineconeApiKey == "" {
