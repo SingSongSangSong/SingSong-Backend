@@ -91,6 +91,15 @@ definitions:
           $ref: '#/definitions/handler.FunctionCallingDetailResponse'
         type: array
     type: object
+  handler.FunctionCallingWithTypesResponse:
+    properties:
+      message:
+        type: string
+      songs:
+        items:
+          $ref: '#/definitions/handler.FunctionCallingDetailResponse'
+        type: array
+    type: object
   handler.GetPlayListV2Response:
     properties:
       lastCursor:
@@ -2766,6 +2775,35 @@ paths:
       security:
       - BearerAuth: []
       summary: AI가 골랐송 Without GRPC
+      tags:
+      - Recommendation
+  /v2/recommend/recommendation/functionCallingWithTypes:
+    post:
+      consumes:
+      - application/json
+      description: LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 20개의 노래를 반환합니다
+      parameters:
+      - description: 인풋
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LlmRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.FunctionCallingWithTypesResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: LLM으로 검색하기
       tags:
       - Recommendation
   /v2/recommend/refresh:
