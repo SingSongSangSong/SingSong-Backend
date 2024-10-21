@@ -827,8 +827,8 @@ type CommentWithRecommentsCountResponse struct {
 }
 
 // GetHotComment godoc
-// @Summary      특정 노래의 핫 댓글 한개 가져오기
-// @Description  특정 노래의 핫 댓글 한개 가져오기. 댓글이 없으면 data가 null로 갑니다.
+// @Summary      특정 노래의 핫 댓글 가져오기(현재 핫 댓글 조건: 따봉이 5개이상 박혀있는 것중에 따봉 가장 높은거)
+// @Description  특정 노래의 핫 댓글 가져오기. 댓글이 없으면 data가 null로 갑니다. 기본값은 댓글 1개인데, size 쿼리 조절해서 더 가져올수 있어요.
 // @Tags         Comment
 // @Accept       json
 // @Produce      json
@@ -876,6 +876,7 @@ func GetHotCommentOfSong(db *sql.DB) gin.HandlerFunc {
 			qm.LeftOuterJoin("member on member.member_id = comment.member_id"),
 			qm.Where("comment.song_info_id = ?", songInfoId),
 			qm.Where("comment.deleted_at is null"),
+			qm.Where("comment.likes > 4"), // todo: 핫 댓글 조건
 			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...),
 			qm.OrderBy("likes desc"),
 			qm.Limit(sizeInt),
