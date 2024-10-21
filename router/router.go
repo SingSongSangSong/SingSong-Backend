@@ -56,6 +56,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	recommendV2 := r.Group("/api/v2/recommend")
 	{
 		recommendV2.GET("recommendation/ai", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
+		recommendV2.GET("recommendation/:pageId", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
 		recommendV2.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendationV2(db))
 		recommendV2.POST("/recommendation/functionCallingWithTypes", middleware.AuthMiddleware(db), handler.FunctionCallingWithTypesRecommedation(db))
 	}
