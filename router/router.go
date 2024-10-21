@@ -56,7 +56,9 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	recommendV2 := r.Group("/api/v2/recommend")
 	{
 		recommendV2.GET("recommendation/ai", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
+		recommendV2.GET("recommendation/:pageId", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
 		recommendV2.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendationV2(db))
+		recommendV2.POST("/recommendation/functionCallingWithTypes", middleware.AuthMiddleware(db), handler.FunctionCallingWithTypesRecommedation(db))
 	}
 
 	// 태그 엔드포인트 설정
@@ -109,12 +111,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		songs.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSong(db, idxConnection))
 		songs.GET("/:songId/link", handler.GetLinkBySongInfoId(db))
 		songs.GET("/new", middleware.AuthMiddleware(db), handler.ListNewSongs(db))
-		songs.GET("/:songId/hot-comment", middleware.AuthMiddleware(db), handler.GetHotCommentOfSong(db))
+		songs.GET("/:songId/comments/hot", middleware.AuthMiddleware(db), handler.GetHotCommentOfSong(db))
 	}
 
 	songsV2 := r.Group("/api/v2/songs")
 	{
 		songsV2.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSongV2(db, milvusClient))
+		songsV2.GET("/:songId/comments", middleware.AuthMiddleware(db), handler.GetCommentsOnSongV2(db))
 	}
 
 	// 노래 리뷰 선택지 추가/조회
