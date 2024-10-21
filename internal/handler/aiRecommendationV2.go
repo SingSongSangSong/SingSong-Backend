@@ -123,6 +123,12 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 			songInfoInterface[i] = v
 		}
 
+		// SQL 실행 전에 songInfoIds가 비어 있는지 확인
+		if len(songInfoIds) == 0 {
+			pkg.BaseResponse(c, http.StatusOK, "success", UserProfileResponse{Songs: []SongResponse{}})
+			return
+		}
+
 		// IN 절에 사용할 플레이스홀더 생성 (예: ?, ?, ?...)
 		placeholders := make([]string, len(songInfoInterface))
 		for i := range songInfoInterface {
@@ -242,10 +248,10 @@ func recommendSimilarSongs(milvus *client.Client, userVector *schemapb.VectorFie
 	res, err := (*milvus).Search(
 		context.Background(),
 		conf.VectorDBConfigInstance.COLLECTION_NAME, // Collection name
-		[]string{},    // Partitions (empty for all partitions)
-		"MR == False", // Optional expression for filtering
-		[]string{"song_info_id", "song_name", "artist_name", "album", "audio_file_url", "song_number", "ssss", "MR"}, // Output fields
-		[]entity.Vector{userVectors}, // Wrap the vector in a slice
+		[]string{},
+		"", // Partitions (empty for all partitions)
+		[]string{"song_info_id", "song_name", "artist_name"}, // Output fields
+		[]entity.Vector{userVectors},                         // Wrap the vector in a slice
 		"vector",
 		entity.COSINE, // Vector field name
 		topK,          // Top-K results
