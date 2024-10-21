@@ -11,8 +11,9 @@ import (
 )
 
 type CommentPageResponse struct {
-	Comments   []CommentWithRecommentsCountResponse `json:"comments"`
-	LastCursor int64                                `json:"lastCursor"`
+	CommentCount int64                                `json:"commentCount"`
+	Comments     []CommentWithRecommentsCountResponse `json:"comments"`
+	LastCursor   int64                                `json:"lastCursor"`
 }
 
 // GetCommentsOnSongV2 godoc
@@ -90,10 +91,18 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL", songId),
 			qm.WhereNotIn("comment.member_id NOT IN ?", blockedMemberIds...),
 			qm.And(cursorCondition, cursorInt),
-			qm.And("comment.parent_comment_id == 0"),
+			qm.And("comment.parent_comment_id = 0"),
 			qm.OrderBy(orderBy),
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
+
+		commentCount, err := mysql.Comments(
+			qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL", songId),
+		).Count(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
 
 		if len(comments) == 0 {
 			var lastCursor int64 = 0
@@ -101,6 +110,7 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 				lastCursor = cursorInt
 			}
 			pkg.BaseResponse(c, http.StatusOK, "success", CommentPageResponse{
+				commentCount,
 				[]CommentWithRecommentsCountResponse{},
 				lastCursor,
 			})
@@ -169,8 +179,9 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 		}
 
 		response := CommentPageResponse{
-			Comments:   topLevelComments,
-			LastCursor: topLevelComments[len(topLevelComments)-1].CommentId,
+			CommentCount: commentCount,
+			Comments:     topLevelComments,
+			LastCursor:   topLevelComments[len(topLevelComments)-1].CommentId,
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "success", response)

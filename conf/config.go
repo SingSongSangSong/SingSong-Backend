@@ -123,7 +123,6 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err := (*db).Ping(); err != nil {
 		log.Fatalf("Mysql ping 실패: %v", err)
 	}
-	log.Printf("mysql success")
 	// 레디스
 	*rdb = redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_ADDR") + ":" + os.Getenv("REDIS_PORT"),
@@ -134,14 +133,12 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Redis 연결 실패: %v", err)
 	}
-	log.Printf("redis success")
 
 	// Milvus 연결
 	*milvusClient, err = client.NewClient(ctx, client.Config{Address: os.Getenv("MILVUS_HOST") + ":" + os.Getenv("MILVUS_PORT")})
 	if err != nil {
 		log.Fatalf("Milvus 연결 실패: %v", err)
 	}
-	log.Printf("milvus success")
 	// Pinecone 연결
 	pineconeApiKey := os.Getenv("PINECONE_API_KEY")
 	if pineconeApiKey == "" {
@@ -162,5 +159,4 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
 	}
-	log.Printf("pinecone success")
 }
