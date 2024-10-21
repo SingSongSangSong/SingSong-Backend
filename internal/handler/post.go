@@ -338,6 +338,7 @@ type postPreviewResponse struct {
 	Title        string    `json:"title"`
 	Content      string    `json:"content"`
 	Nickname     string    `json:"nickname"`
+	MemberId     int64     `json:"memberId"`
 	Likes        int       `json:"likes"`
 	CommentCount int       `json:"commentCount"`
 	CreatedAt    time.Time `json:"createdAt"`
@@ -396,6 +397,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			qm.Load(mysql.PostRels.Member),
 			qm.LeftOuterJoin("post_comment on post_comment.post_id = post.post_id"),
 			qm.Where("post.post_id < ?", cursorInt),
+			qm.Where("post.deleted_at is null"),
 			qm.WhereNotIn("post.member_id not IN ?", blockedMemberIds...),
 			qm.OrderBy("post.post_id DESC"),
 			qm.Limit(sizeInt),
@@ -414,6 +416,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 				Title:        post.Title,
 				Content:      post.Content.String,
 				Nickname:     post.R.Member.Nickname.String,
+				MemberId:     post.MemberID,
 				Likes:        post.Likes,
 				CommentCount: len(comments),
 				CreatedAt:    post.CreatedAt.Time,

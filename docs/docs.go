@@ -2462,7 +2462,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/songs/{songId}/comments/hot": {
+        "/v1/songs/{songId}/hot-comment": {
             "get": {
                 "security": [
                     {
@@ -2483,12 +2483,6 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "조회할 hot 댓글의 개수. 입력하지 않는다면 기본값은 1",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "songId",
                         "name": "songId",
                         "in": "path",
@@ -2507,10 +2501,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.CommentWithRecommentsCountResponse"
-                                            }
+                                            "$ref": "#/definitions/handler.MyCommentPageResponse"
                                         }
                                     }
                                 }
@@ -3104,6 +3095,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/recommend/recommendation/functionCallingWithTypes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 20개의 노래를 반환합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "LLM으로 검색하기",
+                "parameters": [
+                    {
+                        "description": "인풋",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.LlmRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.FunctionCallingWithTypesResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v2/recommend/recommendation/{pageId}": {
             "get": {
                 "security": [
@@ -3153,14 +3195,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/v2/songs/{songId}/comments": {
-            "get": {
+        "/v2/recommend/refresh": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순 커서페이징 적용) - query param이 없으면 디폴트는 최신순 입니다.",
+                "description": "태그에 해당하는 노래 목록을 보여줍니다. 첫페이지는 1입니당!",
                 "consumes": [
                     "application/json"
                 ],
@@ -3168,34 +3210,18 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Comment"
+                    "Recommendation"
                 ],
-                "summary": "특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순 커서페이징 적용)",
+                "summary": "새로고침 노래 추천V2",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "정렬 기준. 최신순(디폴트)=recent, 오래된순=old",
-                        "name": "filter",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "한번에 조회할 댓글의 개수. 디폴트값은 20",
-                        "name": "size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 댓글부터 줌",
-                        "name": "cursor",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "songId",
-                        "name": "songId",
-                        "in": "path",
-                        "required": true
+                        "description": "태그",
+                        "name": "songs",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.refreshRequestV2"
+                        }
                     }
                 ],
                 "responses": {
@@ -3210,7 +3236,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.CommentPageResponse"
+                                            "$ref": "#/definitions/handler.refreshResponseV2"
                                         }
                                     }
                                 }
@@ -3280,6 +3306,29 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v2/tags": {
+            "get": {
+                "description": "태그 목록을 조회합니다 V2",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "태그 목록 가져오기 V2",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -3312,20 +3361,6 @@ const docTemplate = `{
                 },
                 "totalScore": {
                     "type": "number"
-                }
-            }
-        },
-        "handler.CommentPageResponse": {
-            "type": "object",
-            "properties": {
-                "comments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/handler.CommentWithRecommentsCountResponse"
-                    }
-                },
-                "lastCursor": {
-                    "type": "integer"
                 }
             }
         },
@@ -3387,44 +3422,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.CommentWithRecommentsCountResponse": {
-            "type": "object",
-            "properties": {
-                "commentId": {
-                    "type": "integer"
-                },
-                "content": {
-                    "type": "string"
-                },
-                "createdAt": {
-                    "type": "string"
-                },
-                "isLiked": {
-                    "type": "boolean"
-                },
-                "isRecomment": {
-                    "type": "boolean"
-                },
-                "likes": {
-                    "type": "integer"
-                },
-                "memberId": {
-                    "type": "integer"
-                },
-                "nickname": {
-                    "type": "string"
-                },
-                "parentCommentId": {
-                    "type": "integer"
-                },
-                "recommentsCount": {
-                    "type": "integer"
-                },
-                "songId": {
-                    "type": "integer"
-                }
-            }
-        },
         "handler.FunctionCallingDetailResponse": {
             "type": "object",
             "properties": {
@@ -3466,6 +3463,20 @@ const docTemplate = `{
         "handler.FunctionCallingResponse": {
             "type": "object",
             "properties": {
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.FunctionCallingDetailResponse"
+                    }
+                }
+            }
+        },
+        "handler.FunctionCallingWithTypesResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
                 "songs": {
                     "type": "array",
                     "items": {
@@ -4377,6 +4388,9 @@ const docTemplate = `{
                 "likes": {
                     "type": "integer"
                 },
+                "memberId": {
+                    "type": "integer"
+                },
                 "nickname": {
                     "type": "string"
                 },
@@ -4391,6 +4405,17 @@ const docTemplate = `{
         "handler.refreshRequest": {
             "type": "object",
             "properties": {
+                "tag": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.refreshRequestV2": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
                 "tag": {
                     "type": "string"
                 }
@@ -4431,6 +4456,20 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.refreshResponseV2": {
+            "type": "object",
+            "properties": {
+                "nextPage": {
+                    "type": "integer"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.refreshResponse"
+                    }
                 }
             }
         },

@@ -164,6 +164,7 @@ func GetCommentOnSong(db *sql.DB) gin.HandlerFunc {
 		likes, err := mysql.CommentLikes(
 			qm.WhereIn("comment_id IN ?", commentIDs...),
 			qm.And("member_id = ?", blockerId),
+			qm.And("deleted_at is null"),
 		).All(c.Request.Context(), db)
 
 		if err != nil {

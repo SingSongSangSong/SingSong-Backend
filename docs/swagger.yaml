@@ -21,15 +21,6 @@ definitions:
       totalScore:
         type: number
     type: object
-  handler.CommentPageResponse:
-    properties:
-      comments:
-        items:
-          $ref: '#/definitions/handler.CommentWithRecommentsCountResponse'
-        type: array
-      lastCursor:
-        type: integer
-    type: object
   handler.CommentRequest:
     properties:
       content:
@@ -68,31 +59,6 @@ definitions:
       songId:
         type: integer
     type: object
-  handler.CommentWithRecommentsCountResponse:
-    properties:
-      commentId:
-        type: integer
-      content:
-        type: string
-      createdAt:
-        type: string
-      isLiked:
-        type: boolean
-      isRecomment:
-        type: boolean
-      likes:
-        type: integer
-      memberId:
-        type: integer
-      nickname:
-        type: string
-      parentCommentId:
-        type: integer
-      recommentsCount:
-        type: integer
-      songId:
-        type: integer
-    type: object
   handler.FunctionCallingDetailResponse:
     properties:
       album:
@@ -120,6 +86,15 @@ definitions:
     type: object
   handler.FunctionCallingResponse:
     properties:
+      songs:
+        items:
+          $ref: '#/definitions/handler.FunctionCallingDetailResponse'
+        type: array
+    type: object
+  handler.FunctionCallingWithTypesResponse:
+    properties:
+      message:
+        type: string
       songs:
         items:
           $ref: '#/definitions/handler.FunctionCallingDetailResponse'
@@ -711,6 +686,8 @@ definitions:
         type: string
       likes:
         type: integer
+      memberId:
+        type: integer
       nickname:
         type: string
       postId:
@@ -720,6 +697,13 @@ definitions:
     type: object
   handler.refreshRequest:
     properties:
+      tag:
+        type: string
+    type: object
+  handler.refreshRequestV2:
+    properties:
+      page:
+        type: integer
       tag:
         type: string
     type: object
@@ -747,6 +731,15 @@ definitions:
         type: string
       songNumber:
         type: integer
+    type: object
+  handler.refreshResponseV2:
+    properties:
+      nextPage:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/handler.refreshResponse'
+        type: array
     type: object
   handler.relatedSong:
     properties:
@@ -2335,16 +2328,12 @@ paths:
       summary: 노래 상세 정보를 조회합니다
       tags:
       - Songs
-  /v1/songs/{songId}/comments/hot:
+  /v1/songs/{songId}/hot-comment:
     get:
       consumes:
       - application/json
       description: 특정 노래의 핫 댓글 한개 가져오기. 댓글이 없으면 data가 null로 갑니다.
       parameters:
-      - description: 조회할 hot 댓글의 개수. 입력하지 않는다면 기본값은 1
-        in: query
-        name: size
-        type: string
       - description: songId
         in: path
         name: songId
@@ -2360,9 +2349,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  items:
-                    $ref: '#/definitions/handler.CommentWithRecommentsCountResponse'
-                  type: array
+                  $ref: '#/definitions/handler.MyCommentPageResponse'
               type: object
       security:
       - BearerAuth: []
@@ -2790,31 +2777,18 @@ paths:
       summary: AI가 골랐송 Without GRPC
       tags:
       - Recommendation
-  /v2/songs/{songId}/comments:
-    get:
+  /v2/recommend/recommendation/functionCallingWithTypes:
+    post:
       consumes:
       - application/json
-      description: 특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순 커서페이징 적용) - query param이 없으면 디폴트는
-        최신순 입니다.
+      description: LLM의 사용자 입력을 토대로 추천된 노래를 반환합니다. 20개의 노래를 반환합니다
       parameters:
-      - description: 정렬 기준. 최신순(디폴트)=recent, 오래된순=old
-        in: query
-        name: filter
-        type: string
-      - description: 한번에 조회할 댓글의 개수. 디폴트값은 20
-        in: query
-        name: size
-        type: string
-      - description: 마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
-          정렬기준의 가장 처음 댓글부터 줌
-        in: query
-        name: cursor
-        type: string
-      - description: songId
-        in: path
-        name: songId
+      - description: 인풋
+        in: body
+        name: input
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/handler.LlmRequest'
       produces:
       - application/json
       responses:
@@ -2825,13 +2799,42 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.CommentPageResponse'
+                  $ref: '#/definitions/handler.FunctionCallingWithTypesResponse'
               type: object
       security:
       - BearerAuth: []
-      summary: 특정 노래의 댓글 목록 가져오기V2(최신순, 오래된순 커서페이징 적용)
+      summary: LLM으로 검색하기
       tags:
-      - Comment
+      - Recommendation
+  /v2/recommend/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 태그에 해당하는 노래 목록을 보여줍니다. 첫페이지는 1입니당!
+      parameters:
+      - description: 태그
+        in: body
+        name: songs
+        required: true
+        schema:
+          $ref: '#/definitions/handler.refreshRequestV2'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.refreshResponseV2'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 새로고침 노래 추천V2
+      tags:
+      - Recommendation
   /v2/songs/{songId}/related:
     get:
       consumes:
@@ -2870,6 +2873,21 @@ paths:
       summary: 연관된 노래들을 조회합니다
       tags:
       - Songs
+  /v2/tags:
+    get:
+      consumes:
+      - application/json
+      description: 태그 목록을 조회합니다 V2
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 태그 목록 가져오기 V2
+      tags:
+      - Tags
 securityDefinitions:
   BearerAuth:
     in: header

@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package functionCallingWithTypes;
+
+option go_package = "proto/functionCallingWithTypes";  // Go 패키지 경로 추가
+
+// LangChain 서비스
+service FunctionCallingWithTypesRecommend {
+  rpc GetFunctionCallingWithTypesRecommendation(FunctionCallingWithTypesRequest) returns (FunctionCallingWithTypesResponse) {}
+}
+
+// 요청 메시지: memberId를 받아서 유사한 아이템을 검색
+message FunctionCallingWithTypesRequest {
+  int64 memberId = 1;
+  string gender = 2;
+  string year = 3;
+  string command = 4;
+}
+
+message SongInfo {
+  int32 songNumber = 1;
+  string songName = 2;
+  string artistName = 3;
+  int64 songInfoId = 4;
+  string album = 5;
+  bool isMr = 6;
+  bool isLive = 7;
+  string melonSongId = 8;
+}
+
+// 유사한 아이템들의 리스트를 반환하는 응답 메시지
+message FunctionCallingWithTypesResponse {
+  repeated SongInfo songInfos = 1; // 유사한 아이템 목록
+  string message = 2; // 응답 메시지
+}
