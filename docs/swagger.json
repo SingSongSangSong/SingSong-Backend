@@ -3523,13 +3523,13 @@
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "정렬 기준. 최신순(디폴트)=recent, 오래된순=old",
+                        "description": "정렬 기준. 최신순=recent, 오래된순(디폴트)=old",
                         "name": "filter",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "한번에 조회할 댓글의 개수. 디폴트값은 20",
+                        "description": "한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)",
                         "name": "size",
                         "in": "query"
                     },

@@ -3130,11 +3130,11 @@ paths:
       description: 특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용) - query param이 없으면 디폴트는
         최신순 입니다.
       parameters:
-      - description: 정렬 기준. 최신순(디폴트)=recent, 오래된순=old
+      - description: 정렬 기준. 최신순=recent, 오래된순(디폴트)=old
         in: query
         name: filter
         type: string
-      - description: 한번에 조회할 댓글의 개수. 디폴트값은 20
+      - description: 한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)
         in: query
         name: size
         type: string
