@@ -38,8 +38,8 @@ type CommentPageV3Response struct {
 // @Tags         Comment
 // @Accept       json
 // @Produce      json
-// @Param        filter query string false "정렬 기준. 최신순(디폴트)=recent, 오래된순=old"
-// @Param        size query string false "한번에 조회할 댓글의 개수. 디폴트값은 20"
+// @Param        filter query string false "정렬 기준. 최신순=recent, 오래된순(디폴트)=old"
+// @Param        size query string false "한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)"
 // @Param        cursor query string false "마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 댓글부터 줌"
 // @Param        songId path string true "songId"
 // @Success      200 {object} pkg.BaseResponseStruct{data=CommentPageV3Response} "성공"
@@ -54,7 +54,7 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		filter := c.DefaultQuery("filter", "recent")
+		filter := c.DefaultQuery("filter", "old")
 		if filter == "" || (filter != "recent" && filter != "old") {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid filter in query", nil)
 			return
@@ -67,9 +67,9 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		cursorStr := c.DefaultQuery("cursor", "9223372036854775807")
-		if filter == "old" {
-			cursorStr = c.DefaultQuery("cursor", "0")
+		cursorStr := c.DefaultQuery("cursor", "0")
+		if filter == "recent" {
+			cursorStr = c.DefaultQuery("cursor", "9223372036854775807")
 		}
 		cursorInt, err := strconv.ParseInt(cursorStr, 10, 64)
 		if err != nil || cursorInt < 0 {
@@ -95,11 +95,11 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 댓글 가져오기 (최신순/오래된순)
-		orderBy := "comment.comment_id DESC"
-		cursorCondition := "comment.comment_id < ?" //기본은 최신순
+		orderBy := "comment.comment_id ASC"
+		cursorCondition := "comment.comment_id > ?" //기본은 오래된순
 		if filter == "old" {
-			orderBy = "comment.comment_id ASC"
-			cursorCondition = "comment.comment_id > ?"
+			orderBy = "comment.comment_id DESC"
+			cursorCondition = "comment.comment_id < ?" // 최신순
 		}
 
 		comments, err := mysql.Comments(
@@ -121,14 +121,10 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 		}
 
 		if len(comments) == 0 {
-			var lastCursor int64 = 0
-			if filter == "old" {
-				lastCursor = cursorInt
-			}
 			pkg.BaseResponse(c, http.StatusOK, "success", CommentPageResponse{
 				commentCount,
 				[]CommentWithRecommentsCountResponse{},
-				lastCursor,
+				0,
 			})
 			return
 		}
@@ -166,7 +162,6 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 			qm.And("member_id = ?", blockerId),
 			qm.And("deleted_at is null"),
 		).All(c.Request.Context(), db)
-
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -177,14 +172,12 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 		for _, like := range likes {
 			likedCommentMap[like.CommentID] = true
 		}
-
 		recommentsCountMap := make(map[int64]int)
 		for _, recomment := range recomments {
 			if recomment.ParentCommentID.Valid {
 				recommentsCountMap[recomment.ParentCommentID.Int64]++
 			}
 		}
-
 		recommentsMap := make(map[int64][]CommentWithRecommentsResponse)
 		for _, recomment := range recomments {
 			recommentsMap[recomment.ParentCommentID.Int64] = append(recommentsMap[recomment.ParentCommentID.Int64], CommentWithRecommentsResponse{
@@ -203,7 +196,6 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 
 		// Initialize a slice to hold all comments
 		var topLevelComments []CommentWithRecommentsResponse
-
 		// Add all top-level comments (those without parent comments) to the slice
 		for _, comment := range comments {
 			topLevelComments = append(topLevelComments, CommentWithRecommentsResponse{
