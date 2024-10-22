@@ -97,7 +97,7 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 		// 댓글 가져오기 (최신순/오래된순)
 		orderBy := "comment.comment_id ASC"
 		cursorCondition := "comment.comment_id > ?" //기본은 오래된순
-		if filter == "old" {
+		if filter == "recent" {
 			orderBy = "comment.comment_id DESC"
 			cursorCondition = "comment.comment_id < ?" // 최신순
 		}
@@ -121,10 +121,14 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 		}
 
 		if len(comments) == 0 {
+			var lastCursor int64 = 0
+			if filter == "old" {
+				lastCursor = cursorInt
+			}
 			pkg.BaseResponse(c, http.StatusOK, "success", CommentPageResponse{
 				commentCount,
 				[]CommentWithRecommentsCountResponse{},
-				0,
+				lastCursor,
 			})
 			return
 		}
