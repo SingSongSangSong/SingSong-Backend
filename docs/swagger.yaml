@@ -32,6 +32,17 @@ definitions:
       lastCursor:
         type: integer
     type: object
+  handler.CommentPageV3Response:
+    properties:
+      commentCount:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/handler.CommentWithRecommentsResponse'
+        type: array
+      lastCursor:
+        type: integer
+    type: object
   handler.CommentRequest:
     properties:
       content:
@@ -95,6 +106,35 @@ definitions:
       songId:
         type: integer
     type: object
+  handler.CommentWithRecommentsResponse:
+    properties:
+      commentId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentCommentId:
+        type: integer
+      recomments:
+        items:
+          $ref: '#/definitions/handler.CommentWithRecommentsResponse'
+        type: array
+      recommentsCount:
+        type: integer
+      songId:
+        type: integer
+    type: object
   handler.FunctionCallingDetailResponse:
     properties:
       album:
@@ -152,6 +192,17 @@ definitions:
       postComments:
         items:
           $ref: '#/definitions/handler.PostCommentResponse'
+        type: array
+      totalPostCommentCount:
+        type: integer
+    type: object
+  handler.GetPostCommentV2Response:
+    properties:
+      lastCursor:
+        type: integer
+      postComments:
+        items:
+          $ref: '#/definitions/handler.PostCommentV2Response'
         type: array
       totalPostCommentCount:
         type: integer
@@ -358,6 +409,39 @@ definitions:
         type: integer
       postId:
         type: integer
+      postRecommentsCount:
+        type: integer
+      songOnPostComment:
+        items:
+          $ref: '#/definitions/handler.SongOnPost'
+        type: array
+    type: object
+  handler.PostCommentV2Response:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentPostCommentId:
+        type: integer
+      postCommentId:
+        type: integer
+      postId:
+        type: integer
+      postRecomments:
+        items:
+          $ref: '#/definitions/handler.PostCommentV2Response'
+        type: array
       postRecommentsCount:
         type: integer
       songOnPostComment:
@@ -1779,6 +1863,34 @@ paths:
       summary: PostId에 댓글 달기
       tags:
       - Post
+  /v1/posts/comments/{postCommentId}:
+    delete:
+      consumes:
+      - application/json
+      description: 게시글 댓글 하나 삭제
+      parameters:
+      - description: postCommentId
+        in: path
+        name: postCommentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+        "400":
+          description: postCommentId 요청에 없는 경우, 해당 댓글이 존재하지 않는 경우, 댓글 작성자가 아닌 경우 400
+            실패
+        "401":
+          description: 사용자 인증에 실패했을 경우 401 실패
+        "500":
+          description: 서버 에러일 경우 500 실패
+      security:
+      - BearerAuth: []
+      summary: 게시글 댓글 하나 삭제
+      tags:
+      - Post
   /v1/posts/comments/{postCommentId}/like:
     post:
       consumes:
@@ -2770,6 +2882,44 @@ paths:
       summary: 로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용
       tags:
       - Signup and Login
+  /v2/posts/{postId}/comments:
+    get:
+      consumes:
+      - application/json
+      description: Get comments for a specific post identified by postId with optional
+        page and size query parameters (Version 2)
+      parameters:
+      - description: Post ID
+        in: path
+        name: postId
+        required: true
+        type: integer
+      - description: 마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 먼저 작성된 댓글부터 조회
+        in: query
+        name: cursor
+        type: integer
+      - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.GetPostCommentV2Response'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve comments for the specified postId (Version. 2)
+      tags:
+      - Post
   /v2/recommend/recommendation/{pageId}:
     get:
       consumes:
@@ -2973,6 +3123,48 @@ paths:
       summary: 태그 목록 가져오기 V2
       tags:
       - Tags
+  /v3/songs/{songId}/comments:
+    get:
+      consumes:
+      - application/json
+      description: 특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용) - query param이 없으면 디폴트는
+        최신순 입니다.
+      parameters:
+      - description: 정렬 기준. 최신순=recent, 오래된순(디폴트)=old
+        in: query
+        name: filter
+        type: string
+      - description: 한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)
+        in: query
+        name: size
+        type: string
+      - description: 마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          정렬기준의 가장 처음 댓글부터 줌
+        in: query
+        name: cursor
+        type: string
+      - description: songId
+        in: path
+        name: songId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.CommentPageV3Response'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용)
+      tags:
+      - Comment
 securityDefinitions:
   BearerAuth:
     in: header
