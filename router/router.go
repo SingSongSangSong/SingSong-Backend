@@ -120,6 +120,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		songsV2.GET("/:songId/comments", middleware.AuthMiddleware(db), handler.GetCommentsOnSongV2(db))
 	}
 
+	songV3 := r.Group("/api/v3/songs")
+	{
+		songV3.GET("/:songId/comments", middleware.AuthMiddleware(db), handler.GetCommentsOnSongV3(db))
+	}
+
 	// 노래 리뷰 선택지 추가/조회
 	songReviewOptions := r.Group("/api/v1/song-review-options")
 	{
@@ -176,12 +181,18 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		post.GET("/:postId/comments", middleware.AuthMiddleware(db), handler.GetCommentOnPost(db))
 	}
 
+	postV2 := r.Group("/api/v2/posts")
+	{
+		postV2.GET("/:postId/comments", middleware.AuthMiddleware(db), handler.GetCommentOnPostV2(db))
+	}
+
 	postComment := r.Group("/api/v1/posts/comments")
 	{
 		postComment.POST("", middleware.AuthMiddleware(db), handler.CommentOnPost(db))
 		postComment.GET("/:postCommentId/recomments", middleware.AuthMiddleware(db), handler.GetReCommentOnPost(db))
 		postComment.POST("/report", middleware.AuthMiddleware(db), handler.ReportPostComment(db))
 		postComment.POST("/:postCommentId/like", middleware.AuthMiddleware(db), handler.LikePostComment(db))
+		postComment.DELETE("/:postCommentId", middleware.AuthMiddleware(db), handler.DeletePostComment(db))
 	}
 
 	// 스웨거 설정
