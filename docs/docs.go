@@ -1197,6 +1197,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/posts/comments/{postCommentId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 댓글 하나 삭제",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 댓글 하나 삭제",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postCommentId",
+                        "name": "postCommentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    },
+                    "400": {
+                        "description": "postCommentId 요청에 없는 경우, 해당 댓글이 존재하지 않는 경우, 댓글 작성자가 아닌 경우 400 실패"
+                    },
+                    "401": {
+                        "description": "사용자 인증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            }
+        },
         "/v1/posts/comments/{postCommentId}/like": {
             "post": {
                 "security": [
@@ -3064,6 +3107,67 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/posts/{postId}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get comments for a specific post identified by postId with optional page and size query parameters (Version 2)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "Retrieve comments for the specified postId (Version. 2)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 먼저 작성된 댓글부터 조회",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.GetPostCommentV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v2/recommend/recommendation/ai": {
             "get": {
                 "security": [
@@ -3405,6 +3509,73 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v3/songs/{songId}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용) - query param이 없으면 디폴트는 최신순 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "정렬 기준. 최신순=recent, 오래된순(디폴트)=old",
+                        "name": "filter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 댓글부터 줌",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.CommentPageV3Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -3450,6 +3621,23 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/handler.CommentWithRecommentsCountResponse"
+                    }
+                },
+                "lastCursor": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CommentPageV3Response": {
+            "type": "object",
+            "properties": {
+                "commentCount": {
+                    "type": "integer"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CommentWithRecommentsResponse"
                     }
                 },
                 "lastCursor": {
@@ -3553,6 +3741,50 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.CommentWithRecommentsResponse": {
+            "type": "object",
+            "properties": {
+                "commentId": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                },
+                "recomments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CommentWithRecommentsResponse"
+                    }
+                },
+                "recommentsCount": {
+                    "type": "integer"
+                },
+                "songId": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.FunctionCallingDetailResponse": {
             "type": "object",
             "properties": {
@@ -3640,6 +3872,23 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/handler.PostCommentResponse"
+                    }
+                },
+                "totalPostCommentCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.GetPostCommentV2Response": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "postComments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PostCommentV2Response"
                     }
                 },
                 "totalPostCommentCount": {
@@ -3957,6 +4206,56 @@ const docTemplate = `{
                 },
                 "postId": {
                     "type": "integer"
+                },
+                "postRecommentsCount": {
+                    "type": "integer"
+                },
+                "songOnPostComment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongOnPost"
+                    }
+                }
+            }
+        },
+        "handler.PostCommentV2Response": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "parentPostCommentId": {
+                    "type": "integer"
+                },
+                "postCommentId": {
+                    "type": "integer"
+                },
+                "postId": {
+                    "type": "integer"
+                },
+                "postRecomments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PostCommentV2Response"
+                    }
                 },
                 "postRecommentsCount": {
                     "type": "integer"
