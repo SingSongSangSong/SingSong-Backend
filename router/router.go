@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/handler"
 	"SingSong-Server/middleware"
 	"database/sql"
+	firebase "firebase.google.com/go"
 	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
@@ -16,7 +17,7 @@ import (
 	"net/http"
 )
 
-func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, milvusClient *client.Client) *gin.Engine {
+func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, milvusClient *client.Client, firebaseApp *firebase.App) *gin.Engine {
 
 	//gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
@@ -182,6 +183,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		postComment.GET("/:postCommentId/recomments", middleware.AuthMiddleware(db), handler.GetReCommentOnPost(db))
 		postComment.POST("/report", middleware.AuthMiddleware(db), handler.ReportPostComment(db))
 		postComment.POST("/:postCommentId/like", middleware.AuthMiddleware(db), handler.LikePostComment(db))
+	}
+
+	notification := r.Group("/api/v1/notifications")
+	{
+		notification.POST("/test", handler.TestNotification(db, firebaseApp))
 	}
 
 	// 스웨거 설정

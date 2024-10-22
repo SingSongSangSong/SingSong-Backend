@@ -3,12 +3,14 @@ package conf
 import (
 	"context"
 	"database/sql"
+	firebase "firebase.google.com/go"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/api/option"
 	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	"log"
 	"os"
@@ -106,7 +108,7 @@ func init() {
 	}
 }
 
-func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection, milvusClient *client.Client) {
+func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection, milvusClient *client.Client, firebaseApp **firebase.App) {
 	var err error
 
 	// MySQL 연결 설정
@@ -158,5 +160,19 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	*idxConnection, err = client.Index(idx.Host)
 	if err != nil {
 		log.Fatalf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
+	}
+
+	// fcm 파일이 존재하는지 확인
+	fcmKeyPath := os.Getenv("FCM_KEY_PATH")
+	if _, err := os.Stat(fcmKeyPath); os.IsNotExist(err) {
+		log.Fatalf("The file %s does not exist", fcmKeyPath)
+	} else if err != nil {
+		log.Fatalf("Failed to check the file: %v", err)
+	}
+
+	opt := option.WithCredentialsFile(os.Getenv(fcmKeyPath))
+	*firebaseApp, err = firebase.NewApp(ctx, nil, opt)
+	if err != nil {
+		log.Fatalf("Failed to initialize firebase: %v", err)
 	}
 }

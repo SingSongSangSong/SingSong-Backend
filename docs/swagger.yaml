@@ -1520,6 +1520,21 @@ paths:
       summary: 멤버 회원 탈퇴
       tags:
       - Member
+  /v1/notifications/test:
+    post:
+      consumes:
+      - application/json
+      description: 알림 전송 테스트
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 알림 전송 테스트
+      tags:
+      - Notification
   /v1/posts:
     get:
       consumes:

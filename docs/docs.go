@@ -977,6 +977,29 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/notifications/test": {
+            "post": {
+                "description": "알림 전송 테스트",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "알림 전송 테스트",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/posts": {
             "get": {
                 "security": [
