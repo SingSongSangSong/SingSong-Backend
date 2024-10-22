@@ -723,7 +723,7 @@ func (o *Report) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			reportAllColumns,
 			reportColumnsWithDefault,
 			reportColumnsWithoutDefault,
@@ -739,8 +739,7 @@ func (o *Report) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 			return errors.New("mysql: unable to upsert report, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(reportAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`report`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `report` WHERE %s",
