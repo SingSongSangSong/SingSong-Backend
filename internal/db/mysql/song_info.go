@@ -24,156 +24,355 @@ import (
 
 // SongInfo is an object representing the database table.
 type SongInfo struct {
-	SongInfoID     int64       `boil:"song_info_id" json:"song_info_id" toml:"song_info_id" yaml:"song_info_id"`
-	SongName       string      `boil:"song_name" json:"song_name" toml:"song_name" yaml:"song_name"`
-	ArtistID       null.Int64  `boil:"artist_id" json:"artist_id,omitempty" toml:"artist_id" yaml:"artist_id,omitempty"`
-	ArtistName     string      `boil:"artist_name" json:"artist_name" toml:"artist_name" yaml:"artist_name"`
-	ArtistType     null.String `boil:"artist_type" json:"artist_type,omitempty" toml:"artist_type" yaml:"artist_type,omitempty"`
-	IsMR           null.Bool   `boil:"is_mr" json:"is_mr,omitempty" toml:"is_mr" yaml:"is_mr,omitempty"`
-	IsChosen22000  null.Bool   `boil:"is_chosen_22000" json:"is_chosen_22000,omitempty" toml:"is_chosen_22000" yaml:"is_chosen_22000,omitempty"`
-	RelatedArtists null.String `boil:"related_artists" json:"related_artists,omitempty" toml:"related_artists" yaml:"related_artists,omitempty"`
-	Country        null.String `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
-	Album          null.String `boil:"album" json:"album,omitempty" toml:"album" yaml:"album,omitempty"`
-	SongNumber     int         `boil:"song_number" json:"song_number" toml:"song_number" yaml:"song_number"`
-	Octave         null.String `boil:"octave" json:"octave,omitempty" toml:"octave" yaml:"octave,omitempty"`
-	TJLink         null.String `boil:"tj_link" json:"tj_link,omitempty" toml:"tj_link" yaml:"tj_link,omitempty"`
-	Tags           null.String `boil:"tags" json:"tags,omitempty" toml:"tags" yaml:"tags,omitempty"`
-	CreatedAt      null.Time   `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt      null.Time   `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
-	DeletedAt      null.Time   `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
-	MelonSongID    null.String `boil:"melon_song_id" json:"melon_song_id,omitempty" toml:"melon_song_id" yaml:"melon_song_id,omitempty"`
-	IsLive         null.Bool   `boil:"is_live" json:"is_live,omitempty" toml:"is_live" yaml:"is_live,omitempty"`
+	SongInfoID      int64        `boil:"song_info_id" json:"song_info_id" toml:"song_info_id" yaml:"song_info_id"`
+	SongName        string       `boil:"song_name" json:"song_name" toml:"song_name" yaml:"song_name"`
+	ArtistName      string       `boil:"artist_name" json:"artist_name" toml:"artist_name" yaml:"artist_name"`
+	ArtistType      null.String  `boil:"artist_type" json:"artist_type,omitempty" toml:"artist_type" yaml:"artist_type,omitempty"`
+	IsMR            null.Bool    `boil:"is_mr" json:"is_mr,omitempty" toml:"is_mr" yaml:"is_mr,omitempty"`
+	IsChosen22000   null.Bool    `boil:"is_chosen_22000" json:"is_chosen_22000,omitempty" toml:"is_chosen_22000" yaml:"is_chosen_22000,omitempty"`
+	RelatedArtists  null.String  `boil:"related_artists" json:"related_artists,omitempty" toml:"related_artists" yaml:"related_artists,omitempty"`
+	Country         null.String  `boil:"country" json:"country,omitempty" toml:"country" yaml:"country,omitempty"`
+	Album           null.String  `boil:"album" json:"album,omitempty" toml:"album" yaml:"album,omitempty"`
+	SongNumber      int          `boil:"song_number" json:"song_number" toml:"song_number" yaml:"song_number"`
+	TJLink          null.String  `boil:"tj_link" json:"tj_link,omitempty" toml:"tj_link" yaml:"tj_link,omitempty"`
+	CreatedAt       null.Time    `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
+	UpdatedAt       null.Time    `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
+	DeletedAt       null.Time    `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	MelonSongID     null.String  `boil:"melon_song_id" json:"melon_song_id,omitempty" toml:"melon_song_id" yaml:"melon_song_id,omitempty"`
+	IsLive          null.Bool    `boil:"is_live" json:"is_live,omitempty" toml:"is_live" yaml:"is_live,omitempty"`
+	TJScore         null.Float32 `boil:"tj_score" json:"tj_score,omitempty" toml:"tj_score" yaml:"tj_score,omitempty"`
+	Genre           null.String  `boil:"genre" json:"genre,omitempty" toml:"genre" yaml:"genre,omitempty"`
+	Year            null.Int     `boil:"year" json:"year,omitempty" toml:"year" yaml:"year,omitempty"`
+	LyricsVideoLink null.String  `boil:"lyrics_video_link" json:"lyrics_video_link,omitempty" toml:"lyrics_video_link" yaml:"lyrics_video_link,omitempty"`
+	ArtistGender    null.String  `boil:"artist_gender" json:"artist_gender,omitempty" toml:"artist_gender" yaml:"artist_gender,omitempty"`
+	Octave          null.String  `boil:"octave" json:"octave,omitempty" toml:"octave" yaml:"octave,omitempty"`
+	TJYoutubeLink   null.String  `boil:"tj_youtube_link" json:"tj_youtube_link,omitempty" toml:"tj_youtube_link" yaml:"tj_youtube_link,omitempty"`
+	Classics        null.Bool    `boil:"classics" json:"classics,omitempty" toml:"classics" yaml:"classics,omitempty"`
+	Finale          null.Bool    `boil:"finale" json:"finale,omitempty" toml:"finale" yaml:"finale,omitempty"`
+	High            null.Bool    `boil:"high" json:"high,omitempty" toml:"high" yaml:"high,omitempty"`
+	Low             null.Bool    `boil:"low" json:"low,omitempty" toml:"low" yaml:"low,omitempty"`
+	RNB             null.Bool    `boil:"rnb" json:"rnb,omitempty" toml:"rnb" yaml:"rnb,omitempty"`
+	Breakup         null.Bool    `boil:"breakup" json:"breakup,omitempty" toml:"breakup" yaml:"breakup,omitempty"`
+	Ballads         null.Bool    `boil:"ballads" json:"ballads,omitempty" toml:"ballads" yaml:"ballads,omitempty"`
+	Dance           null.Bool    `boil:"dance" json:"dance,omitempty" toml:"dance" yaml:"dance,omitempty"`
+	Duet            null.Bool    `boil:"duet" json:"duet,omitempty" toml:"duet" yaml:"duet,omitempty"`
+	Ssum            null.Bool    `boil:"ssum" json:"ssum,omitempty" toml:"ssum" yaml:"ssum,omitempty"`
+	Carol           null.Bool    `boil:"carol" json:"carol,omitempty" toml:"carol" yaml:"carol,omitempty"`
+	Rainy           null.Bool    `boil:"rainy" json:"rainy,omitempty" toml:"rainy" yaml:"rainy,omitempty"`
+	Pop             null.Bool    `boil:"pop" json:"pop,omitempty" toml:"pop" yaml:"pop,omitempty"`
+	Office          null.Bool    `boil:"office" json:"office,omitempty" toml:"office" yaml:"office,omitempty"`
+	Wedding         null.Bool    `boil:"wedding" json:"wedding,omitempty" toml:"wedding" yaml:"wedding,omitempty"`
+	Military        null.Bool    `boil:"military" json:"military,omitempty" toml:"military" yaml:"military,omitempty"`
+	ArtistIds       null.String  `boil:"artist_ids" json:"artist_ids,omitempty" toml:"artist_ids" yaml:"artist_ids,omitempty"`
+	MelonLikes      null.Int     `boil:"melon_likes" json:"melon_likes,omitempty" toml:"melon_likes" yaml:"melon_likes,omitempty"`
+	LyricsSummary   null.String  `boil:"lyrics_summary" json:"lyrics_summary,omitempty" toml:"lyrics_summary" yaml:"lyrics_summary,omitempty"`
 
 	R *songInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L songInfoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var SongInfoColumns = struct {
-	SongInfoID     string
-	SongName       string
-	ArtistID       string
-	ArtistName     string
-	ArtistType     string
-	IsMR           string
-	IsChosen22000  string
-	RelatedArtists string
-	Country        string
-	Album          string
-	SongNumber     string
-	Octave         string
-	TJLink         string
-	Tags           string
-	CreatedAt      string
-	UpdatedAt      string
-	DeletedAt      string
-	MelonSongID    string
-	IsLive         string
+	SongInfoID      string
+	SongName        string
+	ArtistName      string
+	ArtistType      string
+	IsMR            string
+	IsChosen22000   string
+	RelatedArtists  string
+	Country         string
+	Album           string
+	SongNumber      string
+	TJLink          string
+	CreatedAt       string
+	UpdatedAt       string
+	DeletedAt       string
+	MelonSongID     string
+	IsLive          string
+	TJScore         string
+	Genre           string
+	Year            string
+	LyricsVideoLink string
+	ArtistGender    string
+	Octave          string
+	TJYoutubeLink   string
+	Classics        string
+	Finale          string
+	High            string
+	Low             string
+	RNB             string
+	Breakup         string
+	Ballads         string
+	Dance           string
+	Duet            string
+	Ssum            string
+	Carol           string
+	Rainy           string
+	Pop             string
+	Office          string
+	Wedding         string
+	Military        string
+	ArtistIds       string
+	MelonLikes      string
+	LyricsSummary   string
 }{
-	SongInfoID:     "song_info_id",
-	SongName:       "song_name",
-	ArtistID:       "artist_id",
-	ArtistName:     "artist_name",
-	ArtistType:     "artist_type",
-	IsMR:           "is_mr",
-	IsChosen22000:  "is_chosen_22000",
-	RelatedArtists: "related_artists",
-	Country:        "country",
-	Album:          "album",
-	SongNumber:     "song_number",
-	Octave:         "octave",
-	TJLink:         "tj_link",
-	Tags:           "tags",
-	CreatedAt:      "created_at",
-	UpdatedAt:      "updated_at",
-	DeletedAt:      "deleted_at",
-	MelonSongID:    "melon_song_id",
-	IsLive:         "is_live",
+	SongInfoID:      "song_info_id",
+	SongName:        "song_name",
+	ArtistName:      "artist_name",
+	ArtistType:      "artist_type",
+	IsMR:            "is_mr",
+	IsChosen22000:   "is_chosen_22000",
+	RelatedArtists:  "related_artists",
+	Country:         "country",
+	Album:           "album",
+	SongNumber:      "song_number",
+	TJLink:          "tj_link",
+	CreatedAt:       "created_at",
+	UpdatedAt:       "updated_at",
+	DeletedAt:       "deleted_at",
+	MelonSongID:     "melon_song_id",
+	IsLive:          "is_live",
+	TJScore:         "tj_score",
+	Genre:           "genre",
+	Year:            "year",
+	LyricsVideoLink: "lyrics_video_link",
+	ArtistGender:    "artist_gender",
+	Octave:          "octave",
+	TJYoutubeLink:   "tj_youtube_link",
+	Classics:        "classics",
+	Finale:          "finale",
+	High:            "high",
+	Low:             "low",
+	RNB:             "rnb",
+	Breakup:         "breakup",
+	Ballads:         "ballads",
+	Dance:           "dance",
+	Duet:            "duet",
+	Ssum:            "ssum",
+	Carol:           "carol",
+	Rainy:           "rainy",
+	Pop:             "pop",
+	Office:          "office",
+	Wedding:         "wedding",
+	Military:        "military",
+	ArtistIds:       "artist_ids",
+	MelonLikes:      "melon_likes",
+	LyricsSummary:   "lyrics_summary",
 }
 
 var SongInfoTableColumns = struct {
-	SongInfoID     string
-	SongName       string
-	ArtistID       string
-	ArtistName     string
-	ArtistType     string
-	IsMR           string
-	IsChosen22000  string
-	RelatedArtists string
-	Country        string
-	Album          string
-	SongNumber     string
-	Octave         string
-	TJLink         string
-	Tags           string
-	CreatedAt      string
-	UpdatedAt      string
-	DeletedAt      string
-	MelonSongID    string
-	IsLive         string
+	SongInfoID      string
+	SongName        string
+	ArtistName      string
+	ArtistType      string
+	IsMR            string
+	IsChosen22000   string
+	RelatedArtists  string
+	Country         string
+	Album           string
+	SongNumber      string
+	TJLink          string
+	CreatedAt       string
+	UpdatedAt       string
+	DeletedAt       string
+	MelonSongID     string
+	IsLive          string
+	TJScore         string
+	Genre           string
+	Year            string
+	LyricsVideoLink string
+	ArtistGender    string
+	Octave          string
+	TJYoutubeLink   string
+	Classics        string
+	Finale          string
+	High            string
+	Low             string
+	RNB             string
+	Breakup         string
+	Ballads         string
+	Dance           string
+	Duet            string
+	Ssum            string
+	Carol           string
+	Rainy           string
+	Pop             string
+	Office          string
+	Wedding         string
+	Military        string
+	ArtistIds       string
+	MelonLikes      string
+	LyricsSummary   string
 }{
-	SongInfoID:     "song_info.song_info_id",
-	SongName:       "song_info.song_name",
-	ArtistID:       "song_info.artist_id",
-	ArtistName:     "song_info.artist_name",
-	ArtistType:     "song_info.artist_type",
-	IsMR:           "song_info.is_mr",
-	IsChosen22000:  "song_info.is_chosen_22000",
-	RelatedArtists: "song_info.related_artists",
-	Country:        "song_info.country",
-	Album:          "song_info.album",
-	SongNumber:     "song_info.song_number",
-	Octave:         "song_info.octave",
-	TJLink:         "song_info.tj_link",
-	Tags:           "song_info.tags",
-	CreatedAt:      "song_info.created_at",
-	UpdatedAt:      "song_info.updated_at",
-	DeletedAt:      "song_info.deleted_at",
-	MelonSongID:    "song_info.melon_song_id",
-	IsLive:         "song_info.is_live",
+	SongInfoID:      "song_info.song_info_id",
+	SongName:        "song_info.song_name",
+	ArtistName:      "song_info.artist_name",
+	ArtistType:      "song_info.artist_type",
+	IsMR:            "song_info.is_mr",
+	IsChosen22000:   "song_info.is_chosen_22000",
+	RelatedArtists:  "song_info.related_artists",
+	Country:         "song_info.country",
+	Album:           "song_info.album",
+	SongNumber:      "song_info.song_number",
+	TJLink:          "song_info.tj_link",
+	CreatedAt:       "song_info.created_at",
+	UpdatedAt:       "song_info.updated_at",
+	DeletedAt:       "song_info.deleted_at",
+	MelonSongID:     "song_info.melon_song_id",
+	IsLive:          "song_info.is_live",
+	TJScore:         "song_info.tj_score",
+	Genre:           "song_info.genre",
+	Year:            "song_info.year",
+	LyricsVideoLink: "song_info.lyrics_video_link",
+	ArtistGender:    "song_info.artist_gender",
+	Octave:          "song_info.octave",
+	TJYoutubeLink:   "song_info.tj_youtube_link",
+	Classics:        "song_info.classics",
+	Finale:          "song_info.finale",
+	High:            "song_info.high",
+	Low:             "song_info.low",
+	RNB:             "song_info.rnb",
+	Breakup:         "song_info.breakup",
+	Ballads:         "song_info.ballads",
+	Dance:           "song_info.dance",
+	Duet:            "song_info.duet",
+	Ssum:            "song_info.ssum",
+	Carol:           "song_info.carol",
+	Rainy:           "song_info.rainy",
+	Pop:             "song_info.pop",
+	Office:          "song_info.office",
+	Wedding:         "song_info.wedding",
+	Military:        "song_info.military",
+	ArtistIds:       "song_info.artist_ids",
+	MelonLikes:      "song_info.melon_likes",
+	LyricsSummary:   "song_info.lyrics_summary",
 }
 
 // Generated where
 
+type whereHelpernull_Float32 struct{ field string }
+
+func (w whereHelpernull_Float32) EQ(x null.Float32) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, false, x)
+}
+func (w whereHelpernull_Float32) NEQ(x null.Float32) qm.QueryMod {
+	return qmhelper.WhereNullEQ(w.field, true, x)
+}
+func (w whereHelpernull_Float32) LT(x null.Float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LT, x)
+}
+func (w whereHelpernull_Float32) LTE(x null.Float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.LTE, x)
+}
+func (w whereHelpernull_Float32) GT(x null.Float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GT, x)
+}
+func (w whereHelpernull_Float32) GTE(x null.Float32) qm.QueryMod {
+	return qmhelper.Where(w.field, qmhelper.GTE, x)
+}
+func (w whereHelpernull_Float32) IN(slice []float32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereIn(fmt.Sprintf("%s IN ?", w.field), values...)
+}
+func (w whereHelpernull_Float32) NIN(slice []float32) qm.QueryMod {
+	values := make([]interface{}, 0, len(slice))
+	for _, value := range slice {
+		values = append(values, value)
+	}
+	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
+}
+
+func (w whereHelpernull_Float32) IsNull() qm.QueryMod    { return qmhelper.WhereIsNull(w.field) }
+func (w whereHelpernull_Float32) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
+
 var SongInfoWhere = struct {
-	SongInfoID     whereHelperint64
-	SongName       whereHelperstring
-	ArtistID       whereHelpernull_Int64
-	ArtistName     whereHelperstring
-	ArtistType     whereHelpernull_String
-	IsMR           whereHelpernull_Bool
-	IsChosen22000  whereHelpernull_Bool
-	RelatedArtists whereHelpernull_String
-	Country        whereHelpernull_String
-	Album          whereHelpernull_String
-	SongNumber     whereHelperint
-	Octave         whereHelpernull_String
-	TJLink         whereHelpernull_String
-	Tags           whereHelpernull_String
-	CreatedAt      whereHelpernull_Time
-	UpdatedAt      whereHelpernull_Time
-	DeletedAt      whereHelpernull_Time
-	MelonSongID    whereHelpernull_String
-	IsLive         whereHelpernull_Bool
+	SongInfoID      whereHelperint64
+	SongName        whereHelperstring
+	ArtistName      whereHelperstring
+	ArtistType      whereHelpernull_String
+	IsMR            whereHelpernull_Bool
+	IsChosen22000   whereHelpernull_Bool
+	RelatedArtists  whereHelpernull_String
+	Country         whereHelpernull_String
+	Album           whereHelpernull_String
+	SongNumber      whereHelperint
+	TJLink          whereHelpernull_String
+	CreatedAt       whereHelpernull_Time
+	UpdatedAt       whereHelpernull_Time
+	DeletedAt       whereHelpernull_Time
+	MelonSongID     whereHelpernull_String
+	IsLive          whereHelpernull_Bool
+	TJScore         whereHelpernull_Float32
+	Genre           whereHelpernull_String
+	Year            whereHelpernull_Int
+	LyricsVideoLink whereHelpernull_String
+	ArtistGender    whereHelpernull_String
+	Octave          whereHelpernull_String
+	TJYoutubeLink   whereHelpernull_String
+	Classics        whereHelpernull_Bool
+	Finale          whereHelpernull_Bool
+	High            whereHelpernull_Bool
+	Low             whereHelpernull_Bool
+	RNB             whereHelpernull_Bool
+	Breakup         whereHelpernull_Bool
+	Ballads         whereHelpernull_Bool
+	Dance           whereHelpernull_Bool
+	Duet            whereHelpernull_Bool
+	Ssum            whereHelpernull_Bool
+	Carol           whereHelpernull_Bool
+	Rainy           whereHelpernull_Bool
+	Pop             whereHelpernull_Bool
+	Office          whereHelpernull_Bool
+	Wedding         whereHelpernull_Bool
+	Military        whereHelpernull_Bool
+	ArtistIds       whereHelpernull_String
+	MelonLikes      whereHelpernull_Int
+	LyricsSummary   whereHelpernull_String
 }{
-	SongInfoID:     whereHelperint64{field: "`song_info`.`song_info_id`"},
-	SongName:       whereHelperstring{field: "`song_info`.`song_name`"},
-	ArtistID:       whereHelpernull_Int64{field: "`song_info`.`artist_id`"},
-	ArtistName:     whereHelperstring{field: "`song_info`.`artist_name`"},
-	ArtistType:     whereHelpernull_String{field: "`song_info`.`artist_type`"},
-	IsMR:           whereHelpernull_Bool{field: "`song_info`.`is_mr`"},
-	IsChosen22000:  whereHelpernull_Bool{field: "`song_info`.`is_chosen_22000`"},
-	RelatedArtists: whereHelpernull_String{field: "`song_info`.`related_artists`"},
-	Country:        whereHelpernull_String{field: "`song_info`.`country`"},
-	Album:          whereHelpernull_String{field: "`song_info`.`album`"},
-	SongNumber:     whereHelperint{field: "`song_info`.`song_number`"},
-	Octave:         whereHelpernull_String{field: "`song_info`.`octave`"},
-	TJLink:         whereHelpernull_String{field: "`song_info`.`tj_link`"},
-	Tags:           whereHelpernull_String{field: "`song_info`.`tags`"},
-	CreatedAt:      whereHelpernull_Time{field: "`song_info`.`created_at`"},
-	UpdatedAt:      whereHelpernull_Time{field: "`song_info`.`updated_at`"},
-	DeletedAt:      whereHelpernull_Time{field: "`song_info`.`deleted_at`"},
-	MelonSongID:    whereHelpernull_String{field: "`song_info`.`melon_song_id`"},
-	IsLive:         whereHelpernull_Bool{field: "`song_info`.`is_live`"},
+	SongInfoID:      whereHelperint64{field: "`song_info`.`song_info_id`"},
+	SongName:        whereHelperstring{field: "`song_info`.`song_name`"},
+	ArtistName:      whereHelperstring{field: "`song_info`.`artist_name`"},
+	ArtistType:      whereHelpernull_String{field: "`song_info`.`artist_type`"},
+	IsMR:            whereHelpernull_Bool{field: "`song_info`.`is_mr`"},
+	IsChosen22000:   whereHelpernull_Bool{field: "`song_info`.`is_chosen_22000`"},
+	RelatedArtists:  whereHelpernull_String{field: "`song_info`.`related_artists`"},
+	Country:         whereHelpernull_String{field: "`song_info`.`country`"},
+	Album:           whereHelpernull_String{field: "`song_info`.`album`"},
+	SongNumber:      whereHelperint{field: "`song_info`.`song_number`"},
+	TJLink:          whereHelpernull_String{field: "`song_info`.`tj_link`"},
+	CreatedAt:       whereHelpernull_Time{field: "`song_info`.`created_at`"},
+	UpdatedAt:       whereHelpernull_Time{field: "`song_info`.`updated_at`"},
+	DeletedAt:       whereHelpernull_Time{field: "`song_info`.`deleted_at`"},
+	MelonSongID:     whereHelpernull_String{field: "`song_info`.`melon_song_id`"},
+	IsLive:          whereHelpernull_Bool{field: "`song_info`.`is_live`"},
+	TJScore:         whereHelpernull_Float32{field: "`song_info`.`tj_score`"},
+	Genre:           whereHelpernull_String{field: "`song_info`.`genre`"},
+	Year:            whereHelpernull_Int{field: "`song_info`.`year`"},
+	LyricsVideoLink: whereHelpernull_String{field: "`song_info`.`lyrics_video_link`"},
+	ArtistGender:    whereHelpernull_String{field: "`song_info`.`artist_gender`"},
+	Octave:          whereHelpernull_String{field: "`song_info`.`octave`"},
+	TJYoutubeLink:   whereHelpernull_String{field: "`song_info`.`tj_youtube_link`"},
+	Classics:        whereHelpernull_Bool{field: "`song_info`.`classics`"},
+	Finale:          whereHelpernull_Bool{field: "`song_info`.`finale`"},
+	High:            whereHelpernull_Bool{field: "`song_info`.`high`"},
+	Low:             whereHelpernull_Bool{field: "`song_info`.`low`"},
+	RNB:             whereHelpernull_Bool{field: "`song_info`.`rnb`"},
+	Breakup:         whereHelpernull_Bool{field: "`song_info`.`breakup`"},
+	Ballads:         whereHelpernull_Bool{field: "`song_info`.`ballads`"},
+	Dance:           whereHelpernull_Bool{field: "`song_info`.`dance`"},
+	Duet:            whereHelpernull_Bool{field: "`song_info`.`duet`"},
+	Ssum:            whereHelpernull_Bool{field: "`song_info`.`ssum`"},
+	Carol:           whereHelpernull_Bool{field: "`song_info`.`carol`"},
+	Rainy:           whereHelpernull_Bool{field: "`song_info`.`rainy`"},
+	Pop:             whereHelpernull_Bool{field: "`song_info`.`pop`"},
+	Office:          whereHelpernull_Bool{field: "`song_info`.`office`"},
+	Wedding:         whereHelpernull_Bool{field: "`song_info`.`wedding`"},
+	Military:        whereHelpernull_Bool{field: "`song_info`.`military`"},
+	ArtistIds:       whereHelpernull_String{field: "`song_info`.`artist_ids`"},
+	MelonLikes:      whereHelpernull_Int{field: "`song_info`.`melon_likes`"},
+	LyricsSummary:   whereHelpernull_String{field: "`song_info`.`lyrics_summary`"},
 }
 
 // SongInfoRels is where relationship names are stored.
@@ -193,9 +392,9 @@ func (*songInfoR) NewStruct() *songInfoR {
 type songInfoL struct{}
 
 var (
-	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_id", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "created_at", "updated_at", "deleted_at", "melon_song_id", "is_live"}
-	songInfoColumnsWithoutDefault = []string{"song_name", "artist_id", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "octave", "tj_link", "tags", "deleted_at", "melon_song_id"}
-	songInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at", "is_live"}
+	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "tj_link", "created_at", "updated_at", "deleted_at", "melon_song_id", "is_live", "tj_score", "genre", "year", "lyrics_video_link", "artist_gender", "octave", "tj_youtube_link", "classics", "finale", "high", "low", "rnb", "breakup", "ballads", "dance", "duet", "ssum", "carol", "rainy", "pop", "office", "wedding", "military", "artist_ids", "melon_likes", "lyrics_summary"}
+	songInfoColumnsWithoutDefault = []string{"song_name", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "tj_link", "deleted_at", "melon_song_id", "genre", "year", "lyrics_video_link", "artist_gender", "octave", "tj_youtube_link", "artist_ids", "melon_likes", "lyrics_summary"}
+	songInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at", "is_live", "tj_score", "classics", "finale", "high", "low", "rnb", "breakup", "ballads", "dance", "duet", "ssum", "carol", "rainy", "pop", "office", "wedding", "military"}
 	songInfoPrimaryKeyColumns     = []string{"song_info_id"}
 	songInfoGeneratedColumns      = []string{}
 )
@@ -800,7 +999,7 @@ func (o *SongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			songInfoAllColumns,
 			songInfoColumnsWithDefault,
 			songInfoColumnsWithoutDefault,
@@ -816,8 +1015,7 @@ func (o *SongInfo) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 			return errors.New("mysql: unable to upsert song_info, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(songInfoAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`song_info`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `song_info` WHERE %s",

@@ -216,6 +216,51 @@ definitions:
           $ref: '#/definitions/handler.PostCommentResponse'
         type: array
     type: object
+  handler.GetSongsFromKeepInStoryResponse:
+    properties:
+      isLiked:
+        type: boolean
+      keepName:
+        type: string
+      likeCount:
+        type: integer
+      memberId:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/handler.GetSongsFromKeepStories'
+        type: array
+    type: object
+  handler.GetSongsFromKeepStories:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
+  handler.GetSubscribedKeepsResponse:
+    properties:
+      keepListId:
+        type: integer
+      keepName:
+        type: string
+      memberId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
   handler.LangchainAgentResponse:
     properties:
       songs:
@@ -1449,6 +1494,150 @@ paths:
       security:
       - BearerAuth: []
       summary: 플레이리스트에 노래를 추가한다
+      tags:
+      - Playlist
+  /v1/keep/{keepListId}:
+    get:
+      consumes:
+      - application/json
+      description: 다른사람의 플레이리스트에 있는 노래를 가져온다
+      parameters:
+      - description: keepListId
+        in: path
+        name: keepListId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.GetSongsFromKeepInStoryResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 다른사람의 플레이리스트에 있는 노래를 가져온다
+      tags:
+      - Playlist
+  /v1/keep/{keepListId}/like:
+    post:
+      consumes:
+      - application/json
+      description: 플레이리스트에 좋아요를 누르거나 좋아요를 취소합니다
+      parameters:
+      - description: keepListId
+        in: path
+        name: keepListId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 플레이리스트 좋아요/좋아요 취소
+      tags:
+      - Playlist
+  /v1/keep/{keepListId}/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: 플레이리스트를 구독하거나 구독을 취소합니다. 요청을 한번 보내면 구독을 하고 한번 더 보내면 구독 여부 확인후 취소합니다
+      parameters:
+      - description: keepListId
+        in: path
+        name: keepListId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 플레이리스트 구독하기/구독 취소
+      tags:
+      - Playlist
+  /v1/keep/story:
+    get:
+      consumes:
+      - application/json
+      description: 최근 플레이리스트를 여러 방법으로 가져오고 사용자의 좋아요 여부까지 알 수 있게 합니다
+      parameters:
+      - description: 정렬 기준. 최신순=recent, 오래된순(디폴트)=old, 좋아요가 많은순=like
+        in: query
+        name: filter
+        type: string
+      - description: 한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)
+        in: query
+        name: size
+        type: string
+      - description: 마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          정렬기준의 가장 처음 댓글부터 줌
+        in: query
+        name: cursor
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.CommentPageV3Response'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 최근 플레이리스트 List업 하기
+      tags:
+      - Playlist
+  /v1/keep/subscribe:
+    get:
+      consumes:
+      - application/json
+      description: 내가 구독한 다른사람들의 플레이리스트를 가져온다
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.GetSubscribedKeepsResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 내가 구독한 다른사람들의 플레이리스트 가져오기
       tags:
       - Playlist
   /v1/member:
