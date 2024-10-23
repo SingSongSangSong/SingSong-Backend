@@ -8,4 +8,4 @@ volumes
 embedEtcd.yaml
 user.yaml
 standalone_embed.sh
-singsong-firebase.json
+*.json
