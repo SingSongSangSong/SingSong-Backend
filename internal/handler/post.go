@@ -64,10 +64,10 @@ func CreatePost(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if len(postRequest.SongInfoIds) > 10 {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - maximum song size is 10", nil)
-			return
-		}
+		//if len(postRequest.SongInfoIds) > 10 {
+		//	pkg.BaseResponse(c, http.StatusBadRequest, "error - maximum song size is 10", nil)
+		//	return
+		//}
 
 		if postRequest.SongInfoIds == nil || len(postRequest.SongInfoIds) == 0 {
 			post := mysql.Post{
