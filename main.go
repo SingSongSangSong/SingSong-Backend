@@ -6,7 +6,7 @@ import (
 	"SingSong-Server/router"
 	"context"
 	"database/sql"
-	firebase "firebase.google.com/go"
+	firebase "firebase.google.com/go/v4"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"

@@ -5,7 +5,7 @@ import (
 	"SingSong-Server/internal/handler"
 	"SingSong-Server/middleware"
 	"database/sql"
-	firebase "firebase.google.com/go"
+	firebase "firebase.google.com/go/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
@@ -179,7 +179,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 
 	postComment := r.Group("/api/v1/posts/comments")
 	{
-		postComment.POST("", middleware.AuthMiddleware(db), handler.CommentOnPost(db))
+		postComment.POST("", middleware.AuthMiddleware(db), handler.CommentOnPost(db, firebaseApp))
 		postComment.GET("/:postCommentId/recomments", middleware.AuthMiddleware(db), handler.GetReCommentOnPost(db))
 		postComment.POST("/report", middleware.AuthMiddleware(db), handler.ReportPostComment(db))
 		postComment.POST("/:postCommentId/like", middleware.AuthMiddleware(db), handler.LikePostComment(db))

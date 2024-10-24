@@ -5,8 +5,8 @@ import (
 	"SingSong-Server/internal/pkg"
 	"context"
 	"database/sql"
-	firebase "firebase.google.com/go"
-	"firebase.google.com/go/messaging"
+	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/messaging"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -35,7 +35,7 @@ func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 
 		// 안드로이드 테스트
 		message := &messaging.Message{
-			Token: "d1L3wzN4RI6SWExZ3xEmXO:APA91bECrGlq5QoPJtuzA4ObaqQZraAek7P9TAgWlZq2D95IOboR0SFvB21CZaCiXHkdvSP2AuXMf95DI4Zf02f5iFQWeN5gGmEUGD86F8TzZfdNNIKVEKE", // 알림을 보낼 대상 클라이언트의 FCM 토큰
+			Token: "invalidtoken", // 알림을 보낼 대상 클라이언트의 FCM 토큰
 			Notification: &messaging.Notification{
 				Title: "이건 제목이구",
 				Body:  "이건 body란다",
@@ -94,7 +94,7 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 	}
 
 	all, err := mysql.MemberDeviceTokens(
-		qm.WhereIn("member_id in ?", receiverIds),
+		qm.WhereIn("member_id in ?", ids...),
 		qm.Where("is_activate = true"),
 	).All(ctx, db)
 	if err != nil {
@@ -115,19 +115,18 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 		Tokens: registrationTokens,
 	}
 
-	br, err := client.SendMulticast(ctx, message)
+	br, err := client.SendEachForMulticast(ctx, message)
 	if err != nil {
 		log.Printf("error sending notifications - " + err.Error())
 		return
 	}
 	if br.FailureCount > 0 {
 		var failedTokens []string
-		for idx, resp := range br.Responses {
+		for _, resp := range br.Responses {
 			if !resp.Success {
-				failedTokens = append(failedTokens, registrationTokens[idx])
+				failedTokens = append(failedTokens, resp.Error.Error())
 			}
 		}
 		fmt.Printf("List of tokens that caused failures: %v\n", failedTokens)
 	}
-
 }

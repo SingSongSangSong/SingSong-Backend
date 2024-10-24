@@ -3,7 +3,7 @@ package conf
 import (
 	"context"
 	"database/sql"
-	firebase "firebase.google.com/go"
+	firebase "firebase.google.com/go/v4"
 	"fmt"
 	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"

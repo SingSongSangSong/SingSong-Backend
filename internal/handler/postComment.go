@@ -3,7 +3,9 @@ package handler
 import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
+	"context"
 	"database/sql"
+	firebase "firebase.google.com/go/v4"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
@@ -49,7 +51,7 @@ type PostCommentResponse struct {
 // @Success      200 {object} pkg.BaseResponseStruct{data=PostCommentResponse} "성공"
 // @Router       /v1/posts/comments [post]
 // @Security BearerAuth
-func CommentOnPost(db *sql.DB) gin.HandlerFunc {
+func CommentOnPost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// CommentRequest 받기
 		commentRequest := &PostCommentRequest{}
@@ -139,6 +141,29 @@ func CommentOnPost(db *sql.DB) gin.HandlerFunc {
 			SongOnPostComment:   make([]SongOnPost, 0),
 			PostRecommentCount:  0,
 		}
+
+		go func() {
+			uniqueMemberIds, err := mysql.PostComments(
+				qm.Select("DISTINCT member_id"),
+				qm.Where("post_id = ?", commentRequest.PostId),
+			).All(context.Background(), db)
+			if err != nil {
+				log.Printf("error fetching unique member ids: %v", err)
+				return
+			}
+			receiverIds := make([]int64, len(uniqueMemberIds))
+			for i, v := range uniqueMemberIds {
+				receiverIds[i] = v.MemberID
+			}
+
+			SendNotification(db, firebaseApp, NotificationMessage{
+				Title:             "게시글에 새로운 댓글이 달렸어요",
+				Body:              commentRequest.Content,
+				SenderMemberId:    memberId.(int64),
+				ReceiverMemberIds: receiverIds,
+				Type:              PostNotification,
+			})
+		}()
 
 		// 댓글 달기 성공시 댓글 정보 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", commentResponse)
