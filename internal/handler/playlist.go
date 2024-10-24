@@ -41,8 +41,7 @@ func CreatePlaylist(db *sql.DB, keepName string, memberId int64) {
 	}
 }
 
-// 플레이리스트에 노래리스트 추가
-// AddSongsToPlaylist godoc
+// AddSongsToKeep godoc
 // @Summary      플레이리스트에 노래를 추가한다
 // @Description  노래들을 하나씩 플레이리스트에 추가한 후 적용된 플레이리스트의 노래들을 리턴한다
 // @Tags         Playlist
@@ -52,7 +51,7 @@ func CreatePlaylist(db *sql.DB, keepName string, memberId int64) {
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]PlaylistAddResponse} "성공"
 // @Router       /v1/keep [post]
 // @Security BearerAuth
-func AddSongsToPlaylist(db *sql.DB) gin.HandlerFunc {
+func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		playlistRequest := &PlaylistAddRequest{}
 		if err := c.ShouldBindJSON(&playlistRequest); err != nil {
@@ -134,8 +133,7 @@ type SongDeleteFromPlaylistRequest struct {
 	SongInfoIds []int `json:"songIds"`
 }
 
-// 플레이리스트에 노래리스트 삭제
-// DeleteSongsFromPlaylist godoc
+// DeleteSongsFromKeep godoc
 // @Summary      플레이리스트에 노래를 제거한다
 // @Description  노래들을 하나씩 플레이리스트에서 삭제한다
 // @Tags         Playlist
@@ -145,7 +143,7 @@ type SongDeleteFromPlaylistRequest struct {
 // @Success      200 {object} pkg.BaseResponseStruct{data=PlaylistAddResponse} "성공"
 // @Router       /v1/keep [delete]
 // @Security BearerAuth
-func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
+func DeleteSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		songDeleteFromPlaylistRequest := &SongDeleteFromPlaylistRequest{}
 		if err := c.ShouldBindJSON(&songDeleteFromPlaylistRequest); err != nil {
@@ -200,8 +198,7 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// 플레이리스트에 노래리스트 조회
-// GetSongsFromPlaylist godoc
+// GetSongsFromKeep godoc
 // @Summary      플레이리스트에 노래를 가져온다
 // @Description  플레이리스트에 있는 노래들을 가져온다
 // @Tags         Playlist
@@ -210,7 +207,7 @@ func DeleteSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]PlaylistAddResponse} "성공"
 // @Router       /v1/keep [get]
 // @Security BearerAuth
-func GetSongsFromPlaylist(db *sql.DB) gin.HandlerFunc {
+func GetSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, err := c.Get("memberId")
 		if err != true {

@@ -709,7 +709,7 @@ func (o *PostLike) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			postLikeAllColumns,
 			postLikeColumnsWithDefault,
 			postLikeColumnsWithoutDefault,
@@ -725,8 +725,7 @@ func (o *PostLike) Upsert(ctx context.Context, exec boil.ContextExecutor, update
 			return errors.New("mysql: unable to upsert post_like, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(postLikeAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`post_like`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `post_like` WHERE %s",
