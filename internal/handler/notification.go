@@ -1,14 +1,20 @@
 package handler
 
 import (
+	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
+	"context"
 	"database/sql"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"log"
 	"net/http"
 )
+
+// todo: https://firebase.google.com/docs/cloud-messaging/send-message?hl=ko#go
 
 // TestNotification godoc
 // @Summary      알림 전송 테스트
@@ -20,31 +26,108 @@ import (
 // @Router       /v1/notifications/test [post]
 func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 클라이언트 초기화
-		client, err := firebaseApp.Messaging(c)
+		client, err := firebaseApp.Messaging(context.Background())
 		if err != nil {
 			log.Printf("error getting Messaging client: %v", err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		// 메시지 생성
+		// 안드로이드 테스트
 		message := &messaging.Message{
-			Token: "token", // 알림을 보낼 대상 클라이언트의 FCM 토큰
+			Token: "d1L3wzN4RI6SWExZ3xEmXO:APA91bECrGlq5QoPJtuzA4ObaqQZraAek7P9TAgWlZq2D95IOboR0SFvB21CZaCiXHkdvSP2AuXMf95DI4Zf02f5iFQWeN5gGmEUGD86F8TzZfdNNIKVEKE", // 알림을 보낼 대상 클라이언트의 FCM 토큰
 			Notification: &messaging.Notification{
-				Title: "이건 알림 제목이양",
-				Body:  "이거는 바디 내용이양",
+				Title: "이건 제목이구",
+				Body:  "이건 body란다",
+			},
+			Data: map[string]string{
+				"key1": "value1",
+				"key2": "value2",
 			},
 		}
 
 		// 메시지 전송에 타임아웃을 주고 싶다면 ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) 이걸 쓸 수 있다
-		_, err = client.Send(c, message)
+		_, err = client.Send(context.Background(), message)
 		if err != nil {
-			log.Printf("error sending message: %v", err)
+			log.Printf("error sending android message: %v", err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "error - "+err.Error(), nil)
 	}
+}
+
+// NotificationType 정의
+type NotificationType string
+
+// 허용되는 알림 타입
+const (
+	// 필요한 다른 알림 타입을 추가 가능
+	SongNotification NotificationType = "SONG"
+	PostNotification NotificationType = "POST"
+)
+
+type NotificationMessage struct {
+	Title             string  // 알림 제목
+	Body              string  // 알림 내용
+	SenderMemberId    int64   // 발신자 ID
+	ReceiverMemberIds []int64 // 수신자 ID
+	Type              NotificationType
+}
+
+func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage NotificationMessage) {
+	ctx := context.Background()
+	client, err := firebaseApp.Messaging(ctx)
+	if err != nil {
+		log.Printf("error getting Messaging client: %v", err)
+		return
+	}
+
+	receiverIds := notificationMessage.ReceiverMemberIds
+	ids := make([]interface{}, len(receiverIds))
+	for i, v := range receiverIds {
+		ids[i] = v
+	}
+	if len(ids) == 0 {
+		return
+	}
+
+	all, err := mysql.MemberDeviceTokens(
+		qm.WhereIn("member_id in ?", receiverIds),
+		qm.Where("is_activate = true"),
+	).All(ctx, db)
+	if err != nil {
+		log.Printf("error - "+err.Error(), err)
+		return
+	}
+
+	registrationTokens := make([]string, 0, len(all))
+	for _, device := range all {
+		registrationTokens = append(registrationTokens, device.DeviceToken)
+	}
+
+	message := &messaging.MulticastMessage{
+		Notification: &messaging.Notification{
+			Title: notificationMessage.Title,
+			Body:  notificationMessage.Body,
+		},
+		Tokens: registrationTokens,
+	}
+
+	br, err := client.SendMulticast(ctx, message)
+	if err != nil {
+		log.Printf("error sending notifications - " + err.Error())
+		return
+	}
+	if br.FailureCount > 0 {
+		var failedTokens []string
+		for idx, resp := range br.Responses {
+			if !resp.Success {
+				failedTokens = append(failedTokens, registrationTokens[idx])
+			}
+		}
+		fmt.Printf("List of tokens that caused failures: %v\n", failedTokens)
+	}
+
 }
