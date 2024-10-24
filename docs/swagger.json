@@ -708,6 +708,256 @@
                 }
             }
         },
+        "/v1/keep/story": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "최근 플레이리스트를 여러 방법으로 가져오고 사용자의 좋아요 여부까지 알 수 있게 합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Playlist"
+                ],
+                "summary": "최근 플레이리스트 List업 하기",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "정렬 기준. 최신순=recent, 오래된순(디폴트)=old, 좋아요가 많은순=like",
+                        "name": "filter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "한번에 조회할 플레이리스트 개수. 디폴트값은 10 + @(노래개수)",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "마지막에 조회했던 커서의 keep_list_id(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 플리부터 줌",
+                        "name": "cursor",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.KeepListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/keep/subscribe": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "내가 구독한 다른사람들의 플레이리스트를 가져온다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Playlist"
+                ],
+                "summary": "내가 구독한 다른사람들의 플레이리스트 가져오기",
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.GetSubscribedKeepsResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/keep/{keepListId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "다른사람의 플레이리스트에 있는 노래를 가져온다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Playlist"
+                ],
+                "summary": "다른사람의 플레이리스트에 있는 노래를 가져온다",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "keepListId",
+                        "name": "keepListId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.GetSongsFromKeepInStoryResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/keep/{keepListId}/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "플레이리스트에 좋아요를 누르거나 좋아요를 취소합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Playlist"
+                ],
+                "summary": "플레이리스트 좋아요/좋아요 취소",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "keepListId",
+                        "name": "keepListId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/keep/{keepListId}/subscribe": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "플레이리스트를 구독하거나 구독을 취소합니다. 요청을 한번 보내면 구독을 하고 한번 더 보내면 구독 여부 확인후 취소합니다",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Playlist"
+                ],
+                "summary": "플레이리스트 구독하기/구독 취소",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "keepListId",
+                        "name": "keepListId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/member": {
             "get": {
                 "security": [
@@ -1208,6 +1458,49 @@
                                 }
                             ]
                         }
+                    }
+                }
+            }
+        },
+        "/v1/posts/comments/{postCommentId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "게시글 댓글 하나 삭제",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "게시글 댓글 하나 삭제",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "postCommentId",
+                        "name": "postCommentId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공"
+                    },
+                    "400": {
+                        "description": "postCommentId 요청에 없는 경우, 해당 댓글이 존재하지 않는 경우, 댓글 작성자가 아닌 경우 400 실패"
+                    },
+                    "401": {
+                        "description": "사용자 인증에 실패했을 경우 401 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
                     }
                 }
             }
@@ -3079,6 +3372,67 @@
                 }
             }
         },
+        "/v2/posts/{postId}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get comments for a specific post identified by postId with optional page and size query parameters (Version 2)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Post"
+                ],
+                "summary": "Retrieve comments for the specified postId (Version. 2)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "postId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 먼저 작성된 댓글부터 조회",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.GetPostCommentV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v2/recommend/recommendation/ai": {
             "get": {
                 "security": [
@@ -3420,6 +3774,73 @@
                     }
                 }
             }
+        },
+        "/v3/songs/{songId}/comments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용) - query param이 없으면 디폴트는 최신순 입니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comment"
+                ],
+                "summary": "특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "정렬 기준. 최신순=recent, 오래된순(디폴트)=old",
+                        "name": "filter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 댓글부터 줌",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "songId",
+                        "name": "songId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.CommentPageV3Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -3465,6 +3886,23 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/handler.CommentWithRecommentsCountResponse"
+                    }
+                },
+                "lastCursor": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.CommentPageV3Response": {
+            "type": "object",
+            "properties": {
+                "commentCount": {
+                    "type": "integer"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CommentWithRecommentsResponse"
                     }
                 },
                 "lastCursor": {
@@ -3568,6 +4006,50 @@
                 }
             }
         },
+        "handler.CommentWithRecommentsResponse": {
+            "type": "object",
+            "properties": {
+                "commentId": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "parentCommentId": {
+                    "type": "integer"
+                },
+                "recomments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.CommentWithRecommentsResponse"
+                    }
+                },
+                "recommentsCount": {
+                    "type": "integer"
+                },
+                "songId": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.FunctionCallingDetailResponse": {
             "type": "object",
             "properties": {
@@ -3662,6 +4144,23 @@
                 }
             }
         },
+        "handler.GetPostCommentV2Response": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "postComments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PostCommentV2Response"
+                    }
+                },
+                "totalPostCommentCount": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.GetPostReCommentResponse": {
             "type": "object",
             "properties": {
@@ -3673,6 +4172,150 @@
                     "items": {
                         "$ref": "#/definitions/handler.PostCommentResponse"
                     }
+                }
+            }
+        },
+        "handler.GetSongsFromKeepInStoryResponse": {
+            "type": "object",
+            "properties": {
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "keepName": {
+                    "type": "string"
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.GetSongsFromKeepStories"
+                    }
+                }
+            }
+        },
+        "handler.GetSongsFromKeepStories": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.GetSubscribedKeepsResponse": {
+            "type": "object",
+            "properties": {
+                "keepListId": {
+                    "type": "integer"
+                },
+                "keepName": {
+                    "type": "string"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.KeepListResponse": {
+            "type": "object",
+            "properties": {
+                "keepLists": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.KeepLists"
+                    }
+                },
+                "lastCursor": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.KeepLists": {
+            "type": "object",
+            "properties": {
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "keepListId": {
+                    "type": "integer"
+                },
+                "keepName": {
+                    "type": "string"
+                },
+                "keepSongs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.KeepStorySongs"
+                    }
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.KeepStorySongs": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
                 }
             }
         },
@@ -3772,6 +4415,9 @@
         "handler.LoginV2Request": {
             "type": "object",
             "properties": {
+                "deviceToken": {
+                    "type": "string"
+                },
                 "idToken": {
                     "type": "string"
                 },
@@ -3972,6 +4618,56 @@
                 },
                 "postId": {
                     "type": "integer"
+                },
+                "postRecommentsCount": {
+                    "type": "integer"
+                },
+                "songOnPostComment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongOnPost"
+                    }
+                }
+            }
+        },
+        "handler.PostCommentV2Response": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "isRecomment": {
+                    "type": "boolean"
+                },
+                "likes": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "parentPostCommentId": {
+                    "type": "integer"
+                },
+                "postCommentId": {
+                    "type": "integer"
+                },
+                "postId": {
+                    "type": "integer"
+                },
+                "postRecomments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.PostCommentV2Response"
+                    }
                 },
                 "postRecommentsCount": {
                     "type": "integer"

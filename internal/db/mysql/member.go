@@ -116,12 +116,16 @@ var MemberWhere = struct {
 // MemberRels is where relationship names are stored.
 var MemberRels = struct {
 	Comments           string
+	KeepListLikes      string
+	KeepListSubscribes string
 	LLMSearchLogs      string
 	MemberDeviceTokens string
 	Posts              string
 	PostComments       string
 }{
 	Comments:           "Comments",
+	KeepListLikes:      "KeepListLikes",
+	KeepListSubscribes: "KeepListSubscribes",
 	LLMSearchLogs:      "LLMSearchLogs",
 	MemberDeviceTokens: "MemberDeviceTokens",
 	Posts:              "Posts",
@@ -131,6 +135,8 @@ var MemberRels = struct {
 // memberR is where relationships are stored.
 type memberR struct {
 	Comments           CommentSlice           `boil:"Comments" json:"Comments" toml:"Comments" yaml:"Comments"`
+	KeepListLikes      KeepListLikeSlice      `boil:"KeepListLikes" json:"KeepListLikes" toml:"KeepListLikes" yaml:"KeepListLikes"`
+	KeepListSubscribes KeepListSubscribeSlice `boil:"KeepListSubscribes" json:"KeepListSubscribes" toml:"KeepListSubscribes" yaml:"KeepListSubscribes"`
 	LLMSearchLogs      LLMSearchLogSlice      `boil:"LLMSearchLogs" json:"LLMSearchLogs" toml:"LLMSearchLogs" yaml:"LLMSearchLogs"`
 	MemberDeviceTokens MemberDeviceTokenSlice `boil:"MemberDeviceTokens" json:"MemberDeviceTokens" toml:"MemberDeviceTokens" yaml:"MemberDeviceTokens"`
 	Posts              PostSlice              `boil:"Posts" json:"Posts" toml:"Posts" yaml:"Posts"`
@@ -147,6 +153,20 @@ func (r *memberR) GetComments() CommentSlice {
 		return nil
 	}
 	return r.Comments
+}
+
+func (r *memberR) GetKeepListLikes() KeepListLikeSlice {
+	if r == nil {
+		return nil
+	}
+	return r.KeepListLikes
+}
+
+func (r *memberR) GetKeepListSubscribes() KeepListSubscribeSlice {
+	if r == nil {
+		return nil
+	}
+	return r.KeepListSubscribes
 }
 
 func (r *memberR) GetLLMSearchLogs() LLMSearchLogSlice {
@@ -480,6 +500,34 @@ func (o *Member) Comments(mods ...qm.QueryMod) commentQuery {
 	return Comments(queryMods...)
 }
 
+// KeepListLikes retrieves all the keep_list_like's KeepListLikes with an executor.
+func (o *Member) KeepListLikes(mods ...qm.QueryMod) keepListLikeQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("`keep_list_like`.`member_id`=?", o.MemberID),
+	)
+
+	return KeepListLikes(queryMods...)
+}
+
+// KeepListSubscribes retrieves all the keep_list_subscribe's KeepListSubscribes with an executor.
+func (o *Member) KeepListSubscribes(mods ...qm.QueryMod) keepListSubscribeQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("`keep_list_subscribe`.`member_id`=?", o.MemberID),
+	)
+
+	return KeepListSubscribes(queryMods...)
+}
+
 // LLMSearchLogs retrieves all the llm_search_log's LLMSearchLogs with an executor.
 func (o *Member) LLMSearchLogs(mods ...qm.QueryMod) llmSearchLogQuery {
 	var queryMods []qm.QueryMod
@@ -640,6 +688,234 @@ func (memberL) LoadComments(ctx context.Context, e boil.ContextExecutor, singula
 				local.R.Comments = append(local.R.Comments, foreign)
 				if foreign.R == nil {
 					foreign.R = &commentR{}
+				}
+				foreign.R.Member = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadKeepListLikes allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (memberL) LoadKeepListLikes(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMember interface{}, mods queries.Applicator) error {
+	var slice []*Member
+	var object *Member
+
+	if singular {
+		var ok bool
+		object, ok = maybeMember.(*Member)
+		if !ok {
+			object = new(Member)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeMember)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeMember))
+			}
+		}
+	} else {
+		s, ok := maybeMember.(*[]*Member)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeMember)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeMember))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &memberR{}
+		}
+		args = append(args, object.MemberID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &memberR{}
+			}
+
+			for _, a := range args {
+				if a == obj.MemberID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.MemberID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`keep_list_like`),
+		qm.WhereIn(`keep_list_like.member_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load keep_list_like")
+	}
+
+	var resultSlice []*KeepListLike
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice keep_list_like")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on keep_list_like")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for keep_list_like")
+	}
+
+	if len(keepListLikeAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.KeepListLikes = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &keepListLikeR{}
+			}
+			foreign.R.Member = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.MemberID == foreign.MemberID {
+				local.R.KeepListLikes = append(local.R.KeepListLikes, foreign)
+				if foreign.R == nil {
+					foreign.R = &keepListLikeR{}
+				}
+				foreign.R.Member = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
+// LoadKeepListSubscribes allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (memberL) LoadKeepListSubscribes(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMember interface{}, mods queries.Applicator) error {
+	var slice []*Member
+	var object *Member
+
+	if singular {
+		var ok bool
+		object, ok = maybeMember.(*Member)
+		if !ok {
+			object = new(Member)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeMember)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeMember))
+			}
+		}
+	} else {
+		s, ok := maybeMember.(*[]*Member)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeMember)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeMember))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &memberR{}
+		}
+		args = append(args, object.MemberID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &memberR{}
+			}
+
+			for _, a := range args {
+				if a == obj.MemberID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.MemberID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`keep_list_subscribe`),
+		qm.WhereIn(`keep_list_subscribe.member_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load keep_list_subscribe")
+	}
+
+	var resultSlice []*KeepListSubscribe
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice keep_list_subscribe")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on keep_list_subscribe")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for keep_list_subscribe")
+	}
+
+	if len(keepListSubscribeAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.KeepListSubscribes = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &keepListSubscribeR{}
+			}
+			foreign.R.Member = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.MemberID == foreign.MemberID {
+				local.R.KeepListSubscribes = append(local.R.KeepListSubscribes, foreign)
+				if foreign.R == nil {
+					foreign.R = &keepListSubscribeR{}
 				}
 				foreign.R.Member = local
 				break
@@ -1150,6 +1426,112 @@ func (o *Member) AddComments(ctx context.Context, exec boil.ContextExecutor, ins
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &commentR{
+				Member: o,
+			}
+		} else {
+			rel.R.Member = o
+		}
+	}
+	return nil
+}
+
+// AddKeepListLikes adds the given related objects to the existing relationships
+// of the member, optionally inserting them as new records.
+// Appends related to o.R.KeepListLikes.
+// Sets related.R.Member appropriately.
+func (o *Member) AddKeepListLikes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*KeepListLike) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.MemberID = o.MemberID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `keep_list_like` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"member_id"}),
+				strmangle.WhereClause("`", "`", 0, keepListLikePrimaryKeyColumns),
+			)
+			values := []interface{}{o.MemberID, rel.KeepListLikeID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.MemberID = o.MemberID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &memberR{
+			KeepListLikes: related,
+		}
+	} else {
+		o.R.KeepListLikes = append(o.R.KeepListLikes, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &keepListLikeR{
+				Member: o,
+			}
+		} else {
+			rel.R.Member = o
+		}
+	}
+	return nil
+}
+
+// AddKeepListSubscribes adds the given related objects to the existing relationships
+// of the member, optionally inserting them as new records.
+// Appends related to o.R.KeepListSubscribes.
+// Sets related.R.Member appropriately.
+func (o *Member) AddKeepListSubscribes(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*KeepListSubscribe) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.MemberID = o.MemberID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `keep_list_subscribe` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"member_id"}),
+				strmangle.WhereClause("`", "`", 0, keepListSubscribePrimaryKeyColumns),
+			)
+			values := []interface{}{o.MemberID, rel.KeepListSubscribeID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.MemberID = o.MemberID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &memberR{
+			KeepListSubscribes: related,
+		}
+	} else {
+		o.R.KeepListSubscribes = append(o.R.KeepListSubscribes, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &keepListSubscribeR{
 				Member: o,
 			}
 		} else {

@@ -32,6 +32,17 @@ definitions:
       lastCursor:
         type: integer
     type: object
+  handler.CommentPageV3Response:
+    properties:
+      commentCount:
+        type: integer
+      comments:
+        items:
+          $ref: '#/definitions/handler.CommentWithRecommentsResponse'
+        type: array
+      lastCursor:
+        type: integer
+    type: object
   handler.CommentRequest:
     properties:
       content:
@@ -90,6 +101,35 @@ definitions:
         type: string
       parentCommentId:
         type: integer
+      recommentsCount:
+        type: integer
+      songId:
+        type: integer
+    type: object
+  handler.CommentWithRecommentsResponse:
+    properties:
+      commentId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentCommentId:
+        type: integer
+      recomments:
+        items:
+          $ref: '#/definitions/handler.CommentWithRecommentsResponse'
+        type: array
       recommentsCount:
         type: integer
       songId:
@@ -156,6 +196,17 @@ definitions:
       totalPostCommentCount:
         type: integer
     type: object
+  handler.GetPostCommentV2Response:
+    properties:
+      lastCursor:
+        type: integer
+      postComments:
+        items:
+          $ref: '#/definitions/handler.PostCommentV2Response'
+        type: array
+      totalPostCommentCount:
+        type: integer
+    type: object
   handler.GetPostReCommentResponse:
     properties:
       lastCursor:
@@ -164,6 +215,100 @@ definitions:
         items:
           $ref: '#/definitions/handler.PostCommentResponse'
         type: array
+    type: object
+  handler.GetSongsFromKeepInStoryResponse:
+    properties:
+      isLiked:
+        type: boolean
+      keepName:
+        type: string
+      likeCount:
+        type: integer
+      memberId:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/handler.GetSongsFromKeepStories'
+        type: array
+    type: object
+  handler.GetSongsFromKeepStories:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
+  handler.GetSubscribedKeepsResponse:
+    properties:
+      keepListId:
+        type: integer
+      keepName:
+        type: string
+      memberId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  handler.KeepListResponse:
+    properties:
+      keepLists:
+        items:
+          $ref: '#/definitions/handler.KeepLists'
+        type: array
+      lastCursor:
+        type: integer
+    type: object
+  handler.KeepLists:
+    properties:
+      isLiked:
+        type: boolean
+      keepListId:
+        type: integer
+      keepName:
+        type: string
+      keepSongs:
+        items:
+          $ref: '#/definitions/handler.KeepStorySongs'
+        type: array
+      likeCount:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  handler.KeepStorySongs:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
     type: object
   handler.LangchainAgentResponse:
     properties:
@@ -227,6 +372,8 @@ definitions:
     type: object
   handler.LoginV2Request:
     properties:
+      deviceToken:
+        type: string
       idToken:
         type: string
       provider:
@@ -358,6 +505,39 @@ definitions:
         type: integer
       postId:
         type: integer
+      postRecommentsCount:
+        type: integer
+      songOnPostComment:
+        items:
+          $ref: '#/definitions/handler.SongOnPost'
+        type: array
+    type: object
+  handler.PostCommentV2Response:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      isLiked:
+        type: boolean
+      isRecomment:
+        type: boolean
+      likes:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      parentPostCommentId:
+        type: integer
+      postCommentId:
+        type: integer
+      postId:
+        type: integer
+      postRecomments:
+        items:
+          $ref: '#/definitions/handler.PostCommentV2Response'
+        type: array
       postRecommentsCount:
         type: integer
       songOnPostComment:
@@ -1367,6 +1547,150 @@ paths:
       summary: 플레이리스트에 노래를 추가한다
       tags:
       - Playlist
+  /v1/keep/{keepListId}:
+    get:
+      consumes:
+      - application/json
+      description: 다른사람의 플레이리스트에 있는 노래를 가져온다
+      parameters:
+      - description: keepListId
+        in: path
+        name: keepListId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.GetSongsFromKeepInStoryResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 다른사람의 플레이리스트에 있는 노래를 가져온다
+      tags:
+      - Playlist
+  /v1/keep/{keepListId}/like:
+    post:
+      consumes:
+      - application/json
+      description: 플레이리스트에 좋아요를 누르거나 좋아요를 취소합니다
+      parameters:
+      - description: keepListId
+        in: path
+        name: keepListId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 플레이리스트 좋아요/좋아요 취소
+      tags:
+      - Playlist
+  /v1/keep/{keepListId}/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: 플레이리스트를 구독하거나 구독을 취소합니다. 요청을 한번 보내면 구독을 하고 한번 더 보내면 구독 여부 확인후 취소합니다
+      parameters:
+      - description: keepListId
+        in: path
+        name: keepListId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 플레이리스트 구독하기/구독 취소
+      tags:
+      - Playlist
+  /v1/keep/story:
+    get:
+      consumes:
+      - application/json
+      description: 최근 플레이리스트를 여러 방법으로 가져오고 사용자의 좋아요 여부까지 알 수 있게 합니다
+      parameters:
+      - description: 정렬 기준. 최신순=recent, 오래된순(디폴트)=old, 좋아요가 많은순=like
+        in: query
+        name: filter
+        type: string
+      - description: 한번에 조회할 플레이리스트 개수. 디폴트값은 10 + @(노래개수)
+        in: query
+        name: size
+        type: string
+      - description: 마지막에 조회했던 커서의 keep_list_id(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          정렬기준의 가장 처음 플리부터 줌
+        in: query
+        name: cursor
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.KeepListResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 최근 플레이리스트 List업 하기
+      tags:
+      - Playlist
+  /v1/keep/subscribe:
+    get:
+      consumes:
+      - application/json
+      description: 내가 구독한 다른사람들의 플레이리스트를 가져온다
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.GetSubscribedKeepsResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 내가 구독한 다른사람들의 플레이리스트 가져오기
+      tags:
+      - Playlist
   /v1/member:
     get:
       consumes:
@@ -1792,6 +2116,34 @@ paths:
       security:
       - BearerAuth: []
       summary: PostId에 댓글 달기
+      tags:
+      - Post
+  /v1/posts/comments/{postCommentId}:
+    delete:
+      consumes:
+      - application/json
+      description: 게시글 댓글 하나 삭제
+      parameters:
+      - description: postCommentId
+        in: path
+        name: postCommentId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+        "400":
+          description: postCommentId 요청에 없는 경우, 해당 댓글이 존재하지 않는 경우, 댓글 작성자가 아닌 경우 400
+            실패
+        "401":
+          description: 사용자 인증에 실패했을 경우 401 실패
+        "500":
+          description: 서버 에러일 경우 500 실패
+      security:
+      - BearerAuth: []
+      summary: 게시글 댓글 하나 삭제
       tags:
       - Post
   /v1/posts/comments/{postCommentId}/like:
@@ -2785,6 +3137,44 @@ paths:
       summary: 로그인 성별 및 연령 정보가 필요할때 사용, InfoRequired가 true일때만 사용
       tags:
       - Signup and Login
+  /v2/posts/{postId}/comments:
+    get:
+      consumes:
+      - application/json
+      description: Get comments for a specific post identified by postId with optional
+        page and size query parameters (Version 2)
+      parameters:
+      - description: Post ID
+        in: path
+        name: postId
+        required: true
+        type: integer
+      - description: 마지막에 조회했던 커서의 postCommentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          가장 먼저 작성된 댓글부터 조회
+        in: query
+        name: cursor
+        type: integer
+      - description: 한번에 조회할 게시글 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.GetPostCommentV2Response'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Retrieve comments for the specified postId (Version. 2)
+      tags:
+      - Post
   /v2/recommend/recommendation/{pageId}:
     get:
       consumes:
@@ -2988,6 +3378,48 @@ paths:
       summary: 태그 목록 가져오기 V2
       tags:
       - Tags
+  /v3/songs/{songId}/comments:
+    get:
+      consumes:
+      - application/json
+      description: 특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용) - query param이 없으면 디폴트는
+        최신순 입니다.
+      parameters:
+      - description: 정렬 기준. 최신순=recent, 오래된순(디폴트)=old
+        in: query
+        name: filter
+        type: string
+      - description: 한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)
+        in: query
+        name: size
+        type: string
+      - description: 마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          정렬기준의 가장 처음 댓글부터 줌
+        in: query
+        name: cursor
+        type: string
+      - description: songId
+        in: path
+        name: songId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.CommentPageV3Response'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용)
+      tags:
+      - Comment
 securityDefinitions:
   BearerAuth:
     in: header

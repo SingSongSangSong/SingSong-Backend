@@ -4,19 +4,25 @@ import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"github.com/friendsofgo/errors"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type LoginV2Request struct {
-	IdToken  string `json:"idToken"`
-	Provider string `json:"provider"`
+	IdToken     string `json:"idToken"`
+	Provider    string `json:"provider"`
+	DeviceToken string `json:"deviceToken"`
 }
 
 type LoginV2Response struct {
@@ -51,6 +57,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 				return
 			}
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
+			go ActivateDeviceToken(db, loginRequest.DeviceToken, m.MemberID)
 
 			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, rdb, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID)
 			if tokenErr != nil {
@@ -92,8 +99,9 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 				return
 			}
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
+			go ActivateDeviceToken(db, loginRequest.DeviceToken, m.MemberID)
 
-			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, rdb, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
+			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshTokenV2(c, rdb, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
 
 			if tokenErr != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
@@ -111,7 +119,8 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 			return
 		}
 
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, rdb, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshTokenV2(c, rdb, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
+		go ActivateDeviceToken(db, loginRequest.DeviceToken, m.MemberID)
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
@@ -187,4 +196,84 @@ func joinV2(c *gin.Context, payload *Claims, loginRequest *LoginV2Request, m *my
 		return nil, errors.New("error inserting member - " + err.Error())
 	}
 	return m, nil
+}
+
+func createAccessTokenAndRefreshTokenV2(c *gin.Context, redis *redis.Client, payload *Claims, birthYear string, gender string, memberId int64) (string, string, error) {
+	jwtAccessValidityStr := JWT_ACCESS_VALIDITY_SECONDS
+	if jwtAccessValidityStr == "" {
+		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
+		return "", "", fmt.Errorf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
+	}
+
+	jwtAccessValidity, err := strconv.ParseInt(jwtAccessValidityStr, 10, 64)
+	if err != nil {
+		log.Printf("환경 변수 변환 실패: %v", err)
+		return "", "", fmt.Errorf("환경 변수 변환 실패: %v", err)
+	}
+
+	accessTokenExpiresAt := time.Now().Add(time.Duration(jwtAccessValidity) * time.Second).Unix()
+	at := Claims{
+		MemberId:  memberId,
+		Gender:    gender,
+		BirthYear: birthYear,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: accessTokenExpiresAt,
+			Issuer:    JWT_ISSUER,
+			IssuedAt:  time.Now().Unix(),
+			Subject:   "AccessToken",
+		},
+	}
+
+	jwtRefreshValidityStr := JWT_REFRESH_VALIDITY_SECONDS
+	if jwtRefreshValidityStr == "" {
+		log.Printf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
+		return "", "", errors.New("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
+	}
+
+	jwtRefreshValidity, err := strconv.ParseInt(jwtRefreshValidityStr, 10, 64)
+	if err != nil {
+		log.Printf("환경 변수 변환 실패: %v", err)
+		return "", "", fmt.Errorf("환경 변수 변환 실패: %v", err)
+	}
+
+	refreshTokenExpiresAt := time.Now().Add(time.Duration(jwtRefreshValidity) * time.Second).Unix()
+	memberIdstr := strconv.FormatInt(memberId, 10)
+	rt := Claims{
+		StandardClaims: jwt.StandardClaims{
+			Audience:  memberIdstr,
+			Id:        memberIdstr,
+			ExpiresAt: refreshTokenExpiresAt,
+			Issuer:    JWT_ISSUER,
+			IssuedAt:  time.Now().Unix(),
+			Subject:   "RefreshToken",
+		},
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS512, at)
+	accessTokenString, err := accessToken.SignedString([]byte(SECRET_KEY))
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS512, rt)
+	refreshTokenString, err := refreshToken.SignedString([]byte(SECRET_KEY))
+	if err != nil {
+		return "", "", err
+	}
+
+	payload.BirthYear = birthYear
+	payload.Gender = gender
+	payload.MemberId = memberId
+
+	claims, err := json.Marshal(payload)
+	if err != nil {
+		return "", "", err
+	}
+
+	_, err = redis.Set(c, refreshTokenString, claims, time.Duration(jwtRefreshValidity)*time.Second).Result()
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessTokenString, refreshTokenString, nil
 }

@@ -92,9 +92,14 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	// 태그 엔드포인트 설정
 	keep := r.Group("/api/v1/keep")
 	{
-		keep.GET("", middleware.AuthMiddleware(db), handler.GetSongsFromPlaylist(db))
-		keep.POST("", middleware.AuthMiddleware(db), handler.AddSongsToPlaylist(db))
-		keep.DELETE("", middleware.AuthMiddleware(db), handler.DeleteSongsFromPlaylist(db))
+		keep.GET("", middleware.AuthMiddleware(db), handler.GetSongsFromKeep(db))
+		keep.POST("", middleware.AuthMiddleware(db), handler.AddSongsToKeep(db))
+		keep.DELETE("", middleware.AuthMiddleware(db), handler.DeleteSongsFromKeep(db))
+		keep.GET("/story", middleware.AuthMiddleware(db), handler.GetKeepForStory(db))
+		keep.POST("/:keepListId/like", middleware.AuthMiddleware(db), handler.KeepListLike(db))
+		keep.GET("/:keepListId", middleware.AuthMiddleware(db), handler.GetSongsFromKeepInStory(db))
+		keep.POST("/:keepListId/subscribe", middleware.AuthMiddleware(db), handler.SubscribeKeep(db))
+		keep.GET("/subscribe", middleware.AuthMiddleware(db), handler.GetSubscribedKeeps(db))
 	}
 
 	keepV2 := r.Group("/api/v2/keep")
@@ -119,6 +124,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	{
 		songsV2.GET("/:songId/related", middleware.AuthMiddleware(db), handler.RelatedSongV2(db, milvusClient))
 		songsV2.GET("/:songId/comments", middleware.AuthMiddleware(db), handler.GetCommentsOnSongV2(db))
+	}
+
+	songV3 := r.Group("/api/v3/songs")
+	{
+		songV3.GET("/:songId/comments", middleware.AuthMiddleware(db), handler.GetCommentsOnSongV3(db))
 	}
 
 	// 노래 리뷰 선택지 추가/조회
@@ -177,12 +187,18 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		post.GET("/:postId/comments", middleware.AuthMiddleware(db), handler.GetCommentOnPost(db))
 	}
 
+	postV2 := r.Group("/api/v2/posts")
+	{
+		postV2.GET("/:postId/comments", middleware.AuthMiddleware(db), handler.GetCommentOnPostV2(db))
+	}
+
 	postComment := r.Group("/api/v1/posts/comments")
 	{
 		postComment.POST("", middleware.AuthMiddleware(db), handler.CommentOnPost(db, firebaseApp))
 		postComment.GET("/:postCommentId/recomments", middleware.AuthMiddleware(db), handler.GetReCommentOnPost(db))
 		postComment.POST("/report", middleware.AuthMiddleware(db), handler.ReportPostComment(db))
 		postComment.POST("/:postCommentId/like", middleware.AuthMiddleware(db), handler.LikePostComment(db))
+		postComment.DELETE("/:postCommentId", middleware.AuthMiddleware(db), handler.DeletePostComment(db))
 	}
 
 	notification := r.Group("/api/v1/notifications")

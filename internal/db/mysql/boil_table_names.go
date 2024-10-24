@@ -11,6 +11,8 @@ var TableNames = struct {
 	Comment           string
 	CommentLike       string
 	KeepList          string
+	KeepListLike      string
+	KeepListSubscribe string
 	KeepSong          string
 	LLMSearchLog      string
 	Member            string
@@ -37,6 +39,8 @@ var TableNames = struct {
 	Comment:           "comment",
 	CommentLike:       "comment_like",
 	KeepList:          "keep_list",
+	KeepListLike:      "keep_list_like",
+	KeepListSubscribe: "keep_list_subscribe",
 	KeepSong:          "keep_song",
 	LLMSearchLog:      "llm_search_log",
 	Member:            "member",

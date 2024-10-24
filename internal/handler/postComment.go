@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"context"
 	"database/sql"
+	"errors"
 	firebase "firebase.google.com/go/v4"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -735,5 +736,65 @@ func LikePostComment(db *sql.DB) gin.HandlerFunc {
 
 		pkg.BaseResponse(c, http.StatusOK, "success", postComment.Likes)
 		return
+	}
+}
+
+// DeletePostComment godoc
+// @Summary      게시글 댓글 하나 삭제
+// @Description  게시글 댓글 하나 삭제
+// @Tags         Post
+// @Accept       json
+// @Produce      json
+// @Param        postCommentId path string true "postCommentId"
+// @Success      200 "성공"
+// @Failure      400 "postCommentId 요청에 없는 경우, 해당 댓글이 존재하지 않는 경우, 댓글 작성자가 아닌 경우 400 실패"
+// @Failure      401 "사용자 인증에 실패했을 경우 401 실패"
+// @Failure      500 "서버 에러일 경우 500 실패"
+// @Router       /v1/posts/comments/{postCommentId} [delete]
+// @Security BearerAuth
+func DeletePostComment(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		postCommentId := c.Param("postCommentId")
+		if postCommentId == "" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find postCommentId in path variable", nil)
+			return
+		}
+
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
+		one, err := mysql.PostComments(
+			qm.Where("post_comment.post_comment_id = ? and post_comment.deleted_at is null", postCommentId),
+		).One(c.Request.Context(), db)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				// postId에 해당하는 게시글이 존재하지 않는 경우
+				pkg.BaseResponse(c, http.StatusBadRequest, "error - postComment not found", nil)
+				return
+			}
+			// 기타 데이터베이스 관련 에러
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		if one.MemberID != memberId {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - you are not writer", nil)
+			return
+		}
+
+		_, err = mysql.PostComments(qm.Where("post_comment.post_comment_id = ? and post_comment.deleted_at is null", postCommentId)).
+			UpdateAll(c.Request.Context(), db, mysql.M{
+				"deleted_at": time.Now(),
+			})
+
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "success", nil)
 	}
 }

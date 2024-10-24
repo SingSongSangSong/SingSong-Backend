@@ -95,8 +95,8 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			SongNumber:   one.SongNumber,
 			SongName:     one.SongName,
 			SingerName:   one.ArtistName,
-			Tags:         make([]string, 0),
 			SongInfoId:   one.SongInfoID,
+			Tags:         []string{}, //todo: tags
 			Album:        one.Album.String,
 			Octave:       one.Octave.String,
 			Description:  "", //todo:

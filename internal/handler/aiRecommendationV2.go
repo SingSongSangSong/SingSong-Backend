@@ -87,7 +87,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 			log.Printf("No profile found for memberId %d fetching Gender Profile", memberIdInt)
 			userVector, err = fetchGenderProfile(milvus, gender.(string))
 			if err != nil || userVector == nil || len(userVector.GetFloatVector().Data) == 0 {
-				pkg.BaseResponse(c, http.StatusOK, "success", UserProfileResponse{Songs: []SongResponse{}})
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - no user profile vector", nil)
 				return
 			}
 		}
@@ -125,7 +125,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 
 		// SQL 실행 전에 songInfoIds가 비어 있는지 확인
 		if len(songInfoIds) == 0 {
-			pkg.BaseResponse(c, http.StatusOK, "success", UserProfileResponse{Songs: []SongResponse{}})
+			pkg.BaseResponse(c, http.StatusInternalServerError, "err - no song Ids", nil)
 			return
 		}
 
