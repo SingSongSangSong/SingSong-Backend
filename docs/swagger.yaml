@@ -372,6 +372,8 @@ definitions:
     type: object
   handler.LoginV2Request:
     properties:
+      deviceToken:
+        type: string
       idToken:
         type: string
       provider:

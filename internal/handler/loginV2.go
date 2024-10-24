@@ -20,8 +20,9 @@ import (
 )
 
 type LoginV2Request struct {
-	IdToken  string `json:"idToken"`
-	Provider string `json:"provider"`
+	IdToken     string `json:"idToken"`
+	Provider    string `json:"provider"`
+	DeviceToken string `json:"deviceToken"`
 }
 
 type LoginV2Response struct {
@@ -56,6 +57,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 				return
 			}
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
+			go ActivateDeviceToken(db, loginRequest.DeviceToken, m.MemberID)
 
 			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, rdb, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID)
 			if tokenErr != nil {
@@ -97,6 +99,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 				return
 			}
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
+			go ActivateDeviceToken(db, loginRequest.DeviceToken, m.MemberID)
 
 			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshTokenV2(c, rdb, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
 
@@ -117,6 +120,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 		}
 
 		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshTokenV2(c, rdb, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
+		go ActivateDeviceToken(db, loginRequest.DeviceToken, m.MemberID)
 
 		if tokenErr != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
