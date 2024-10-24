@@ -709,7 +709,7 @@ func (o *Blacklist) Upsert(ctx context.Context, exec boil.ContextExecutor, updat
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			blacklistAllColumns,
 			blacklistColumnsWithDefault,
 			blacklistColumnsWithoutDefault,
@@ -725,8 +725,7 @@ func (o *Blacklist) Upsert(ctx context.Context, exec boil.ContextExecutor, updat
 			return errors.New("mysql: unable to upsert blacklist, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(blacklistAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`blacklist`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `blacklist` WHERE %s",

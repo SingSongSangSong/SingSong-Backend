@@ -797,7 +797,7 @@ func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 	var err error
 
 	if !cached {
-		insert, _ := insertColumns.InsertColumnSet(
+		insert, ret := insertColumns.InsertColumnSet(
 			appVersionAllColumns,
 			appVersionColumnsWithDefault,
 			appVersionColumnsWithoutDefault,
@@ -813,8 +813,7 @@ func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 			return errors.New("mysql: unable to upsert app_version, could not build update column list")
 		}
 
-		ret := strmangle.SetComplement(appVersionAllColumns, strmangle.SetIntersect(insert, update))
-
+		ret = strmangle.SetComplement(ret, nzUniques)
 		cache.query = buildUpsertQueryMySQL(dialect, "`app_version`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `app_version` WHERE %s",

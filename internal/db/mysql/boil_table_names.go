@@ -11,10 +11,13 @@ var TableNames = struct {
 	Comment           string
 	CommentLike       string
 	KeepList          string
+	KeepListLike      string
+	KeepListSubscribe string
 	KeepSong          string
 	LLMSearchLog      string
 	Member            string
 	MemberAction      string
+	MemberDeviceToken string
 	Post              string
 	PostComment       string
 	PostCommentLike   string
@@ -28,7 +31,6 @@ var TableNames = struct {
 	SongInfo          string
 	SongReview        string
 	SongReviewOption  string
-	TempSongInfo      string
 }{
 	AppVersion:        "app_version",
 	Artist:            "artist",
@@ -37,10 +39,13 @@ var TableNames = struct {
 	Comment:           "comment",
 	CommentLike:       "comment_like",
 	KeepList:          "keep_list",
+	KeepListLike:      "keep_list_like",
+	KeepListSubscribe: "keep_list_subscribe",
 	KeepSong:          "keep_song",
 	LLMSearchLog:      "llm_search_log",
 	Member:            "member",
 	MemberAction:      "member_action",
+	MemberDeviceToken: "member_device_token",
 	Post:              "post",
 	PostComment:       "post_comment",
 	PostCommentLike:   "post_comment_like",
@@ -54,5 +59,4 @@ var TableNames = struct {
 	SongInfo:          "song_info",
 	SongReview:        "song_review",
 	SongReviewOption:  "song_review_option",
-	TempSongInfo:      "temp_song_info",
 }
