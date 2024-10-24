@@ -399,17 +399,17 @@ CREATE TABLE keep_list_like (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
-    FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE CASCADE,
-    FOREIGN KEY (keep_list_id) REFERENCES keep_list(id) ON DELETE CASCADE
+    FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
+    FOREIGN KEY (keep_list_id) REFERENCES keep_list(keep_list_id) ON DELETE CASCADE
 );
 
 CREATE TABLE keep_list_subscribe (
-     keep_list_subscribe_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-     member_id BIGINT NOT NULL,
-     keep_list_id BIGINT NOT NULL,
-     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-     deleted_at TIMESTAMP NULL DEFAULT NULL,
-     FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE CASCADE,
-     FOREIGN KEY (keep_list_id) REFERENCES keep_list(id) ON DELETE CASCADE
+    keep_list_subscribe_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    keep_list_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
+    FOREIGN KEY (keep_list_id) REFERENCES keep_list(keep_list_id) ON DELETE CASCADE
 );
