@@ -4400,6 +4400,9 @@ const docTemplate = `{
         "handler.LoginV2Request": {
             "type": "object",
             "properties": {
+                "deviceToken": {
+                    "type": "string"
+                },
                 "idToken": {
                     "type": "string"
                 },

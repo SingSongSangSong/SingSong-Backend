@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"log"
 	"net/http"
 	"time"
 )
@@ -132,6 +133,8 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
 			return
 		}
+		log.Printf("member id = %v", memberId)
+		go InvalidateAllDeviceTokens(db, memberId.(int64))
 
 		// Delete member
 		_, err := mysql.Members(qm.Where("member_id = ? AND deleted_at is null", memberId)).
@@ -150,7 +153,6 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-
 		pkg.BaseResponse(c, http.StatusOK, "success", nil)
 	}
 }
