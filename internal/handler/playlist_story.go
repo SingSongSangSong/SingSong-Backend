@@ -21,11 +21,11 @@ type KeepListResponse struct {
 
 type KeepLists struct {
 	KeepListId int64            `json:"keepListId"`
-	KeepName   null.String      `json:"keepName"`
+	KeepName   string           `json:"keepName"`
 	MemberId   int64            `json:"memberId"`
-	Nickname   null.String      `json:"nickname"`
-	LikeCount  null.Int         `json:"likeCount"`
-	UpdatedAt  null.Time        `json:"updatedAt"`
+	Nickname   string           `json:"nickname"`
+	LikeCount  int              `json:"likeCount"`
+	UpdatedAt  time.Time        `json:"updatedAt"`
 	IsLiked    bool             `json:"isLiked"`
 	KeepSongs  []KeepStorySongs `json:"keepSongs"`
 }
@@ -48,9 +48,9 @@ type KeepStorySongs struct {
 // @Accept       json
 // @Produce      json
 // @Param        filter query string false "정렬 기준. 최신순=recent, 오래된순(디폴트)=old, 좋아요가 많은순=like"
-// @Param        size query string false "한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)"
-// @Param        cursor query string false "마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 댓글부터 줌"
-// @Success      200 {object} pkg.BaseResponseStruct{data=CommentPageV3Response} "성공"
+// @Param        size query string false "한번에 조회할 플레이리스트 개수. 디폴트값은 10 + @(노래개수)"
+// @Param        cursor query string false "마지막에 조회했던 커서의 keep_list_id(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 플리부터 줌"
+// @Success      200 {object} pkg.BaseResponseStruct{data=KeepListResponse} "성공"
 // @Router       /v1/keep/story [get]
 // @Security BearerAuth
 func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
@@ -371,7 +371,7 @@ func KeepListLike(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// 댓글 좋아요 누르기
+		// keepList 좋아요 누르기
 		like := mysql.KeepListLike{MemberID: memberId.(int64), KeepListID: keepListId}
 		if err := like.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)

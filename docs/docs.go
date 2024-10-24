@@ -743,13 +743,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)",
+                        "description": "한번에 조회할 플레이리스트 개수. 디폴트값은 10 + @(노래개수)",
                         "name": "size",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 댓글부터 줌",
+                        "description": "마지막에 조회했던 커서의 keep_list_id(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 정렬기준의 가장 처음 플리부터 줌",
                         "name": "cursor",
                         "in": "query"
                     }
@@ -766,7 +766,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.CommentPageV3Response"
+                                            "$ref": "#/definitions/handler.KeepListResponse"
                                         }
                                     }
                                 }
@@ -4226,6 +4226,81 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.KeepListResponse": {
+            "type": "object",
+            "properties": {
+                "keepLists": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.KeepLists"
+                    }
+                },
+                "lastCursor": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.KeepLists": {
+            "type": "object",
+            "properties": {
+                "isLiked": {
+                    "type": "boolean"
+                },
+                "keepListId": {
+                    "type": "integer"
+                },
+                "keepName": {
+                    "type": "string"
+                },
+                "keepSongs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.KeepStorySongs"
+                    }
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "memberId": {
+                    "type": "integer"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.KeepStorySongs": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
                 }
             }
         },

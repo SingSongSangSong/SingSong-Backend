@@ -261,6 +261,55 @@ definitions:
       updatedAt:
         type: string
     type: object
+  handler.KeepListResponse:
+    properties:
+      keepLists:
+        items:
+          $ref: '#/definitions/handler.KeepLists'
+        type: array
+      lastCursor:
+        type: integer
+    type: object
+  handler.KeepLists:
+    properties:
+      isLiked:
+        type: boolean
+      keepListId:
+        type: integer
+      keepName:
+        type: string
+      keepSongs:
+        items:
+          $ref: '#/definitions/handler.KeepStorySongs'
+        type: array
+      likeCount:
+        type: integer
+      memberId:
+        type: integer
+      nickname:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  handler.KeepStorySongs:
+    properties:
+      album:
+        type: string
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+    type: object
   handler.LangchainAgentResponse:
     properties:
       songs:
@@ -1590,12 +1639,12 @@ paths:
         in: query
         name: filter
         type: string
-      - description: 한번에 조회할 댓글의 개수. 디폴트값은 10 + @(대댓글수)
+      - description: 한번에 조회할 플레이리스트 개수. 디폴트값은 10 + @(노래개수)
         in: query
         name: size
         type: string
-      - description: 마지막에 조회했던 커서의 commentId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
-          정렬기준의 가장 처음 댓글부터 줌
+      - description: 마지막에 조회했던 커서의 keep_list_id(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
+          정렬기준의 가장 처음 플리부터 줌
         in: query
         name: cursor
         type: string
@@ -1609,7 +1658,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.CommentPageV3Response'
+                  $ref: '#/definitions/handler.KeepListResponse'
               type: object
       security:
       - BearerAuth: []
