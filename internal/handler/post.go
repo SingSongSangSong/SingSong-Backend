@@ -158,14 +158,16 @@ type PostDetailsResponse struct {
 }
 
 type SongOnPost struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	SongInfoId int64  `json:"songId"`
-	Album      string `json:"album"`
-	IsMr       bool   `json:"isMr"`
-	IsLive     bool   `json:"isLive"`
-	MelonLink  string `json:"melonLink"`
+	SongNumber        int    `json:"songNumber"`
+	SongName          string `json:"songName"`
+	SingerName        string `json:"singerName"`
+	SongInfoId        int64  `json:"songId"`
+	Album             string `json:"album"`
+	IsMr              bool   `json:"isMr"`
+	IsLive            bool   `json:"isLive"`
+	MelonLink         string `json:"melonLink"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 // GetPost godoc
@@ -236,14 +238,16 @@ func GetPost(db *sql.DB) gin.HandlerFunc {
 		var songsOnPost []SongOnPost
 		for _, song := range all {
 			songsOnPost = append(songsOnPost, SongOnPost{
-				SongNumber: song.SongNumber,
-				SongName:   song.SongName,
-				SingerName: song.ArtistName,
-				SongInfoId: song.SongInfoID,
-				Album:      song.Album.String,
-				IsMr:       song.IsMR.Bool,
-				IsLive:     song.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
+				SongNumber:        song.SongNumber,
+				SongName:          song.SongName,
+				SingerName:        song.ArtistName,
+				SongInfoId:        song.SongInfoID,
+				Album:             song.Album.String,
+				IsMr:              song.IsMR.Bool,
+				IsLive:            song.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				LyricsYoutubeLink: song.LyricsVideoLink.String,
+				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
 

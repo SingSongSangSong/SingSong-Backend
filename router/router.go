@@ -72,6 +72,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		tagsV2.GET("", handler.ListTagsV2())
 	}
 
+	tagsV3 := r.Group("/api/v3/tags")
+	{
+		tagsV3.GET("", handler.ListTagsV3())
+	}
+
 	member := r.Group("/api/v1/member")
 	{
 		member.POST("/login", handler.Login(rdb, db))
@@ -173,6 +178,14 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		search.GET("/song-name", handler.SearchSongsBySongName(db))
 		search.GET("/song-number", handler.SearchSongsBySongNumber(db))
 		search.GET("/posts", middleware.AuthMiddleware(db), handler.SearchPosts(db))
+	}
+
+	searchV2 := r.Group("/api/v2/search")
+	{
+		searchV2.GET("/:searchKeyword", middleware.AuthMiddleware(db), handler.SearchSongsV2(db))
+		searchV2.GET("/artist-name", middleware.AuthMiddleware(db), handler.SearchSongsByAristV2(db))
+		searchV2.GET("/song-name", middleware.AuthMiddleware(db), handler.SearchSongsBySongNameV2(db))
+		searchV2.GET("/song-number", middleware.AuthMiddleware(db), handler.SearchSongsBySongNumberV2(db))
 	}
 
 	post := r.Group("/api/v1/posts")

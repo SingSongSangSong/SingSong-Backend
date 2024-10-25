@@ -3609,6 +3609,310 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/search/artist-name": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "가수로 노래 검색 API, 아티스트 이름을 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호 및 IsKeep여부를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "가수로 노래 검색 API V2",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SongSearchPageV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/search/song-name": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 제목으로 노래 검색 API V2, 노래 제목을 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호 및 IsKeep여부를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "노래 제목으로 노래 검색 API V2",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SongSearchPageV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/search/song-number": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 번호로 노래 검색 API V2, 노래 번호를 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호및 IsKeep여부를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "노래 번호로 노래 검색 API V2",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회. 현재는 노래 번호가 정확히 일치하는 1개만 반환하기 때문에 무의미",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회. 현재는 노래 번호가 정확히 일치하는 1개만 반환하기 때문에 무의미",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SongSearchPageV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/search/{searchKeyword}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 검색 API V2, 노래 제목 또는 아티스트 이름을 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호 및 추가적으로 IsKeep여부를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "노래 검색 API V2",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "searchKeyword",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SongSearchInfoV2Responses"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패 - 빈 리스트 반환",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v2/songs/{songId}/comments": {
             "get": {
                 "security": [
@@ -3822,6 +4126,29 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v3/tags": {
+            "get": {
+                "description": "태그 목록을 조회합니다 V3",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
                         }
                     }
                 }
@@ -4056,6 +4383,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4070,6 +4400,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4195,6 +4528,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4209,6 +4545,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4287,6 +4626,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4301,6 +4643,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4511,6 +4856,9 @@ const docTemplate = `{
                 "keepSongId": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4525,6 +4873,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4876,6 +5227,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4890,6 +5244,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4928,6 +5285,81 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.SongSearchInfoV2Response": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.SongSearchInfoV2Responses": {
+            "type": "object",
+            "properties": {
+                "artistName": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                    }
+                },
+                "songName": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                    }
+                },
+                "songNumber": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                    }
+                }
+            }
+        },
+        "handler.SongSearchPageV2Response": {
+            "type": "object",
+            "properties": {
+                "nextPage": {
+                    "type": "integer"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                    }
                 }
             }
         },
@@ -5005,6 +5437,9 @@ const docTemplate = `{
                 "isNew": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5022,6 +5457,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 },
                 "totalScore": {
                     "type": "number"
@@ -5155,6 +5593,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5169,6 +5610,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5269,6 +5713,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5283,6 +5730,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5315,6 +5765,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5329,6 +5782,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5399,6 +5855,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5422,6 +5881,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5473,6 +5935,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5487,6 +5952,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },

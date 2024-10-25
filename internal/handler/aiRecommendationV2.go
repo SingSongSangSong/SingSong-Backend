@@ -140,7 +140,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 		query := fmt.Sprintf(`
 			SELECT 
 				si.song_info_id, si.song_number, si.song_name, si.artist_name, 
-				si.album, si.is_mr, si.is_live, si.melon_song_id,
+				si.album, si.is_mr, si.is_live, si.melon_song_id, si.lyrics_video_link, si.tj_youtube_link,
 				COUNT(DISTINCT c.comment_id) AS comment_count,
 				COUNT(DISTINCT ks.keep_song_id) AS keep_count,
 				EXISTS (
@@ -172,10 +172,12 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 			var song SongResponse
 			var melonLinkId null.String
 			var album null.String
+			var lyricsLink null.String
+			var tjLink null.String
 
 			err := rows.Scan(
 				&song.SongInfoId, &song.SongNumber, &song.SongName, &song.SingerName,
-				&album, &song.IsMr, &song.IsLive, &melonLinkId,
+				&album, &song.IsMr, &song.IsLive, &melonLinkId, &lyricsLink, &tjLink,
 				&song.CommentCount, &song.KeepCount, &song.IsKeep,
 			)
 			if err != nil {

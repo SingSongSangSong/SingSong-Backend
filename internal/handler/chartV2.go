@@ -32,18 +32,20 @@ type V2RedisChartResponse struct {
 
 // ChartResponse 카멜케이스 구조체
 type V2ChartSong struct {
-	Ranking       int     `json:"ranking"`
-	SongInfoId    int     `json:"songId"`
-	TotalScore    float32 `json:"totalScore"`
-	IsNew         bool    `json:"isNew"`
-	RankingChange int     `json:"rankingChange"`
-	ArtistName    string  `json:"artistName"`
-	SongName      string  `json:"songName"`
-	SongNumber    int     `json:"songNumber"`
-	IsMR          bool    `json:"isMr"`
-	IsLive        bool    `json:"isLive"`
-	Album         string  `json:"album"`
-	MelonLink     string  `json:"melonLink"`
+	Ranking           int     `json:"ranking"`
+	SongInfoId        int     `json:"songId"`
+	TotalScore        float32 `json:"totalScore"`
+	IsNew             bool    `json:"isNew"`
+	RankingChange     int     `json:"rankingChange"`
+	ArtistName        string  `json:"artistName"`
+	SongName          string  `json:"songName"`
+	SongNumber        int     `json:"songNumber"`
+	IsMR              bool    `json:"isMr"`
+	IsLive            bool    `json:"isLive"`
+	Album             string  `json:"album"`
+	MelonLink         string  `json:"melonLink"`
+	LyricsYoutubeLink string  `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string  `json:"tjYoutubeLink"`
 }
 
 type V2ChartOfKey struct {
@@ -55,18 +57,20 @@ func convertOldToNewV2(old []V2RedisChartResponse) []V2ChartSong {
 	var newCharts []V2ChartSong
 	for _, o := range old {
 		newCharts = append(newCharts, V2ChartSong{
-			Ranking:       o.Ranking,
-			SongInfoId:    o.SongInfoId,
-			TotalScore:    o.TotalScore,
-			IsNew:         o.New == 1, // 1,0 -> true/false로 변환
-			RankingChange: o.RankingChange,
-			ArtistName:    o.ArtistName,
-			SongName:      o.SongName,
-			SongNumber:    o.SongNumber,
-			IsMR:          o.IsMR == 1,   // 1, 0 -> true/false로 변환
-			IsLive:        o.IsLive == 1, // 1, 0 -> true/false로 변환
-			Album:         o.Album,
-			MelonLink:     CreateMelonLinkByMelonSongId(o.MelonSongId),
+			Ranking:           o.Ranking,
+			SongInfoId:        o.SongInfoId,
+			TotalScore:        o.TotalScore,
+			IsNew:             o.New == 1, // 1,0 -> true/false로 변환
+			RankingChange:     o.RankingChange,
+			ArtistName:        o.ArtistName,
+			SongName:          o.SongName,
+			SongNumber:        o.SongNumber,
+			IsMR:              o.IsMR == 1,   // 1, 0 -> true/false로 변환
+			IsLive:            o.IsLive == 1, // 1, 0 -> true/false로 변환
+			Album:             o.Album,
+			MelonLink:         CreateMelonLinkByMelonSongId(o.MelonSongId),
+			LyricsYoutubeLink: "", //todo:
+			TJYoutubeLink:     "",
 		})
 	}
 	return newCharts
