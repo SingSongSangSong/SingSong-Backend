@@ -59,7 +59,7 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 		query := fmt.Sprintf(`
 			SELECT 
 				si.song_info_id, si.song_number, si.song_name, si.artist_name, 
-				si.album, si.is_mr, si.is_live, si.melon_song_id,
+				si.album, si.is_mr, si.is_live, si.melon_song_id, si.lyrics_video_link, si.tj_youtube_link,
 				COUNT(DISTINCT c.comment_id) AS comment_count,
 				COUNT(DISTINCT ks.keep_song_id) AS keep_count,
 				EXISTS (
