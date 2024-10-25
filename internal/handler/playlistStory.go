@@ -31,14 +31,16 @@ type KeepLists struct {
 }
 
 type KeepStorySongs struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	SongInfoId int64  `json:"songId"`
-	Album      string `json:"album"`
-	IsMr       bool   `json:"isMr"`
-	IsLive     bool   `json:"isLive"`
-	MelonLink  string `json:"melonLink"`
+	SongNumber        int    `json:"songNumber"`
+	SongName          string `json:"songName"`
+	SingerName        string `json:"singerName"`
+	SongInfoId        int64  `json:"songId"`
+	Album             string `json:"album"`
+	IsMr              bool   `json:"isMr"`
+	IsLive            bool   `json:"isLive"`
+	MelonLink         string `json:"melonLink"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 // GetKeepForStory godoc
@@ -233,14 +235,16 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 		songInfoMap := make(map[int64]KeepStorySongs)
 		for _, songInfo := range songInfoList {
 			songInfoMap[songInfo.SongInfoID] = KeepStorySongs{
-				SongNumber: songInfo.SongNumber,
-				SongName:   songInfo.SongName,
-				SingerName: songInfo.ArtistName,
-				SongInfoId: songInfo.SongInfoID,
-				Album:      songInfo.Album.String,
-				IsMr:       songInfo.IsMR.Bool,
-				IsLive:     songInfo.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(songInfo.MelonSongID),
+				SongNumber:        songInfo.SongNumber,
+				SongName:          songInfo.SongName,
+				SingerName:        songInfo.ArtistName,
+				SongInfoId:        songInfo.SongInfoID,
+				Album:             songInfo.Album.String,
+				IsMr:              songInfo.IsMR.Bool,
+				IsLive:            songInfo.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(songInfo.MelonSongID),
+				LyricsYoutubeLink: songInfo.LyricsVideoLink.String,
+				TJYoutubeLink:     songInfo.TJYoutubeLink.String,
 			}
 		}
 
@@ -406,14 +410,16 @@ type GetSongsFromKeepInStoryResponse struct {
 }
 
 type GetSongsFromKeepStories struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	SongInfoId int64  `json:"songId"`
-	Album      string `json:"album"`
-	IsMr       bool   `json:"isMr"`
-	IsLive     bool   `json:"isLive"`
-	MelonLink  string `json:"melonLink"`
+	SongNumber        int    `json:"songNumber"`
+	SongName          string `json:"songName"`
+	SingerName        string `json:"singerName"`
+	SongInfoId        int64  `json:"songId"`
+	Album             string `json:"album"`
+	IsMr              bool   `json:"isMr"`
+	IsLive            bool   `json:"isLive"`
+	MelonLink         string `json:"melonLink"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 // GetSongsFromKeepInStory godoc
@@ -474,14 +480,16 @@ func GetSongsFromKeepInStory(db *sql.DB) gin.HandlerFunc {
 		songFromKeepResponse := make([]GetSongsFromKeepStories, len(allSongInfos))
 		for i, v := range allSongInfos {
 			songFromKeepResponse[i] = GetSongsFromKeepStories{
-				SongName:   v.SongName,
-				SingerName: v.ArtistName,
-				SongNumber: v.SongNumber,
-				SongInfoId: v.SongInfoID,
-				Album:      v.Album.String,
-				IsMr:       v.IsMR.Bool,
-				IsLive:     v.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(v.MelonSongID),
+				SongName:          v.SongName,
+				SingerName:        v.ArtistName,
+				SongNumber:        v.SongNumber,
+				SongInfoId:        v.SongInfoID,
+				Album:             v.Album.String,
+				IsMr:              v.IsMR.Bool,
+				IsLive:            v.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(v.MelonSongID),
+				LyricsYoutubeLink: v.LyricsVideoLink.String,
+				TJYoutubeLink:     v.TJYoutubeLink.String,
 			}
 		}
 		// 좋아요 여부 확인

@@ -258,14 +258,16 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 						if songInfo, exists := songInfoMap[int64(id)]; exists {
 							// Create SongOnPost object
 							songOnPost := SongOnPost{
-								SongNumber: songInfo.SongNumber,
-								SongName:   songInfo.SongName,
-								SingerName: songInfo.ArtistName,
-								SongInfoId: songInfo.SongInfoID,
-								Album:      songInfo.Album.String,
-								IsMr:       songInfo.IsMR.Bool,
-								IsLive:     songInfo.IsLive.Bool,                               // Set according to your logic
-								MelonLink:  CreateMelonLinkByMelonSongId(songInfo.MelonSongID), // Set according to your logic
+								SongNumber:        songInfo.SongNumber,
+								SongName:          songInfo.SongName,
+								SingerName:        songInfo.ArtistName,
+								SongInfoId:        songInfo.SongInfoID,
+								Album:             songInfo.Album.String,
+								IsMr:              songInfo.IsMR.Bool,
+								IsLive:            songInfo.IsLive.Bool,                               // Set according to your logic
+								MelonLink:         CreateMelonLinkByMelonSongId(songInfo.MelonSongID), // Set according to your logic
+								LyricsYoutubeLink: songInfo.LyricsVideoLink.String,
+								TJYoutubeLink:     songInfo.TJYoutubeLink.String,
 							}
 							// Add to the list of songs for this postComment
 							songsOnPost = append(songsOnPost, songOnPost)
