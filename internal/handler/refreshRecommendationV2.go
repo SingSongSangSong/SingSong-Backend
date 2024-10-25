@@ -96,10 +96,13 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 			var commentCount int
 			var keepCount int
 			var isKeep bool
+			var lyricsLink null.String
+			var tjLink null.String
 
 			err := rows.Scan(
 				&songInfoId, &songNumber, &songName, &artistName,
 				&album, &isMr, &isLive, &melonSongId,
+				&lyricsLink, &tjLink,
 				&commentCount, &keepCount, &isKeep,
 			)
 			if err != nil {
@@ -108,17 +111,19 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 			}
 
 			refreshSongs = append(refreshSongs, refreshResponse{
-				SongNumber:   songNumber,
-				SongName:     songName,
-				SingerName:   artistName,
-				Album:        album.String,
-				IsKeep:       isKeep,
-				SongInfoId:   songInfoId,
-				IsMr:         isMr.Bool,
-				IsLive:       isLive.Bool,
-				KeepCount:    keepCount,
-				CommentCount: commentCount,
-				MelonLink:    CreateMelonLinkByMelonSongId(melonSongId),
+				SongNumber:        songNumber,
+				SongName:          songName,
+				SingerName:        artistName,
+				Album:             album.String,
+				IsKeep:            isKeep,
+				SongInfoId:        songInfoId,
+				IsMr:              isMr.Bool,
+				IsLive:            isLive.Bool,
+				KeepCount:         keepCount,
+				CommentCount:      commentCount,
+				MelonLink:         CreateMelonLinkByMelonSongId(melonSongId),
+				LyricsYoutubeLink: lyricsLink.String,
+				TJYoutubeLink:     tjLink.String,
 			})
 		}
 

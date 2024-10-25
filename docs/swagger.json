@@ -4122,6 +4122,29 @@
                     }
                 }
             }
+        },
+        "/v3/tags": {
+            "get": {
+                "description": "태그 목록을 조회합니다 V3",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -4352,6 +4375,9 @@
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4366,6 +4392,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4491,6 +4520,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4505,6 +4537,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4583,6 +4618,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4597,6 +4635,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4807,6 +4848,9 @@
                 "keepSongId": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4821,6 +4865,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5172,6 +5219,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5186,6 +5236,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5376,6 +5429,9 @@
                 "isNew": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5393,6 +5449,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 },
                 "totalScore": {
                     "type": "number"
@@ -5526,6 +5585,9 @@
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5540,6 +5602,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5640,6 +5705,9 @@
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5654,6 +5722,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5686,6 +5757,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5700,6 +5774,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5770,6 +5847,9 @@
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5793,6 +5873,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5844,6 +5927,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5858,6 +5944,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },

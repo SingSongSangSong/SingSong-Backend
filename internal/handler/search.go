@@ -11,14 +11,16 @@ import (
 )
 
 type songSearchInfoResponse struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	SongInfoId int64  `json:"songId"`
-	Album      string `json:"album"`
-	IsMr       bool   `json:"isMr"`
-	IsLive     bool   `json:"isLive"`
-	MelonLink  string `json:"melonLink"`
+	SongNumber        int    `json:"songNumber"`
+	SongName          string `json:"songName"`
+	SingerName        string `json:"singerName"`
+	SongInfoId        int64  `json:"songId"`
+	Album             string `json:"album"`
+	IsMr              bool   `json:"isMr"`
+	IsLive            bool   `json:"isLive"`
+	MelonLink         string `json:"melonLink"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 type songSearchInfoResponses struct {
@@ -84,42 +86,48 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 		// 노래 이름으로 검색한 결과를 response 추가
 		for _, song := range songsWithName {
 			response.SongName = append(response.SongName, songSearchInfoResponse{
-				SongNumber: song.SongNumber,
-				SongName:   song.SongName,
-				SingerName: song.ArtistName,
-				SongInfoId: song.SongInfoID,
-				Album:      song.Album.String,
-				IsMr:       song.IsMR.Bool,
-				IsLive:     song.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
+				SongNumber:        song.SongNumber,
+				SongName:          song.SongName,
+				SingerName:        song.ArtistName,
+				SongInfoId:        song.SongInfoID,
+				Album:             song.Album.String,
+				IsMr:              song.IsMR.Bool,
+				IsLive:            song.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				LyricsYoutubeLink: song.LyricsVideoLink.String,
+				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
 
 		// 아티스트 이름으로 검색한 결과를 response 추가
 		for _, song := range songsWithArtist {
 			response.ArtistName = append(response.ArtistName, songSearchInfoResponse{
-				SongNumber: song.SongNumber,
-				SongName:   song.SongName,
-				SingerName: song.ArtistName,
-				SongInfoId: song.SongInfoID,
-				Album:      song.Album.String,
-				IsMr:       song.IsMR.Bool,
-				IsLive:     song.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
+				SongNumber:        song.SongNumber,
+				SongName:          song.SongName,
+				SingerName:        song.ArtistName,
+				SongInfoId:        song.SongInfoID,
+				Album:             song.Album.String,
+				IsMr:              song.IsMR.Bool,
+				IsLive:            song.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				LyricsYoutubeLink: song.LyricsVideoLink.String,
+				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
 
 		// 노래 번호로 검색한 결과를 response에 추가
 		for _, song := range songsWithNumber {
 			response.SongNumber = append(response.SongNumber, songSearchInfoResponse{
-				SongNumber: song.SongNumber,
-				SongName:   song.SongName,
-				SingerName: song.ArtistName,
-				SongInfoId: song.SongInfoID,
-				Album:      song.Album.String,
-				IsMr:       song.IsMR.Bool,
-				IsLive:     song.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
+				SongNumber:        song.SongNumber,
+				SongName:          song.SongName,
+				SingerName:        song.ArtistName,
+				SongInfoId:        song.SongInfoID,
+				Album:             song.Album.String,
+				IsMr:              song.IsMR.Bool,
+				IsLive:            song.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				LyricsYoutubeLink: song.LyricsVideoLink.String,
+				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
 
@@ -191,14 +199,16 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 		songs := make([]songSearchInfoResponse, 0, len(songsWithArtist))
 		for _, song := range songsWithArtist {
 			songs = append(songs, songSearchInfoResponse{
-				SongNumber: song.SongNumber,
-				SongName:   song.SongName,
-				SingerName: song.ArtistName,
-				SongInfoId: song.SongInfoID,
-				Album:      song.Album.String,
-				IsMr:       song.IsMR.Bool,
-				IsLive:     song.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
+				SongNumber:        song.SongNumber,
+				SongName:          song.SongName,
+				SingerName:        song.ArtistName,
+				SongInfoId:        song.SongInfoID,
+				Album:             song.Album.String,
+				IsMr:              song.IsMR.Bool,
+				IsLive:            song.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				LyricsYoutubeLink: song.LyricsVideoLink.String,
+				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
 		response := songSearchPageResponse{
@@ -268,14 +278,16 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 		songs := make([]songSearchInfoResponse, 0, len(songsWithName))
 		for _, song := range songsWithName {
 			songs = append(songs, songSearchInfoResponse{
-				SongNumber: song.SongNumber,
-				SongName:   song.SongName,
-				SingerName: song.ArtistName,
-				SongInfoId: song.SongInfoID,
-				Album:      song.Album.String,
-				IsMr:       song.IsMR.Bool,
-				IsLive:     song.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
+				SongNumber:        song.SongNumber,
+				SongName:          song.SongName,
+				SingerName:        song.ArtistName,
+				SongInfoId:        song.SongInfoID,
+				Album:             song.Album.String,
+				IsMr:              song.IsMR.Bool,
+				IsLive:            song.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				LyricsYoutubeLink: song.LyricsVideoLink.String,
+				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
 		response := songSearchPageResponse{
@@ -332,14 +344,16 @@ func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
 		songs := make([]songSearchInfoResponse, 0, len(songsWithNumber))
 		for _, song := range songsWithNumber {
 			songs = append(songs, songSearchInfoResponse{
-				SongNumber: song.SongNumber,
-				SongName:   song.SongName,
-				SingerName: song.ArtistName,
-				SongInfoId: song.SongInfoID,
-				Album:      song.Album.String,
-				IsMr:       song.IsMR.Bool,
-				IsLive:     song.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
+				SongNumber:        song.SongNumber,
+				SongName:          song.SongName,
+				SingerName:        song.ArtistName,
+				SongInfoId:        song.SongInfoID,
+				Album:             song.Album.String,
+				IsMr:              song.IsMR.Bool,
+				IsLive:            song.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				LyricsYoutubeLink: song.LyricsVideoLink.String,
+				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
 		response := songSearchPageResponse{

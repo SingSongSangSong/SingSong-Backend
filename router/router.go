@@ -72,6 +72,11 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		tagsV2.GET("", handler.ListTagsV2())
 	}
 
+	tagsV3 := r.Group("/api/v3/tags")
+	{
+		tagsV3.GET("", handler.ListTagsV3())
+	}
+
 	member := r.Group("/api/v1/member")
 	{
 		member.POST("/login", handler.Login(rdb, db))

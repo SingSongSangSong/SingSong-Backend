@@ -24,6 +24,8 @@ type newSongInfo struct {
 	CommentCount      int    `json:"commentCount"`
 	MelonLink         string `json:"melonLink"`
 	IsRecentlyUpdated bool   `json:"isRecentlyUpdated"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 type newSongInfoResponse struct {
@@ -145,6 +147,8 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 				CommentCount:      commentCountMap[song.SongInfoID],
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
 				IsRecentlyUpdated: song.CreatedAt.Time.After(sevenDaysAgo), //song.CreatedAt이 7일 이내인지
+				LyricsYoutubeLink: song.LyricsVideoLink.String,
+				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
 

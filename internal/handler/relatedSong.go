@@ -13,15 +13,17 @@ import (
 )
 
 type relatedSong struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	Album      string `json:"album"`
-	IsKeep     bool   `json:"isKeep"`
-	SongInfoId int64  `json:"songId"`
-	IsMr       bool   `json:"isMr"`
-	IsLive     bool   `json:"isLive"`
-	MelonLink  string `json:"melonLink"`
+	SongNumber        int    `json:"songNumber"`
+	SongName          string `json:"songName"`
+	SingerName        string `json:"singerName"`
+	Album             string `json:"album"`
+	IsKeep            bool   `json:"isKeep"`
+	SongInfoId        int64  `json:"songId"`
+	IsMr              bool   `json:"isMr"`
+	IsLive            bool   `json:"isLive"`
+	MelonLink         string `json:"melonLink"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 type relatedSongResponse struct {
@@ -186,6 +188,8 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			relatedSongs[i].IsMr = found.IsMR.Bool
 			relatedSongs[i].IsLive = found.IsLive.Bool
 			relatedSongs[i].MelonLink = CreateMelonLinkByMelonSongId(found.MelonSongID)
+			relatedSongs[i].LyricsYoutubeLink = found.LyricsVideoLink.String
+			relatedSongs[i].TJYoutubeLink = found.TJYoutubeLink.String
 		}
 
 		nextPage := pageInt + 1

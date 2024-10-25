@@ -18,14 +18,16 @@ type GetPlayListV2Response struct {
 }
 
 type KeepSongsWithSongName struct {
-	SongNumber  int         `json:"songNumber"`
-	SongName    string      `json:"songName"`
-	ArtistName  string      `json:"artistName"`
-	SongInfoId  int64       `json:"songInfoId"`
-	Album       null.String `json:"album"`
-	IsMr        null.Bool   `json:"isMr"`
-	IsLive      null.Bool   `json:"isLive"`
-	MelonSongId null.String `json:"melonSongId"`
+	SongNumber        int         `json:"songNumber"`
+	SongName          string      `json:"songName"`
+	ArtistName        string      `json:"artistName"`
+	SongInfoId        int64       `json:"songInfoId"`
+	Album             null.String `json:"album"`
+	IsMr              null.Bool   `json:"isMr"`
+	IsLive            null.Bool   `json:"isLive"`
+	MelonSongId       null.String `json:"melonSongId"`
+	LyricsYoutubeLink null.String `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     null.String `json:"tjYoutubeLink"`
 }
 
 // GetSongsFromPlaylistV2 godoc
@@ -104,7 +106,7 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 
 		// 공통 쿼리 생성
 		query := fmt.Sprintf(`
-			SELECT song_info.song_number, song_info.song_name, song_info.artist_name, song_info.song_info_id, song_info.album, song_info.is_mr, song_info.is_live, song_info.melon_song_id, keep_song.keep_song_id
+			SELECT song_info.song_number, song_info.song_name, song_info.artist_name, song_info.song_info_id, song_info.album, song_info.is_mr, song_info.is_live, song_info.melon_song_id, keep_song.keep_song_id, song_info.lyrics_video_link, song_info.tj_youtube_link
 			FROM keep_song
 			LEFT JOIN song_info ON keep_song.song_info_id = song_info.song_info_id
 			WHERE keep_song.keep_list_id = ? AND keep_song.deleted_at IS NULL %s %s
@@ -136,6 +138,8 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 				&keepSong.IsLive,
 				&keepSong.MelonSongId,
 				&keepSongId,
+				&keepSong.LyricsYoutubeLink,
+				&keepSong.TJYoutubeLink,
 			)
 			if err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
@@ -143,15 +147,17 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 			}
 
 			playlistAddResponse := PlaylistAddResponse{
-				SongNumber: keepSong.SongNumber,
-				SongName:   keepSong.SongName,
-				SingerName: keepSong.ArtistName,
-				SongInfoId: keepSong.SongInfoId,
-				Album:      keepSong.Album.String,
-				IsMr:       keepSong.IsMr.Bool,
-				IsLive:     keepSong.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(null.StringFrom(keepSong.MelonSongId.String)),
-				KeepSongId: keepSongId,
+				SongNumber:        keepSong.SongNumber,
+				SongName:          keepSong.SongName,
+				SingerName:        keepSong.ArtistName,
+				SongInfoId:        keepSong.SongInfoId,
+				Album:             keepSong.Album.String,
+				IsMr:              keepSong.IsMr.Bool,
+				IsLive:            keepSong.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(null.StringFrom(keepSong.MelonSongId.String)),
+				KeepSongId:        keepSongId,
+				LyricsYoutubeLink: keepSong.LyricsYoutubeLink.String,
+				TJYoutubeLink:     keepSong.TJYoutubeLink.String,
 			}
 			keepSongs = append(keepSongs, playlistAddResponse)
 		}

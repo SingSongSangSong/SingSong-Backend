@@ -23,17 +23,19 @@ type refreshRequest struct {
 }
 
 type refreshResponse struct {
-	SongNumber   int    `json:"songNumber"`
-	SongName     string `json:"songName"`
-	SingerName   string `json:"singerName"`
-	Album        string `json:"album"`
-	IsKeep       bool   `json:"isKeep"`
-	SongInfoId   int64  `json:"songId"`
-	IsMr         bool   `json:"isMr"`
-	IsLive       bool   `json:"isLive"`
-	KeepCount    int    `json:"keepCount"`
-	CommentCount int    `json:"commentCount"`
-	MelonLink    string `json:"melonLink"`
+	SongNumber        int    `json:"songNumber"`
+	SongName          string `json:"songName"`
+	SingerName        string `json:"singerName"`
+	Album             string `json:"album"`
+	IsKeep            bool   `json:"isKeep"`
+	SongInfoId        int64  `json:"songId"`
+	IsMr              bool   `json:"isMr"`
+	IsLive            bool   `json:"isLive"`
+	KeepCount         int    `json:"keepCount"`
+	CommentCount      int    `json:"commentCount"`
+	MelonLink         string `json:"melonLink"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 var (
@@ -170,6 +172,8 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 				refreshedSongs[i].SingerName = foundSong.ArtistName
 				refreshedSongs[i].IsLive = foundSong.IsLive.Bool
 				refreshedSongs[i].MelonLink = CreateMelonLinkByMelonSongId(foundSong.MelonSongID)
+				refreshedSongs[i].LyricsYoutubeLink = foundSong.LyricsVideoLink.String
+				refreshedSongs[i].TJYoutubeLink = foundSong.TJYoutubeLink.String
 			}
 
 			// 댓글 수 및 Keep 수 추가
