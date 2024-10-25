@@ -3405,6 +3405,21 @@ paths:
       summary: 특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용)
       tags:
       - Comment
+  /v3/tags:
+    get:
+      consumes:
+      - application/json
+      description: 태그 목록을 조회합니다 V3
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜)
+      tags:
+      - Tags
 securityDefinitions:
   BearerAuth:
     in: header

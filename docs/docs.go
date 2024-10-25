@@ -3826,6 +3826,29 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v3/tags": {
+            "get": {
+                "description": "태그 목록을 조회합니다 V3",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
