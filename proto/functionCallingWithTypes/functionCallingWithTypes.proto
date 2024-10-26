@@ -26,6 +26,8 @@ message SongInfo {
   bool isMr = 6;
   bool isLive = 7;
   string melonSongId = 8;
+  string lyricsYoutubeLink = 9;
+  string tjYoutubeLink = 10;
 }
 
 // 유사한 아이템들의 리스트를 반환하는 응답 메시지
