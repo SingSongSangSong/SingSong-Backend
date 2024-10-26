@@ -230,8 +230,8 @@ func FunctionCallingWithTypesRecommedation(db *sql.DB) gin.HandlerFunc {
 				KeepCount:         keepCountMap[item.SongInfoId],
 				CommentCount:      commentCountMap[item.SongInfoId],
 				MelonLink:         CreateMelonLinkByMelonSongId(nullMelongSongId),
-				LyricsYoutubeLink: "", //todo:
-				TJYoutubeLink:     "",
+				LyricsYoutubeLink: item.LyricsYoutubeLink, //todo:
+				TJYoutubeLink:     item.TjYoutubeLink,
 			})
 		}
 
