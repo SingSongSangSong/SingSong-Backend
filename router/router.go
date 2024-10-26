@@ -59,6 +59,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		recommendV2.GET("recommendation/:pageId", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
 		recommendV2.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendationV2(db))
 		recommendV2.POST("/recommendation/functionCallingWithTypes", middleware.AuthMiddleware(db), handler.FunctionCallingWithTypesRecommedation(db))
+		recommend.GET("/recommendation/searchLog", middleware.AuthMiddleware(db), handler.GetSearchResultsForLLMV2(db))
 	}
 
 	// 태그 엔드포인트 설정
