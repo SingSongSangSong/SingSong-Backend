@@ -28,7 +28,7 @@ func GetSearchResultsForLLM(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		llmSearch, err := mysql.LLMSearchLogs(
 			qm.OrderBy("created_at DESC"),
-			qm.Limit(10),
+			qm.Limit(15),
 		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
@@ -42,7 +42,7 @@ func GetSearchResultsForLLM(db *sql.DB) gin.HandlerFunc {
 
 		// Get random 3 search texts
 		// 랜덤으로 3개의 텍스트 선택
-		randomTexts := getRandomElements(searchTexts, 3)
+		randomTexts := getRandomElements(searchTexts, 10)
 
 		pkg.BaseResponse(c, http.StatusOK, "success", SearchResultForLLMResponse{SearchTexts: randomTexts})
 	}
