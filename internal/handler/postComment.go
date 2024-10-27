@@ -32,6 +32,7 @@ type PostCommentResponse struct {
 	ParentPostCommentId int64        `json:"parentPostCommentId"`
 	PostId              int64        `json:"postId"`
 	MemberId            int64        `json:"memberId"`
+	IsWriter            bool         `json:"isWriter"`
 	Nickname            string       `json:"nickname"`
 	CreatedAt           time.Time    `json:"createdAt"`
 	Likes               int          `json:"likes"`
@@ -134,6 +135,7 @@ func CommentOnPost(db *sql.DB) gin.HandlerFunc {
 			Content:             postComment.Content.String,
 			IsRecomment:         postComment.IsRecomment.Bool,
 			MemberId:            postComment.MemberID,
+			IsWriter:            member.MemberID == postComment.MemberID,
 			Nickname:            member.Nickname.String,
 			CreatedAt:           postComment.CreatedAt.Time,
 			Likes:               postComment.Likes,
@@ -407,6 +409,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 					ParentPostCommentId: comment.ParentPostCommentID.Int64,
 					PostId:              comment.PostID,
 					MemberId:            comment.MemberID,
+					IsWriter:            comment.MemberID == blockerId,
 					Nickname:            comment.NickName.String,
 					CreatedAt:           comment.CreatedAt.Time,
 					Likes:               comment.Likes,
@@ -541,6 +544,7 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 				ParentPostCommentId: recomment.ParentPostCommentID.Int64,
 				PostId:              recomment.PostID,
 				MemberId:            recomment.MemberID,
+				IsWriter:            recomment.MemberID == blockerId,
 				Nickname:            recomment.R.Member.Nickname.String,
 				Likes:               recomment.Likes,
 				IsLiked:             likedCommentMap[recomment.PostCommentID],

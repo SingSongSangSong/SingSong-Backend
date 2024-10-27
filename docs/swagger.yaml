@@ -66,6 +66,8 @@ definitions:
         type: boolean
       isRecomment:
         type: boolean
+      isWriter:
+        type: boolean
       likes:
         type: integer
       memberId:
@@ -117,6 +119,8 @@ definitions:
       isLiked:
         type: boolean
       isRecomment:
+        type: boolean
+      isWriter:
         type: boolean
       likes:
         type: integer
@@ -508,6 +512,8 @@ definitions:
       isLiked:
         type: boolean
       isRecomment:
+        type: boolean
+      isWriter:
         type: boolean
       likes:
         type: integer

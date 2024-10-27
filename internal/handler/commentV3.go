@@ -18,6 +18,7 @@ type CommentWithRecommentsResponse struct {
 	ParentCommentId int64                           `json:"parentCommentId"`
 	SongInfoId      int64                           `json:"songId"`
 	MemberId        int64                           `json:"memberId"`
+	IsWriter        bool                            `json:"isWriter"`
 	Nickname        string                          `json:"nickname"`
 	CreatedAt       time.Time                       `json:"createdAt"`
 	Likes           int                             `json:"likes"`
@@ -191,6 +192,7 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 				ParentCommentId: recomment.ParentCommentID.Int64,
 				SongInfoId:      recomment.SongInfoID,
 				MemberId:        recomment.MemberID,
+				IsWriter:        recomment.MemberID == blockerId,
 				Nickname:        recomment.R.Member.Nickname.String,
 				CreatedAt:       recomment.CreatedAt.Time,
 				Likes:           recomment.Likes.Int,
@@ -209,6 +211,7 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 				ParentCommentId: comment.ParentCommentID.Int64,
 				SongInfoId:      comment.SongInfoID,
 				MemberId:        comment.MemberID,
+				IsWriter:        comment.MemberID == blockerId,
 				Nickname:        comment.R.Member.Nickname.String,
 				CreatedAt:       comment.CreatedAt.Time,
 				Likes:           comment.Likes.Int,
