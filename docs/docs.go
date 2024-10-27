@@ -4257,6 +4257,9 @@ const docTemplate = `{
                 "isRecomment": {
                     "type": "boolean"
                 },
+                "isWriter": {
+                    "type": "boolean"
+                },
                 "likes": {
                     "type": "integer"
                 },
@@ -4334,6 +4337,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "isRecomment": {
+                    "type": "boolean"
+                },
+                "isWriter": {
                     "type": "boolean"
                 },
                 "likes": {
@@ -4935,6 +4941,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "isRecomment": {
+                    "type": "boolean"
+                },
+                "isWriter": {
                     "type": "boolean"
                 },
                 "likes": {
