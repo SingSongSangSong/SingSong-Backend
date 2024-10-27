@@ -4289,6 +4289,9 @@
                 "isRecomment": {
                     "type": "boolean"
                 },
+                "isWriter": {
+                    "type": "boolean"
+                },
                 "likes": {
                     "type": "integer"
                 },
@@ -4366,6 +4369,9 @@
                     "type": "boolean"
                 },
                 "isRecomment": {
+                    "type": "boolean"
+                },
+                "isWriter": {
                     "type": "boolean"
                 },
                 "likes": {
@@ -4967,6 +4973,9 @@
                     "type": "boolean"
                 },
                 "isRecomment": {
+                    "type": "boolean"
+                },
+                "isWriter": {
                     "type": "boolean"
                 },
                 "likes": {
