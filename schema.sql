@@ -413,3 +413,9 @@ CREATE TABLE keep_list_subscribe (
     FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE,
     FOREIGN KEY (keep_list_id) REFERENCES keep_list(keep_list_id) ON DELETE CASCADE
 );
+
+ALTER TABLE song_info
+    ADD COLUMN hiphop BOOL DEFAULT FALSE,
+    ADD COLUMN jpop BOOL DEFAULT FALSE,
+    ADD COLUMN musical BOOL DEFAULT FALSE,
+    ADD COLUMN band BOOL DEFAULT FALSE;
