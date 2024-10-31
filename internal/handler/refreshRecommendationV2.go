@@ -60,7 +60,7 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 			SELECT * FROM (
 				SELECT 
 					si.song_info_id, si.song_number, si.song_name, si.artist_name, 
-					si.album, si.is_mr, si.is_live, si.melon_song_id, si.lyrics_video_link, si.tj_youtube_link,
+					si.album, si.is_mr, si.is_live, si.melon_song_id, si.lyrics_video_link, si.tj_youtube_link, si.tj_score,
 					COUNT(DISTINCT c.comment_id) AS comment_count,
 					COUNT(DISTINCT ks.keep_song_id) AS keep_count,
 					EXISTS (
@@ -100,11 +100,12 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 			var isKeep bool
 			var lyricsLink null.String
 			var tjLink null.String
+			var tj_score int
 
 			err := rows.Scan(
 				&songInfoId, &songNumber, &songName, &artistName,
 				&album, &isMr, &isLive, &melonSongId,
-				&lyricsLink, &tjLink,
+				&lyricsLink, &tjLink, &tj_score,
 				&commentCount, &keepCount, &isKeep,
 			)
 			if err != nil {
