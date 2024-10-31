@@ -43,7 +43,7 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		column, err := MapTagToColumn(request.Tag)
+		column, err := MapTagToColumnV3(request.Tag)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid tag", nil)
 			return

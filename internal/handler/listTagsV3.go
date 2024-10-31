@@ -2,12 +2,17 @@ package handler
 
 import (
 	"SingSong-Server/internal/pkg"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 // v2와 똑같은데 태그 순서만 바뀜
 var tagColumnMappingsV3 = []TagColumnMapping{
+	{Tag: "밴드송", Column: "band"},
+	{Tag: "힙합송", Column: "hiphop"},
+	{Tag: "J-POP송", Column: "jpop"},
+	{Tag: "뮤지컬송", Column: "musical"},
 	{Tag: "그시절띵곡", Column: "classics"},
 	{Tag: "마무리송", Column: "finale"},
 	{Tag: "고음송", Column: "high"},
@@ -26,8 +31,18 @@ var tagColumnMappingsV3 = []TagColumnMapping{
 	{Tag: "입대송", Column: "military"},
 }
 
-// ListTagsV2 godoc
-// @Summary      태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜)
+// 태그에서 컬럼으로 빠르게 접근할 수 있도록 맵을 생성
+var tagToColumnV3 = make(map[string]string)
+
+func init() {
+	// tagToColumn 맵을 초기화 (한 번만 실행)
+	for _, mapping := range tagColumnMappingsV3 {
+		tagToColumnV3[mapping.Tag] = mapping.Column
+	}
+}
+
+// ListTagsV3 godoc
+// @Summary      태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜 + 뮤지컬/밴드/jpop/힙합 추가)
 // @Description  태그 목록을 조회합니다 V3
 // @Tags         Tags
 // @Accept       json
@@ -43,4 +58,11 @@ func ListTagsV3() gin.HandlerFunc {
 		}
 		pkg.BaseResponse(c, http.StatusOK, "ok", tags)
 	}
+}
+
+func MapTagToColumnV3(koreanTag string) (string, error) {
+	if column, exists := tagToColumnV3[koreanTag]; exists {
+		return column, nil
+	}
+	return "", errors.New("tag not found, tag cannot convert to database column: " + koreanTag)
 }
