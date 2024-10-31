@@ -415,6 +415,15 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 
 		for _, post := range posts {
 			comments := post.R.PostComments
+
+			//deleted_at이 NULL인 댓글만 카운트
+			validCommentCount := 0
+			for _, comment := range comments {
+				if !comment.DeletedAt.Valid { // deleted_at이 NULL인지 확인
+					validCommentCount++
+				}
+			}
+
 			previews = append(previews, postPreviewResponse{
 				PostId:       post.PostID,
 				Title:        post.Title,
@@ -422,7 +431,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 				Nickname:     post.R.Member.Nickname.String,
 				MemberId:     post.MemberID,
 				Likes:        post.Likes,
-				CommentCount: len(comments),
+				CommentCount: validCommentCount,
 				CreatedAt:    post.CreatedAt.Time,
 			})
 		}
