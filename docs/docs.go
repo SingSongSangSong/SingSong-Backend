@@ -4183,7 +4183,30 @@ const docTemplate = `{
                 "tags": [
                     "Tags"
                 ],
-                "summary": "태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜 + 뮤지컬/밴드/jpop/힙합 추가)",
+                "summary": "태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/v4/tags": {
+            "get": {
+                "description": "태그 목록을 조회합니다 V4",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "태그 목록 가져오기 V4 (v2와 팝스타송, 캐롤송 순서가 바뀜 + 뮤지컬/밴드/jpop/힙합 추가)",
                 "responses": {
                     "200": {
                         "description": "OK",

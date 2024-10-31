@@ -3716,7 +3716,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/pkg.BaseResponseStruct'
-      summary: 태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜 + 뮤지컬/밴드/jpop/힙합 추가)
+      summary: 태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜)
+      tags:
+      - Tags
+  /v4/tags:
+    get:
+      consumes:
+      - application/json
+      description: 태그 목록을 조회합니다 V4
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 태그 목록 가져오기 V4 (v2와 팝스타송, 캐롤송 순서가 바뀜 + 뮤지컬/밴드/jpop/힙합 추가)
       tags:
       - Tags
 securityDefinitions:
