@@ -43,7 +43,7 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		column, err := MapTagToColumn(request.Tag)
+		column, err := MapTagToColumnV3(request.Tag)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid tag", nil)
 			return
@@ -57,22 +57,24 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 
 		//todo: tj_score, 댓글, keep, 멜론 좋아요 종합적으로 반영
 		query := fmt.Sprintf(`
-			SELECT 
-				si.song_info_id, si.song_number, si.song_name, si.artist_name, 
-				si.album, si.is_mr, si.is_live, si.melon_song_id, si.lyrics_video_link, si.tj_youtube_link,
-				COUNT(DISTINCT c.comment_id) AS comment_count,
-				COUNT(DISTINCT ks.keep_song_id) AS keep_count,
-				EXISTS (
-					SELECT 1 FROM keep_song WHERE song_info_id = si.song_info_id AND keep_list_id IN (
-						SELECT keep_list_id FROM keep_list WHERE member_id = ? AND deleted_at IS NULL
-					)
-				) AS is_keep
-			FROM song_info si
-			LEFT JOIN comment c ON si.song_info_id = c.song_info_id AND c.deleted_at IS NULL
-			LEFT JOIN keep_song ks ON si.song_info_id = ks.song_info_id AND ks.deleted_at IS NULL
-			WHERE %s = TRUE
-			GROUP BY si.song_info_id
-			ORDER BY (si.tj_score + keep_count + comment_count) desc, si.song_info_id desc
+			SELECT * FROM (
+				SELECT 
+					si.song_info_id, si.song_number, si.song_name, si.artist_name, 
+					si.album, si.is_mr, si.is_live, si.melon_song_id, si.lyrics_video_link, si.tj_youtube_link, si.tj_score,
+					COUNT(DISTINCT c.comment_id) AS comment_count,
+					COUNT(DISTINCT ks.keep_song_id) AS keep_count,
+					EXISTS (
+						SELECT 1 FROM keep_song WHERE song_info_id = si.song_info_id AND keep_list_id IN (
+							SELECT keep_list_id FROM keep_list WHERE member_id = ? AND deleted_at IS NULL
+						)
+					) AS is_keep
+				FROM song_info si
+				LEFT JOIN comment c ON si.song_info_id = c.song_info_id AND c.deleted_at IS NULL
+				LEFT JOIN keep_song ks ON si.song_info_id = ks.song_info_id AND ks.deleted_at IS NULL
+				WHERE %s = TRUE
+				GROUP BY si.song_info_id
+			) AS result
+			ORDER BY (result.tj_score + result.keep_count + result.comment_count) DESC, result.song_info_id DESC
 			LIMIT ? OFFSET ?
 		`, column)
 
@@ -98,11 +100,12 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 			var isKeep bool
 			var lyricsLink null.String
 			var tjLink null.String
+			var tj_score int
 
 			err := rows.Scan(
 				&songInfoId, &songNumber, &songName, &artistName,
 				&album, &isMr, &isLive, &melonSongId,
-				&lyricsLink, &tjLink,
+				&lyricsLink, &tjLink, &tj_score,
 				&commentCount, &keepCount, &isKeep,
 			)
 			if err != nil {

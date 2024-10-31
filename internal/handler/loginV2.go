@@ -101,7 +101,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 			go ActivateDeviceToken(db, loginRequest.DeviceToken, m.MemberID)
 
-			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshTokenV2(c, rdb, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
+			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshTokenV2(c, rdb, payload, "0", "Unknown", m.MemberID)
 
 			if tokenErr != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
