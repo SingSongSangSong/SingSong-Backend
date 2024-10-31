@@ -235,6 +235,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			LEFT JOIN post_comment AS replies 
 				ON replies.parent_post_comment_id = post_comment.post_comment_id 
 				AND replies.is_recomment = true
+			    AND replies.deleted_at IS NULL
 			LEFT JOIN post_comment_song AS comment_song ON post_comment.post_comment_id = comment_song.post_comment_id
 			WHERE post_comment.post_id = ? 
 				AND post_comment.deleted_at IS NULL 
