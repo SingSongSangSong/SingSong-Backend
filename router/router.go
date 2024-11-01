@@ -34,8 +34,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	version := r.Group("/api/v1/version")
 	{
 		version.GET("/", handler.AllVersion(db))
-		version.POST("/check", middleware.PlatformMiddleware(), handler.VersionCheck(db))
-		version.POST("/update", handler.LatestVersionUpdate(db))
+		version.POST("/check", handler.VersionCheck(db))
+		version.POST("/update", handler.VersionUpdate(db))
 	}
 
 	r.GET("/", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "Welcome to SingSong-Server"}) })
@@ -218,6 +218,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		postComment.POST("/report", middleware.AuthMiddleware(db), handler.ReportPostComment(db))
 		postComment.POST("/:postCommentId/like", middleware.AuthMiddleware(db), handler.LikePostComment(db))
 		postComment.DELETE("/:postCommentId", middleware.AuthMiddleware(db), handler.DeletePostComment(db))
+	}
+
+	recent := r.Group("/api/v1/recent")
+	{
+		recent.GET("/search", handler.GetLatestSearchApi(db))
+		recent.GET("/keep", handler.GetRecentKeepSongs(db))
+		recent.GET("/comment", handler.GetRecentCommentsongs(db))
 	}
 
 	record := r.Group("/api/v1/record")
