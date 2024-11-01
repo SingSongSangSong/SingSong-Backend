@@ -219,6 +219,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		postComment.DELETE("/:postCommentId", middleware.AuthMiddleware(db), handler.DeletePostComment(db))
 	}
 
+	recent := r.Group("/api/v1/recent")
+	{
+		recent.GET("/search", handler.GetLatestSearchApi(db))
+		recent.GET("/keep", handler.GetRecentKeepSongs(db))
+		recent.GET("/comment", handler.GetRecentCommentsongs(db))
+	}
+
 	// 스웨거 설정
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

@@ -3,11 +3,15 @@ package handler
 import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
+	"context"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type SongSearchInfoV2Response struct {
@@ -51,6 +55,8 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 
 		// 검색어를 URL 파라미터에서 가져오기
 		searchKeyword := c.Param("searchKeyword")
+		// 혹시 모를 공백 제거
+		searchKeyword = strings.TrimSpace(searchKeyword)
 
 		// 노래 이름으로 검색
 		songsWithName, err := mysql.SongInfos(
@@ -162,6 +168,14 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
+
+		go func() {
+			searchLog := mysql.SearchLog{MemberID: memberId.(int64), SearchText: searchKeyword}
+			err = searchLog.Insert(context.Background(), db, boil.Infer())
+			if err != nil {
+				log.Printf("Error inserting Search Log: %v", err)
+			}
+		}()
 
 		// 응답 반환
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)

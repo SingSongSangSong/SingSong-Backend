@@ -898,7 +898,7 @@ func (o *LLMSearchLog) Upsert(ctx context.Context, exec boil.ContextExecutor, up
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			llmSearchLogAllColumns,
 			llmSearchLogColumnsWithDefault,
 			llmSearchLogColumnsWithoutDefault,
@@ -914,7 +914,8 @@ func (o *LLMSearchLog) Upsert(ctx context.Context, exec boil.ContextExecutor, up
 			return errors.New("mysql: unable to upsert llm_search_log, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(llmSearchLogAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`llm_search_log`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `llm_search_log` WHERE %s",
