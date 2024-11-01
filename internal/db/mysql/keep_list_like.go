@@ -1086,7 +1086,7 @@ func (o *KeepListLike) Upsert(ctx context.Context, exec boil.ContextExecutor, up
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			keepListLikeAllColumns,
 			keepListLikeColumnsWithDefault,
 			keepListLikeColumnsWithoutDefault,
@@ -1102,7 +1102,8 @@ func (o *KeepListLike) Upsert(ctx context.Context, exec boil.ContextExecutor, up
 			return errors.New("mysql: unable to upsert keep_list_like, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(keepListLikeAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`keep_list_like`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `keep_list_like` WHERE %s",

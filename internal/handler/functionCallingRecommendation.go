@@ -17,17 +17,19 @@ import (
 )
 
 type FunctionCallingDetailResponse struct {
-	SongNumber   int    `json:"songNumber"`
-	SongName     string `json:"songName"`
-	SingerName   string `json:"singerName"`
-	SongInfoId   int64  `json:"songId"`
-	Album        string `json:"album"`
-	IsMr         bool   `json:"isMr"`
-	IsLive       bool   `json:"isLive"`
-	MelonLink    string `json:"melonLink"`
-	IsKeep       bool   `json:"isKeep"`
-	KeepCount    int    `json:"keepCount"`
-	CommentCount int    `json:"commentCount"`
+	SongNumber        int    `json:"songNumber"`
+	SongName          string `json:"songName"`
+	SingerName        string `json:"singerName"`
+	SongInfoId        int64  `json:"songId"`
+	Album             string `json:"album"`
+	IsMr              bool   `json:"isMr"`
+	IsLive            bool   `json:"isLive"`
+	MelonLink         string `json:"melonLink"`
+	IsKeep            bool   `json:"isKeep"`
+	KeepCount         int    `json:"keepCount"`
+	CommentCount      int    `json:"commentCount"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 type FunctionCallingResponse struct {
@@ -215,17 +217,19 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 		// Loop through the gRPC response to populate songResponse
 		for _, item := range response.SongInfoId {
 			functionCallingResponse.Songs = append(functionCallingResponse.Songs, FunctionCallingDetailResponse{
-				SongNumber:   songInfoMap[item].SongNumber,
-				SongName:     songInfoMap[item].SongName,
-				SingerName:   songInfoMap[item].ArtistName,
-				SongInfoId:   songInfoMap[item].SongInfoID,
-				Album:        songInfoMap[item].Album.String,
-				IsMr:         songInfoMap[item].IsMR.Bool,
-				IsLive:       songInfoMap[item].IsLive.Bool,
-				IsKeep:       keepSongMap[songInfoMap[item].SongInfoID],
-				KeepCount:    keepCountMap[songInfoMap[item].SongInfoID],
-				CommentCount: commentCountMap[songInfoMap[item].SongInfoID],
-				MelonLink:    CreateMelonLinkByMelonSongId(songInfoMap[item].MelonSongID),
+				SongNumber:        songInfoMap[item].SongNumber,
+				SongName:          songInfoMap[item].SongName,
+				SingerName:        songInfoMap[item].ArtistName,
+				SongInfoId:        songInfoMap[item].SongInfoID,
+				Album:             songInfoMap[item].Album.String,
+				IsMr:              songInfoMap[item].IsMR.Bool,
+				IsLive:            songInfoMap[item].IsLive.Bool,
+				IsKeep:            keepSongMap[songInfoMap[item].SongInfoID],
+				KeepCount:         keepCountMap[songInfoMap[item].SongInfoID],
+				CommentCount:      commentCountMap[songInfoMap[item].SongInfoID],
+				MelonLink:         CreateMelonLinkByMelonSongId(songInfoMap[item].MelonSongID),
+				LyricsYoutubeLink: songInfoMap[item].LyricsVideoLink.String,
+				TJYoutubeLink:     songInfoMap[item].TJYoutubeLink.String,
 			})
 		}
 

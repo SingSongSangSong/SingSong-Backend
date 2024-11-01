@@ -1872,6 +1872,144 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/recent/comment": {
+            "get": {
+                "description": "최근 댓글 단 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recent"
+                ],
+                "summary": "최근 댓글 단 노래 목록 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/recent/keep": {
+            "get": {
+                "description": "최근 Keep한 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recent"
+                ],
+                "summary": "최근 Keep한 노래 목록 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/recent/search": {
+            "get": {
+                "description": "검색화면 최근 검색어 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recent"
+                ],
+                "summary": "검색화면 최근 검색어 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/recommend/home": {
             "post": {
                 "description": "태그에 해당하는 노래를 추천합니다.",
@@ -3079,7 +3217,7 @@ const docTemplate = `{
         },
         "/v1/version": {
             "get": {
-                "description": "등록되어 있는 모든 버전 확인 가능",
+                "description": "플랫폼별 등록되어 있는 버전 내용 확인 가능",
                 "consumes": [
                     "application/json"
                 ],
@@ -3092,14 +3230,32 @@ const docTemplate = `{
                 "summary": "모든 버전 확인",
                 "responses": {
                     "200": {
-                        "description": "성공\" {object} pkg.BaseResponseStruct{data=[]versionResponse} \"성공"
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.versionCheckResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             }
         },
         "/v1/version/check": {
             "post": {
-                "description": "헤더에 플랫폼 정보를 포함하고, request body 앱의 버전을 보내면, 최신 버전인지 여부와 강제 업데이트 필요 여부를 응답",
+                "description": "request body에 플랫폼을 보내면, 해당 플랫폼의 최신 버전과 강제 업데이트 버전을 응답",
                 "consumes": [
                     "application/json"
                 ],
@@ -3112,7 +3268,7 @@ const docTemplate = `{
                 "summary": "버전 확인",
                 "parameters": [
                     {
-                        "description": "현재 앱 버전 정보",
+                        "description": "플랫폼 정보",
                         "name": "version",
                         "in": "body",
                         "required": true,
@@ -3133,7 +3289,7 @@ const docTemplate = `{
         },
         "/v1/version/update": {
             "post": {
-                "description": "새로운 버전이 나왔을때 버전을 추가할 수 있음 (플랫폼(ios, android), 버전, 이전 버전들을 강제 업데이트 할지 여부)",
+                "description": "플랫폼별 최신 버전, 강제 업데이트 버전을 설정할 수 있다. (강제 업데이트 버전이랑 update url은 걍 필드 빼고 보내면 갱신 안됨)",
                 "consumes": [
                     "application/json"
                 ],
@@ -3151,13 +3307,16 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.latestVersionUpdateRequest"
+                            "$ref": "#/definitions/handler.VersionUpdateRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "성공"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
                     }
                 }
             }
@@ -3532,6 +3691,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/v2/recommend/recommendation/searchLog": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get Recent 10 Search Results for LLM",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recommendation"
+                ],
+                "summary": "Get 10 Recent Search Results for LLM",
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SearchResultForLLMResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v2/recommend/recommendation/{pageId}": {
             "get": {
                 "security": [
@@ -3623,6 +3822,310 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/handler.refreshResponseV2"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/search/artist-name": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "가수로 노래 검색 API, 아티스트 이름을 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호 및 IsKeep여부를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "가수로 노래 검색 API V2",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SongSearchPageV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/search/song-name": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 제목으로 노래 검색 API V2, 노래 제목을 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호 및 IsKeep여부를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "노래 제목으로 노래 검색 API V2",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SongSearchPageV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/search/song-number": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 번호로 노래 검색 API V2, 노래 번호를 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호및 IsKeep여부를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "노래 번호로 노래 검색 API V2",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "keyword",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회. 현재는 노래 번호가 정확히 일치하는 1개만 반환하기 때문에 무의미",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회. 현재는 노래 번호가 정확히 일치하는 1개만 반환하기 때문에 무의미",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SongSearchPageV2Response"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/search/{searchKeyword}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "노래 검색 API V2, 노래 제목 또는 아티스트 이름을 검색합니다. \\n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호 및 추가적으로 IsKeep여부를 반환합니다.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Search"
+                ],
+                "summary": "노래 검색 API V2",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "검색 키워드",
+                        "name": "searchKeyword",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.SongSearchInfoV2Responses"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "실패 - 빈 리스트 반환",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
                                         }
                                     }
                                 }
@@ -3849,6 +4352,52 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v3/tags": {
+            "get": {
+                "description": "태그 목록을 조회합니다 V3",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/v4/tags": {
+            "get": {
+                "description": "태그 목록을 조회합니다 V4",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tags"
+                ],
+                "summary": "태그 목록 가져오기 V4 (v2와 팝스타송, 캐롤송 순서가 바뀜 + 뮤지컬/밴드/jpop/힙합 추가)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -3953,6 +4502,9 @@ const docTemplate = `{
                 "isRecomment": {
                     "type": "boolean"
                 },
+                "isWriter": {
+                    "type": "boolean"
+                },
                 "likes": {
                     "type": "integer"
                 },
@@ -4032,6 +4584,9 @@ const docTemplate = `{
                 "isRecomment": {
                     "type": "boolean"
                 },
+                "isWriter": {
+                    "type": "boolean"
+                },
                 "likes": {
                     "type": "integer"
                 },
@@ -4079,6 +4634,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4093,6 +4651,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4218,6 +4779,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4232,6 +4796,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4310,6 +4877,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4324,6 +4894,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4534,6 +5107,9 @@ const docTemplate = `{
                 "keepSongId": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4548,6 +5124,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4607,6 +5186,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "isRecomment": {
+                    "type": "boolean"
+                },
+                "isWriter": {
                     "type": "boolean"
                 },
                 "likes": {
@@ -4899,6 +5481,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -4913,6 +5498,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -4951,6 +5539,81 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.SongSearchInfoV2Response": {
+            "type": "object",
+            "properties": {
+                "album": {
+                    "type": "string"
+                },
+                "isKeep": {
+                    "type": "boolean"
+                },
+                "isLive": {
+                    "type": "boolean"
+                },
+                "isMr": {
+                    "type": "boolean"
+                },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
+                "melonLink": {
+                    "type": "string"
+                },
+                "singerName": {
+                    "type": "string"
+                },
+                "songId": {
+                    "type": "integer"
+                },
+                "songName": {
+                    "type": "string"
+                },
+                "songNumber": {
+                    "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.SongSearchInfoV2Responses": {
+            "type": "object",
+            "properties": {
+                "artistName": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                    }
+                },
+                "songName": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                    }
+                },
+                "songNumber": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                    }
+                }
+            }
+        },
+        "handler.SongSearchPageV2Response": {
+            "type": "object",
+            "properties": {
+                "nextPage": {
+                    "type": "integer"
+                },
+                "songs": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                    }
                 }
             }
         },
@@ -5028,6 +5691,9 @@ const docTemplate = `{
                 "isNew": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5045,6 +5711,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 },
                 "totalScore": {
                     "type": "number"
@@ -5070,6 +5739,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "userKey": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.VersionUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "forceUpdateVersion": {
+                    "type": "string"
+                },
+                "latestVersion": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "updateUrl": {
                     "type": "string"
                 }
             }
@@ -5140,20 +5826,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.latestVersionUpdateRequest": {
-            "type": "object",
-            "properties": {
-                "forceUpdate": {
-                    "type": "boolean"
-                },
-                "platform": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
         "handler.newSongInfo": {
             "type": "object",
             "properties": {
@@ -5178,6 +5850,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5192,6 +5867,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5292,6 +5970,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5306,6 +5987,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5338,6 +6022,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5352,6 +6039,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5422,6 +6112,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5445,6 +6138,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5496,6 +6192,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsYoutubeLink": {
+                    "type": "string"
+                },
                 "melonLink": {
                     "type": "string"
                 },
@@ -5510,6 +6209,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjYoutubeLink": {
+                    "type": "string"
                 }
             }
         },
@@ -5585,7 +6287,24 @@ const docTemplate = `{
         "handler.versionCheckRequest": {
             "type": "object",
             "properties": {
-                "version": {
+                "platform": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.versionCheckResponse": {
+            "type": "object",
+            "properties": {
+                "forceUpdateVersion": {
+                    "type": "string"
+                },
+                "latestVersion": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "updateUrl": {
                     "type": "string"
                 }
             }

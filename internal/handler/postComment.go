@@ -34,6 +34,7 @@ type PostCommentResponse struct {
 	ParentPostCommentId int64        `json:"parentPostCommentId"`
 	PostId              int64        `json:"postId"`
 	MemberId            int64        `json:"memberId"`
+	IsWriter            bool         `json:"isWriter"`
 	Nickname            string       `json:"nickname"`
 	CreatedAt           time.Time    `json:"createdAt"`
 	Likes               int          `json:"likes"`
@@ -136,6 +137,7 @@ func CommentOnPost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 			Content:             postComment.Content.String,
 			IsRecomment:         postComment.IsRecomment.Bool,
 			MemberId:            postComment.MemberID,
+			IsWriter:            member.MemberID == postComment.MemberID,
 			Nickname:            member.Nickname.String,
 			CreatedAt:           postComment.CreatedAt.Time,
 			Likes:               postComment.Likes,
@@ -258,6 +260,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			LEFT JOIN post_comment AS replies 
 				ON replies.parent_post_comment_id = post_comment.post_comment_id 
 				AND replies.is_recomment = true
+			    AND replies.deleted_at IS NULL
 			LEFT JOIN post_comment_song AS comment_song ON post_comment.post_comment_id = comment_song.post_comment_id
 			WHERE post_comment.post_id = ? 
 				AND post_comment.deleted_at IS NULL 
@@ -376,14 +379,16 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 						if songInfo, exists := songInfoMap[int64(id)]; exists {
 							// Create SongOnPost object
 							songOnPost := SongOnPost{
-								SongNumber: songInfo.SongNumber,
-								SongName:   songInfo.SongName,
-								SingerName: songInfo.ArtistName,
-								SongInfoId: songInfo.SongInfoID,
-								Album:      songInfo.Album.String,
-								IsMr:       songInfo.IsMR.Bool,
-								IsLive:     songInfo.IsLive.Bool,                               // Set according to your logic
-								MelonLink:  CreateMelonLinkByMelonSongId(songInfo.MelonSongID), // Set according to your logic
+								SongNumber:        songInfo.SongNumber,
+								SongName:          songInfo.SongName,
+								SingerName:        songInfo.ArtistName,
+								SongInfoId:        songInfo.SongInfoID,
+								Album:             songInfo.Album.String,
+								IsMr:              songInfo.IsMR.Bool,
+								IsLive:            songInfo.IsLive.Bool,                               // Set according to your logic
+								MelonLink:         CreateMelonLinkByMelonSongId(songInfo.MelonSongID), // Set according to your logic
+								LyricsYoutubeLink: songInfo.LyricsVideoLink.String,
+								TJYoutubeLink:     songInfo.TJYoutubeLink.String,
 							}
 							// Add to the list of songs for this postComment
 							songsOnPost = append(songsOnPost, songOnPost)
@@ -430,6 +435,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 					ParentPostCommentId: comment.ParentPostCommentID.Int64,
 					PostId:              comment.PostID,
 					MemberId:            comment.MemberID,
+					IsWriter:            comment.MemberID == blockerId,
 					Nickname:            comment.NickName.String,
 					CreatedAt:           comment.CreatedAt.Time,
 					Likes:               comment.Likes,
@@ -564,6 +570,7 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 				ParentPostCommentId: recomment.ParentPostCommentID.Int64,
 				PostId:              recomment.PostID,
 				MemberId:            recomment.MemberID,
+				IsWriter:            recomment.MemberID == blockerId,
 				Nickname:            recomment.R.Member.Nickname.String,
 				Likes:               recomment.Likes,
 				IsLiked:             likedCommentMap[recomment.PostCommentID],

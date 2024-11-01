@@ -24,52 +24,57 @@ import (
 
 // AppVersion is an object representing the database table.
 type AppVersion struct {
-	AppVersionID int64     `boil:"app_version_id" json:"app_version_id" toml:"app_version_id" yaml:"app_version_id"`
-	Platform     string    `boil:"platform" json:"platform" toml:"platform" yaml:"platform"`
-	Version      string    `boil:"version" json:"version" toml:"version" yaml:"version"`
-	ForceUpdate  bool      `boil:"force_update" json:"force_update" toml:"force_update" yaml:"force_update"`
-	CreatedAt    null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
-	UpdatedAt    null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
-	DeletedAt    null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
+	AppVersionID       int64     `boil:"app_version_id" json:"app_version_id" toml:"app_version_id" yaml:"app_version_id"`
+	Platform           string    `boil:"platform" json:"platform" toml:"platform" yaml:"platform"`
+	LatestVersion      string    `boil:"latest_version" json:"latest_version" toml:"latest_version" yaml:"latest_version"`
+	ForceUpdateVersion string    `boil:"force_update_version" json:"force_update_version" toml:"force_update_version" yaml:"force_update_version"`
+	UpdateURL          string    `boil:"update_url" json:"update_url" toml:"update_url" yaml:"update_url"`
+	CreatedAt          null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
+	UpdatedAt          null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
+	DeletedAt          null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
 
 	R *appVersionR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L appVersionL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AppVersionColumns = struct {
-	AppVersionID string
-	Platform     string
-	Version      string
-	ForceUpdate  string
-	CreatedAt    string
-	UpdatedAt    string
-	DeletedAt    string
+	AppVersionID       string
+	Platform           string
+	LatestVersion      string
+	ForceUpdateVersion string
+	UpdateURL          string
+	CreatedAt          string
+	UpdatedAt          string
+	DeletedAt          string
 }{
-	AppVersionID: "app_version_id",
-	Platform:     "platform",
-	Version:      "version",
-	ForceUpdate:  "force_update",
-	CreatedAt:    "created_at",
-	UpdatedAt:    "updated_at",
-	DeletedAt:    "deleted_at",
+	AppVersionID:       "app_version_id",
+	Platform:           "platform",
+	LatestVersion:      "latest_version",
+	ForceUpdateVersion: "force_update_version",
+	UpdateURL:          "update_url",
+	CreatedAt:          "created_at",
+	UpdatedAt:          "updated_at",
+	DeletedAt:          "deleted_at",
 }
 
 var AppVersionTableColumns = struct {
-	AppVersionID string
-	Platform     string
-	Version      string
-	ForceUpdate  string
-	CreatedAt    string
-	UpdatedAt    string
-	DeletedAt    string
+	AppVersionID       string
+	Platform           string
+	LatestVersion      string
+	ForceUpdateVersion string
+	UpdateURL          string
+	CreatedAt          string
+	UpdatedAt          string
+	DeletedAt          string
 }{
-	AppVersionID: "app_version.app_version_id",
-	Platform:     "app_version.platform",
-	Version:      "app_version.version",
-	ForceUpdate:  "app_version.force_update",
-	CreatedAt:    "app_version.created_at",
-	UpdatedAt:    "app_version.updated_at",
-	DeletedAt:    "app_version.deleted_at",
+	AppVersionID:       "app_version.app_version_id",
+	Platform:           "app_version.platform",
+	LatestVersion:      "app_version.latest_version",
+	ForceUpdateVersion: "app_version.force_update_version",
+	UpdateURL:          "app_version.update_url",
+	CreatedAt:          "app_version.created_at",
+	UpdatedAt:          "app_version.updated_at",
+	DeletedAt:          "app_version.deleted_at",
 }
 
 // Generated where
@@ -122,15 +127,6 @@ func (w whereHelperstring) NIN(slice []string) qm.QueryMod {
 	return qm.WhereNotIn(fmt.Sprintf("%s NOT IN ?", w.field), values...)
 }
 
-type whereHelperbool struct{ field string }
-
-func (w whereHelperbool) EQ(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.EQ, x) }
-func (w whereHelperbool) NEQ(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.NEQ, x) }
-func (w whereHelperbool) LT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.LT, x) }
-func (w whereHelperbool) LTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.LTE, x) }
-func (w whereHelperbool) GT(x bool) qm.QueryMod  { return qmhelper.Where(w.field, qmhelper.GT, x) }
-func (w whereHelperbool) GTE(x bool) qm.QueryMod { return qmhelper.Where(w.field, qmhelper.GTE, x) }
-
 type whereHelpernull_Time struct{ field string }
 
 func (w whereHelpernull_Time) EQ(x null.Time) qm.QueryMod {
@@ -156,21 +152,23 @@ func (w whereHelpernull_Time) IsNull() qm.QueryMod    { return qmhelper.WhereIsN
 func (w whereHelpernull_Time) IsNotNull() qm.QueryMod { return qmhelper.WhereIsNotNull(w.field) }
 
 var AppVersionWhere = struct {
-	AppVersionID whereHelperint64
-	Platform     whereHelperstring
-	Version      whereHelperstring
-	ForceUpdate  whereHelperbool
-	CreatedAt    whereHelpernull_Time
-	UpdatedAt    whereHelpernull_Time
-	DeletedAt    whereHelpernull_Time
+	AppVersionID       whereHelperint64
+	Platform           whereHelperstring
+	LatestVersion      whereHelperstring
+	ForceUpdateVersion whereHelperstring
+	UpdateURL          whereHelperstring
+	CreatedAt          whereHelpernull_Time
+	UpdatedAt          whereHelpernull_Time
+	DeletedAt          whereHelpernull_Time
 }{
-	AppVersionID: whereHelperint64{field: "`app_version`.`app_version_id`"},
-	Platform:     whereHelperstring{field: "`app_version`.`platform`"},
-	Version:      whereHelperstring{field: "`app_version`.`version`"},
-	ForceUpdate:  whereHelperbool{field: "`app_version`.`force_update`"},
-	CreatedAt:    whereHelpernull_Time{field: "`app_version`.`created_at`"},
-	UpdatedAt:    whereHelpernull_Time{field: "`app_version`.`updated_at`"},
-	DeletedAt:    whereHelpernull_Time{field: "`app_version`.`deleted_at`"},
+	AppVersionID:       whereHelperint64{field: "`app_version`.`app_version_id`"},
+	Platform:           whereHelperstring{field: "`app_version`.`platform`"},
+	LatestVersion:      whereHelperstring{field: "`app_version`.`latest_version`"},
+	ForceUpdateVersion: whereHelperstring{field: "`app_version`.`force_update_version`"},
+	UpdateURL:          whereHelperstring{field: "`app_version`.`update_url`"},
+	CreatedAt:          whereHelpernull_Time{field: "`app_version`.`created_at`"},
+	UpdatedAt:          whereHelpernull_Time{field: "`app_version`.`updated_at`"},
+	DeletedAt:          whereHelpernull_Time{field: "`app_version`.`deleted_at`"},
 }
 
 // AppVersionRels is where relationship names are stored.
@@ -190,9 +188,9 @@ func (*appVersionR) NewStruct() *appVersionR {
 type appVersionL struct{}
 
 var (
-	appVersionAllColumns            = []string{"app_version_id", "platform", "version", "force_update", "created_at", "updated_at", "deleted_at"}
-	appVersionColumnsWithoutDefault = []string{"platform", "version", "deleted_at"}
-	appVersionColumnsWithDefault    = []string{"app_version_id", "force_update", "created_at", "updated_at"}
+	appVersionAllColumns            = []string{"app_version_id", "platform", "latest_version", "force_update_version", "update_url", "created_at", "updated_at", "deleted_at"}
+	appVersionColumnsWithoutDefault = []string{"platform", "latest_version", "force_update_version", "update_url", "deleted_at"}
+	appVersionColumnsWithDefault    = []string{"app_version_id", "created_at", "updated_at"}
 	appVersionPrimaryKeyColumns     = []string{"app_version_id"}
 	appVersionGeneratedColumns      = []string{}
 )
@@ -797,7 +795,7 @@ func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			appVersionAllColumns,
 			appVersionColumnsWithDefault,
 			appVersionColumnsWithoutDefault,
@@ -813,7 +811,8 @@ func (o *AppVersion) Upsert(ctx context.Context, exec boil.ContextExecutor, upda
 			return errors.New("mysql: unable to upsert app_version, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(appVersionAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`app_version`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `app_version` WHERE %s",

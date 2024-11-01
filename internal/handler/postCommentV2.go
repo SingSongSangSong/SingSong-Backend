@@ -117,6 +117,7 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 			LEFT JOIN post_comment AS replies 
 				ON replies.parent_post_comment_id = post_comment.post_comment_id 
 				AND replies.is_recomment = true
+			    AND replies.deleted_at IS NULL
 			LEFT JOIN post_comment_song AS comment_song ON post_comment.post_comment_id = comment_song.post_comment_id
 			WHERE post_comment.post_id = ? 
 				AND post_comment.deleted_at IS NULL 
@@ -258,14 +259,16 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 						if songInfo, exists := songInfoMap[int64(id)]; exists {
 							// Create SongOnPost object
 							songOnPost := SongOnPost{
-								SongNumber: songInfo.SongNumber,
-								SongName:   songInfo.SongName,
-								SingerName: songInfo.ArtistName,
-								SongInfoId: songInfo.SongInfoID,
-								Album:      songInfo.Album.String,
-								IsMr:       songInfo.IsMR.Bool,
-								IsLive:     songInfo.IsLive.Bool,                               // Set according to your logic
-								MelonLink:  CreateMelonLinkByMelonSongId(songInfo.MelonSongID), // Set according to your logic
+								SongNumber:        songInfo.SongNumber,
+								SongName:          songInfo.SongName,
+								SingerName:        songInfo.ArtistName,
+								SongInfoId:        songInfo.SongInfoID,
+								Album:             songInfo.Album.String,
+								IsMr:              songInfo.IsMR.Bool,
+								IsLive:            songInfo.IsLive.Bool,                               // Set according to your logic
+								MelonLink:         CreateMelonLinkByMelonSongId(songInfo.MelonSongID), // Set according to your logic
+								LyricsYoutubeLink: songInfo.LyricsVideoLink.String,
+								TJYoutubeLink:     songInfo.TJYoutubeLink.String,
 							}
 							// Add to the list of songs for this postComment
 							songsOnPost = append(songsOnPost, songOnPost)

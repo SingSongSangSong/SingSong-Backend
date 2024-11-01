@@ -219,17 +219,19 @@ func FunctionCallingWithTypesRecommedation(db *sql.DB) gin.HandlerFunc {
 			nullMelongSongId := null.StringFrom(item.MelonSongId)
 
 			functionCallingResponse.Songs = append(functionCallingResponse.Songs, FunctionCallingDetailResponse{
-				SongNumber:   songNumberForMap,
-				SongName:     item.SongName,
-				SingerName:   item.ArtistName,
-				SongInfoId:   item.SongInfoId,
-				Album:        item.Album,
-				IsMr:         item.IsMr,
-				IsLive:       item.IsLive,
-				IsKeep:       keepSongMap[item.SongInfoId],
-				KeepCount:    keepCountMap[item.SongInfoId],
-				CommentCount: commentCountMap[item.SongInfoId],
-				MelonLink:    CreateMelonLinkByMelonSongId(nullMelongSongId),
+				SongNumber:        songNumberForMap,
+				SongName:          item.SongName,
+				SingerName:        item.ArtistName,
+				SongInfoId:        item.SongInfoId,
+				Album:             item.Album,
+				IsMr:              item.IsMr,
+				IsLive:            item.IsLive,
+				IsKeep:            keepSongMap[item.SongInfoId],
+				KeepCount:         keepCountMap[item.SongInfoId],
+				CommentCount:      commentCountMap[item.SongInfoId],
+				MelonLink:         CreateMelonLinkByMelonSongId(nullMelongSongId),
+				LyricsYoutubeLink: item.LyricsYoutubeLink, //todo:
+				TJYoutubeLink:     item.TjYoutubeLink,
 			})
 		}
 

@@ -15,7 +15,6 @@ import (
 )
 
 // todo: 이미지 등록
-
 type PostRequest struct {
 	Title       string  `json:"title"`
 	Content     string  `json:"content"`
@@ -64,10 +63,10 @@ func CreatePost(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		if len(postRequest.SongInfoIds) > 10 {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - maximum song size is 10", nil)
-			return
-		}
+		//if len(postRequest.SongInfoIds) > 10 {
+		//	pkg.BaseResponse(c, http.StatusBadRequest, "error - maximum song size is 10", nil)
+		//	return
+		//}
 
 		if postRequest.SongInfoIds == nil || len(postRequest.SongInfoIds) == 0 {
 			post := mysql.Post{
@@ -158,14 +157,16 @@ type PostDetailsResponse struct {
 }
 
 type SongOnPost struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	SongInfoId int64  `json:"songId"`
-	Album      string `json:"album"`
-	IsMr       bool   `json:"isMr"`
-	IsLive     bool   `json:"isLive"`
-	MelonLink  string `json:"melonLink"`
+	SongNumber        int    `json:"songNumber"`
+	SongName          string `json:"songName"`
+	SingerName        string `json:"singerName"`
+	SongInfoId        int64  `json:"songId"`
+	Album             string `json:"album"`
+	IsMr              bool   `json:"isMr"`
+	IsLive            bool   `json:"isLive"`
+	MelonLink         string `json:"melonLink"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 // GetPost godoc
@@ -236,14 +237,16 @@ func GetPost(db *sql.DB) gin.HandlerFunc {
 		var songsOnPost []SongOnPost
 		for _, song := range all {
 			songsOnPost = append(songsOnPost, SongOnPost{
-				SongNumber: song.SongNumber,
-				SongName:   song.SongName,
-				SingerName: song.ArtistName,
-				SongInfoId: song.SongInfoID,
-				Album:      song.Album.String,
-				IsMr:       song.IsMR.Bool,
-				IsLive:     song.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(song.MelonSongID),
+				SongNumber:        song.SongNumber,
+				SongName:          song.SongName,
+				SingerName:        song.ArtistName,
+				SongInfoId:        song.SongInfoID,
+				Album:             song.Album.String,
+				IsMr:              song.IsMR.Bool,
+				IsLive:            song.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				LyricsYoutubeLink: song.LyricsVideoLink.String,
+				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
 
@@ -411,6 +414,15 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 
 		for _, post := range posts {
 			comments := post.R.PostComments
+
+			//deleted_at이 NULL인 댓글만 카운트
+			validCommentCount := 0
+			for _, comment := range comments {
+				if !comment.DeletedAt.Valid { // deleted_at이 NULL인지 확인
+					validCommentCount++
+				}
+			}
+
 			previews = append(previews, postPreviewResponse{
 				PostId:       post.PostID,
 				Title:        post.Title,
@@ -418,7 +430,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 				Nickname:     post.R.Member.Nickname.String,
 				MemberId:     post.MemberID,
 				Likes:        post.Likes,
-				CommentCount: len(comments),
+				CommentCount: validCommentCount,
 				CreatedAt:    post.CreatedAt.Time,
 			})
 		}

@@ -34,8 +34,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	version := r.Group("/api/v1/version")
 	{
 		version.GET("/", handler.AllVersion(db))
-		version.POST("/check", middleware.PlatformMiddleware(), handler.VersionCheck(db))
-		version.POST("/update", handler.LatestVersionUpdate(db))
+		version.POST("/check", handler.VersionCheck(db))
+		version.POST("/update", handler.VersionUpdate(db))
 	}
 
 	r.GET("/", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "Welcome to SingSong-Server"}) })
@@ -60,6 +60,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		recommendV2.GET("recommendation/:pageId", middleware.AuthMiddleware(db), handler.GetRecommendationV2(db, rdb, milvusClient))
 		recommendV2.POST("/refresh", middleware.AuthMiddleware(db), handler.RefreshRecommendationV2(db))
 		recommendV2.POST("/recommendation/functionCallingWithTypes", middleware.AuthMiddleware(db), handler.FunctionCallingWithTypesRecommedation(db))
+		recommendV2.GET("/recommendation/searchLog", middleware.AuthMiddleware(db), handler.GetSearchResultsForLLMV2(db))
 	}
 
 	// 태그 엔드포인트 설정
@@ -71,6 +72,16 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	tagsV2 := r.Group("/api/v2/tags")
 	{
 		tagsV2.GET("", handler.ListTagsV2())
+	}
+
+	tagsV3 := r.Group("/api/v3/tags")
+	{
+		tagsV3.GET("", handler.ListTagsV3())
+	}
+
+	tagsV4 := r.Group("/api/v4/tags")
+	{
+		tagsV4.GET("", handler.ListTagsV4())
 	}
 
 	member := r.Group("/api/v1/member")
@@ -176,6 +187,14 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		search.GET("/posts", middleware.AuthMiddleware(db), handler.SearchPosts(db))
 	}
 
+	searchV2 := r.Group("/api/v2/search")
+	{
+		searchV2.GET("/:searchKeyword", middleware.AuthMiddleware(db), handler.SearchSongsV2(db))
+		searchV2.GET("/artist-name", middleware.AuthMiddleware(db), handler.SearchSongsByAristV2(db))
+		searchV2.GET("/song-name", middleware.AuthMiddleware(db), handler.SearchSongsBySongNameV2(db))
+		searchV2.GET("/song-number", middleware.AuthMiddleware(db), handler.SearchSongsBySongNumberV2(db))
+	}
+
 	post := r.Group("/api/v1/posts")
 	{
 		post.POST("", middleware.AuthMiddleware(db), handler.CreatePost(db))
@@ -199,6 +218,13 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		postComment.POST("/report", middleware.AuthMiddleware(db), handler.ReportPostComment(db))
 		postComment.POST("/:postCommentId/like", middleware.AuthMiddleware(db), handler.LikePostComment(db))
 		postComment.DELETE("/:postCommentId", middleware.AuthMiddleware(db), handler.DeletePostComment(db))
+	}
+
+	recent := r.Group("/api/v1/recent")
+	{
+		recent.GET("/search", handler.GetLatestSearchApi(db))
+		recent.GET("/keep", handler.GetRecentKeepSongs(db))
+		recent.GET("/comment", handler.GetRecentCommentsongs(db))
 	}
 
 	notification := r.Group("/api/v1/notifications")

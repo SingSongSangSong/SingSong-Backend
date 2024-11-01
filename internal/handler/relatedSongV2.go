@@ -201,15 +201,17 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 		for _, song := range songInfoIds {
 			found := songInfoMap[song.(int64)]
 			relatedSongs = append(relatedSongs, relatedSong{
-				SongInfoId: found.SongInfoID,
-				SongName:   found.SongName,
-				SingerName: found.ArtistName,
-				Album:      found.Album.String,
-				IsKeep:     isKeepMap[found.SongInfoID],
-				SongNumber: found.SongNumber,
-				IsMr:       found.IsMR.Bool,
-				IsLive:     found.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(found.MelonSongID),
+				SongInfoId:        found.SongInfoID,
+				SongName:          found.SongName,
+				SingerName:        found.ArtistName,
+				Album:             found.Album.String,
+				IsKeep:            isKeepMap[found.SongInfoID],
+				SongNumber:        found.SongNumber,
+				IsMr:              found.IsMR.Bool,
+				IsLive:            found.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(found.MelonSongID),
+				LyricsYoutubeLink: found.LyricsVideoLink.String,
+				TJYoutubeLink:     found.TJYoutubeLink.String,
 			})
 		}
 		nextPage := pageInt + 1

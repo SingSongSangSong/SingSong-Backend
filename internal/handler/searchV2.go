@@ -3,14 +3,18 @@ package handler
 import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
+	"context"
 	"database/sql"
 	"github.com/gin-gonic/gin"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
-type songSearchInfoResponse struct {
+type SongSearchInfoV2Response struct {
 	SongNumber        int    `json:"songNumber"`
 	SongName          string `json:"songName"`
 	SingerName        string `json:"singerName"`
@@ -19,30 +23,40 @@ type songSearchInfoResponse struct {
 	IsMr              bool   `json:"isMr"`
 	IsLive            bool   `json:"isLive"`
 	MelonLink         string `json:"melonLink"`
+	IsKeep            bool   `json:"isKeep"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
-type songSearchInfoResponses struct {
-	SongName   []songSearchInfoResponse `json:"songName"`
-	ArtistName []songSearchInfoResponse `json:"artistName"`
-	SongNumber []songSearchInfoResponse `json:"songNumber"`
+type SongSearchInfoV2Responses struct {
+	SongName   []SongSearchInfoV2Response `json:"songName"`
+	ArtistName []SongSearchInfoV2Response `json:"artistName"`
+	SongNumber []SongSearchInfoV2Response `json:"songNumber"`
 }
 
-// SearchSongs godoc
-// @Summary      노래 검색 API
-// @Description  노래 검색 API, 노래 제목 또는 아티스트 이름을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호를 반환합니다.
+// SearchSongsV2 godoc
+// @Summary      노래 검색 API V2
+// @Description  노래 검색 API V2, 노래 제목 또는 아티스트 이름을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호 및 추가적으로 IsKeep여부를 반환합니다.
 // @Tags         Search
 // @Accept       json
 // @Produce      json
 // @Param        searchKeyword path string true "검색 키워드"
-// @Success      200 {object} pkg.BaseResponseStruct{data=songSearchInfoResponses} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=SongSearchInfoV2Responses} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패 - 빈 리스트 반환"
-// @Router       /v1/search/{searchKeyword} [get]
-func SearchSongs(db *sql.DB) gin.HandlerFunc {
+// @Router       /v2/search/{searchKeyword} [get]
+// @Security BearerAuth
+func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
+
 		// 검색어를 URL 파라미터에서 가져오기
 		searchKeyword := c.Param("searchKeyword")
+		// 혹시 모를 공백 제거
+		searchKeyword = strings.TrimSpace(searchKeyword)
 
 		// 노래 이름으로 검색
 		songsWithName, err := mysql.SongInfos(
@@ -76,16 +90,37 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		keepList, err := mysql.KeepLists(
+			qm.Where("member_id = ?", memberId),
+		).One(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongs, err := mysql.KeepSongs(
+			qm.Where("keep_list_id = ?", keepList.KeepListID),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongMap := make(map[int64]bool)
+		for _, keepSong := range keepSongs {
+			keepSongMap[keepSong.SongInfoID] = true
+		}
+
 		// 응답 데이터 생성
-		response := songSearchInfoResponses{
-			SongName:   make([]songSearchInfoResponse, 0),
-			ArtistName: make([]songSearchInfoResponse, 0),
-			SongNumber: make([]songSearchInfoResponse, 0),
+		response := SongSearchInfoV2Responses{
+			SongName:   make([]SongSearchInfoV2Response, 0),
+			ArtistName: make([]SongSearchInfoV2Response, 0),
+			SongNumber: make([]SongSearchInfoV2Response, 0),
 		}
 
 		// 노래 이름으로 검색한 결과를 response 추가
 		for _, song := range songsWithName {
-			response.SongName = append(response.SongName, songSearchInfoResponse{
+			response.SongName = append(response.SongName, SongSearchInfoV2Response{
 				SongNumber:        song.SongNumber,
 				SongName:          song.SongName,
 				SingerName:        song.ArtistName,
@@ -94,6 +129,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				IsMr:              song.IsMR.Bool,
 				IsLive:            song.IsLive.Bool,
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
@@ -101,7 +137,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 
 		// 아티스트 이름으로 검색한 결과를 response 추가
 		for _, song := range songsWithArtist {
-			response.ArtistName = append(response.ArtistName, songSearchInfoResponse{
+			response.ArtistName = append(response.ArtistName, SongSearchInfoV2Response{
 				SongNumber:        song.SongNumber,
 				SongName:          song.SongName,
 				SingerName:        song.ArtistName,
@@ -110,6 +146,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				IsMr:              song.IsMR.Bool,
 				IsLive:            song.IsLive.Bool,
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
@@ -117,7 +154,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 
 		// 노래 번호로 검색한 결과를 response에 추가
 		for _, song := range songsWithNumber {
-			response.SongNumber = append(response.SongNumber, songSearchInfoResponse{
+			response.SongNumber = append(response.SongNumber, SongSearchInfoV2Response{
 				SongNumber:        song.SongNumber,
 				SongName:          song.SongName,
 				SingerName:        song.ArtistName,
@@ -126,40 +163,51 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				IsMr:              song.IsMR.Bool,
 				IsLive:            song.IsLive.Bool,
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
+
+		go func() {
+			searchLog := mysql.SearchLog{MemberID: memberId.(int64), SearchText: searchKeyword}
+			err = searchLog.Insert(context.Background(), db, boil.Infer())
+			if err != nil {
+				log.Printf("Error inserting Search Log: %v", err)
+			}
+		}()
 
 		// 응답 반환
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }
 
-var (
-	defaultSearchSize = "20"
-	defaultSearchPage = "1"
-)
-
-type songSearchPageResponse struct {
-	Songs    []songSearchInfoResponse `json:"songs"`
-	NextPage int                      `json:"nextPage"`
+type SongSearchPageV2Response struct {
+	Songs    []SongSearchInfoV2Response `json:"songs"`
+	NextPage int                        `json:"nextPage"`
 }
 
-// SearchSongsByArtist godoc
-// @Summary      가수로 노래 검색 API
-// @Description  가수로 노래 검색 API, 아티스트 이름을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호를 반환합니다.
+// SearchSongsByAristV2 godoc
+// @Summary      가수로 노래 검색 API V2
+// @Description  가수로 노래 검색 API, 아티스트 이름을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호 및 IsKeep여부를 반환합니다.
 // @Tags         Search
 // @Accept       json
 // @Produce      json
 // @Param        keyword query string true "검색 키워드"
 // @Param        page query int false "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
 // @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
-// @Success      200 {object} pkg.BaseResponseStruct{data=songSearchPageResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=SongSearchPageV2Response} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
-// @Router       /v1/search/artist-name [get]
-func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
+// @Router       /v2/search/artist-name [get]
+// @Security BearerAuth
+func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
+
 		// 검색어를 쿼리 파라미터에서 가져오기
 		searchKeyword := c.Query("keyword")
 		if searchKeyword == "" {
@@ -195,10 +243,31 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		keepList, err := mysql.KeepLists(
+			qm.Where("member_id = ?", memberId),
+		).One(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongs, err := mysql.KeepSongs(
+			qm.Where("keep_list_id = ?", keepList.KeepListID),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongMap := make(map[int64]bool)
+		for _, keepSong := range keepSongs {
+			keepSongMap[keepSong.SongInfoID] = true
+		}
+
 		// 응답 데이터 생성
-		songs := make([]songSearchInfoResponse, 0, len(songsWithArtist))
+		songs := make([]SongSearchInfoV2Response, 0, len(songsWithArtist))
 		for _, song := range songsWithArtist {
-			songs = append(songs, songSearchInfoResponse{
+			songs = append(songs, SongSearchInfoV2Response{
 				SongNumber:        song.SongNumber,
 				SongName:          song.SongName,
 				SingerName:        song.ArtistName,
@@ -207,11 +276,12 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 				IsMr:              song.IsMR.Bool,
 				IsLive:            song.IsLive.Bool,
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
-		response := songSearchPageResponse{
+		response := SongSearchPageV2Response{
 			Songs:    songs,
 			NextPage: page + 1,
 		}
@@ -220,20 +290,26 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// SearchSongsBySongName godoc
-// @Summary      노래 제목으로 노래 검색 API
-// @Description  노래 제목으로 노래 검색 API, 노래 제목을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호를 반환합니다.
+// SearchSongsBySongNameV2 godoc
+// @Summary      노래 제목으로 노래 검색 API V2
+// @Description  노래 제목으로 노래 검색 API V2, 노래 제목을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호 및 IsKeep여부를 반환합니다.
 // @Tags         Search
 // @Accept       json
 // @Produce      json
 // @Param        keyword query string true "검색 키워드"
 // @Param        page query int false "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회"
 // @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
-// @Success      200 {object} pkg.BaseResponseStruct{data=songSearchPageResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=SongSearchPageV2Response} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
-// @Router       /v1/search/song-name [get]
-func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
+// @Router       /v2/search/song-name [get]
+// @Security BearerAuth
+func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
 		// 검색어를 쿼리 파라미터에서 가져오기
 		searchKeyword := c.Query("keyword")
 		if searchKeyword == "" {
@@ -274,10 +350,31 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		keepList, err := mysql.KeepLists(
+			qm.Where("member_id = ?", memberId),
+		).One(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongs, err := mysql.KeepSongs(
+			qm.Where("keep_list_id = ?", keepList.KeepListID),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongMap := make(map[int64]bool)
+		for _, keepSong := range keepSongs {
+			keepSongMap[keepSong.SongInfoID] = true
+		}
+
 		// 응답 데이터 생성
-		songs := make([]songSearchInfoResponse, 0, len(songsWithName))
+		songs := make([]SongSearchInfoV2Response, 0, len(songsWithName))
 		for _, song := range songsWithName {
-			songs = append(songs, songSearchInfoResponse{
+			songs = append(songs, SongSearchInfoV2Response{
 				SongNumber:        song.SongNumber,
 				SongName:          song.SongName,
 				SingerName:        song.ArtistName,
@@ -286,11 +383,12 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 				IsMr:              song.IsMR.Bool,
 				IsLive:            song.IsLive.Bool,
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
-		response := songSearchPageResponse{
+		response := SongSearchPageV2Response{
 			Songs:    songs,
 			NextPage: page + 1,
 		}
@@ -299,20 +397,27 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 	}
 }
 
-// SearchSongsBySongNumber godoc
-// @Summary      노래 번호로 노래 검색 API
-// @Description  노래 번호로 노래 검색 API, 노래 번호를 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호를 반환합니다.
+// SearchSongsBySongNumberV2 godoc
+// @Summary      노래 번호로 노래 검색 API V2
+// @Description  노래 번호로 노래 검색 API V2, 노래 번호를 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래 번호및 IsKeep여부를 반환합니다.
 // @Tags         Search
 // @Accept       json
 // @Produce      json
 // @Param        keyword query string true "검색 키워드"
 // @Param        page query int false "현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회. 현재는 노래 번호가 정확히 일치하는 1개만 반환하기 때문에 무의미"
 // @Param        size query int false "한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회. 현재는 노래 번호가 정확히 일치하는 1개만 반환하기 때문에 무의미"
-// @Success      200 {object} pkg.BaseResponseStruct{data=songSearchPageResponse} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=SongSearchPageV2Response} "성공"
 // @Failure      400 {object} pkg.BaseResponseStruct{data=nil} "실패"
-// @Router       /v1/search/song-number [get]
-func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
+// @Router       /v2/search/song-number [get]
+// @Security BearerAuth
+func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			return
+		}
+
 		// 검색어를 쿼리 파라미터에서 가져오기
 		searchKeyword := c.Query("keyword")
 		if searchKeyword == "" {
@@ -340,10 +445,31 @@ func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
+		keepList, err := mysql.KeepLists(
+			qm.Where("member_id = ?", memberId),
+		).One(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongs, err := mysql.KeepSongs(
+			qm.Where("keep_list_id = ?", keepList.KeepListID),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+
+		keepSongMap := make(map[int64]bool)
+		for _, keepSong := range keepSongs {
+			keepSongMap[keepSong.SongInfoID] = true
+		}
+
 		// 응답 데이터 생성
-		songs := make([]songSearchInfoResponse, 0, len(songsWithNumber))
+		songs := make([]SongSearchInfoV2Response, 0, len(songsWithNumber))
 		for _, song := range songsWithNumber {
-			songs = append(songs, songSearchInfoResponse{
+			songs = append(songs, SongSearchInfoV2Response{
 				SongNumber:        song.SongNumber,
 				SongName:          song.SongName,
 				SingerName:        song.ArtistName,
@@ -352,11 +478,12 @@ func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
 				IsMr:              song.IsMR.Bool,
 				IsLive:            song.IsLive.Bool,
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
 			})
 		}
-		response := songSearchPageResponse{
+		response := SongSearchPageV2Response{
 			Songs:    songs,
 			NextPage: page + 1,
 		}

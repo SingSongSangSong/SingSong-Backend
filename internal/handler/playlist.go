@@ -20,15 +20,17 @@ type PlaylistAddRequest struct {
 }
 
 type PlaylistAddResponse struct {
-	SongNumber int    `json:"songNumber"`
-	SongName   string `json:"songName"`
-	SingerName string `json:"singerName"`
-	SongInfoId int64  `json:"songId"`
-	Album      string `json:"album"`
-	IsMr       bool   `json:"isMr"`
-	IsLive     bool   `json:"isLive"`
-	MelonLink  string `json:"melonLink"`
-	KeepSongId int64  `json:"keepSongId"`
+	SongNumber        int    `json:"songNumber"`
+	SongName          string `json:"songName"`
+	SingerName        string `json:"singerName"`
+	SongInfoId        int64  `json:"songId"`
+	Album             string `json:"album"`
+	IsMr              bool   `json:"isMr"`
+	IsLive            bool   `json:"isLive"`
+	MelonLink         string `json:"melonLink"`
+	KeepSongId        int64  `json:"keepSongId"`
+	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string `json:"tjYoutubeLink"`
 }
 
 // GoRoutine으로 회원가입시에 플레이리스트를 생성한다 (context따로 가져와야함)
@@ -121,7 +123,18 @@ func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String, IsMr: row.IsMR.Bool, IsLive: row.IsLive.Bool}
+			response := PlaylistAddResponse{
+				SongName:          row.SongName,
+				SingerName:        row.ArtistName,
+				SongNumber:        row.SongNumber,
+				SongInfoId:        row.SongInfoID,
+				Album:             row.Album.String,
+				IsMr:              row.IsMR.Bool,
+				IsLive:            row.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(row.MelonSongID),
+				LyricsYoutubeLink: row.LyricsVideoLink.String,
+				TJYoutubeLink:     row.TJYoutubeLink.String,
+			}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
 
@@ -191,7 +204,18 @@ func DeleteSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
 			}
-			response := PlaylistAddResponse{SongName: row.SongName, SingerName: row.ArtistName, SongNumber: row.SongNumber, SongInfoId: row.SongInfoID, Album: row.Album.String, IsMr: row.IsMR.Bool}
+			response := PlaylistAddResponse{
+				SongName:          row.SongName,
+				SingerName:        row.ArtistName,
+				SongNumber:        row.SongNumber,
+				SongInfoId:        row.SongInfoID,
+				Album:             row.Album.String,
+				IsMr:              row.IsMR.Bool,
+				IsLive:            row.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(row.MelonSongID),
+				LyricsYoutubeLink: row.LyricsVideoLink.String,
+				TJYoutubeLink:     row.TJYoutubeLink.String,
+			}
 			keepSongs = append(keepSongs, response)
 		}
 		pkg.BaseResponse(c, http.StatusOK, "success", keepSongs)
@@ -240,14 +264,16 @@ func GetSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 				return
 			}
 			response := PlaylistAddResponse{
-				SongName:   row.SongName,
-				SingerName: row.ArtistName,
-				SongNumber: row.SongNumber,
-				SongInfoId: row.SongInfoID,
-				Album:      row.Album.String,
-				IsMr:       row.IsMR.Bool,
-				IsLive:     row.IsLive.Bool,
-				MelonLink:  CreateMelonLinkByMelonSongId(row.MelonSongID),
+				SongName:          row.SongName,
+				SingerName:        row.ArtistName,
+				SongNumber:        row.SongNumber,
+				SongInfoId:        row.SongInfoID,
+				Album:             row.Album.String,
+				IsMr:              row.IsMR.Bool,
+				IsLive:            row.IsLive.Bool,
+				MelonLink:         CreateMelonLinkByMelonSongId(row.MelonSongID),
+				LyricsYoutubeLink: row.LyricsVideoLink.String,
+				TJYoutubeLink:     row.TJYoutubeLink.String,
 			}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
@@ -255,5 +281,3 @@ func GetSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 		pkg.BaseResponse(c, http.StatusOK, "success", PlaylistAddResponseList)
 	}
 }
-
-// 플레이리스트에 노래리스트 수정

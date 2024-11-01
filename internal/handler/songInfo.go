@@ -12,20 +12,22 @@ import (
 )
 
 type songInfoResponse struct {
-	SongNumber   int      `json:"songNumber"`
-	SongName     string   `json:"songName"`
-	SingerName   string   `json:"singerName"`
-	Tags         []string `json:"tags"`
-	SongInfoId   int64    `json:"songId"`
-	Album        string   `json:"album"`
-	Octave       string   `json:"octave"`
-	Description  string   `json:"description"`
-	IsKeep       bool     `json:"isKeep"`
-	KeepCount    int64    `json:"keepCount"`
-	CommentCount int64    `json:"commentCount"`
-	IsMr         bool     `json:"isMr"`
-	IsLive       bool     `json:"isLive"`
-	MelonLink    string   `json:"melonLink"`
+	SongNumber        int      `json:"songNumber"`
+	SongName          string   `json:"songName"`
+	SingerName        string   `json:"singerName"`
+	Tags              []string `json:"tags"`
+	SongInfoId        int64    `json:"songId"`
+	Album             string   `json:"album"`
+	Octave            string   `json:"octave"`
+	Description       string   `json:"description"`
+	IsKeep            bool     `json:"isKeep"`
+	KeepCount         int64    `json:"keepCount"`
+	CommentCount      int64    `json:"commentCount"`
+	IsMr              bool     `json:"isMr"`
+	IsLive            bool     `json:"isLive"`
+	MelonLink         string   `json:"melonLink"`
+	LyricsYoutubeLink string   `json:"lyricsYoutubeLink"`
+	TJYoutubeLink     string   `json:"tjYoutubeLink"`
 }
 
 // GetSongInfo godoc
@@ -92,20 +94,22 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 		}
 
 		response := songInfoResponse{
-			SongNumber:   one.SongNumber,
-			SongName:     one.SongName,
-			SingerName:   one.ArtistName,
-			SongInfoId:   one.SongInfoID,
-			Tags:         []string{}, //todo: tags
-			Album:        one.Album.String,
-			Octave:       one.Octave.String,
-			Description:  "", //todo:
-			IsKeep:       isKeep,
-			CommentCount: commentCount,
-			KeepCount:    keepCount,
-			IsMr:         one.IsMR.Bool,
-			IsLive:       one.IsLive.Bool,
-			MelonLink:    CreateMelonLinkByMelonSongId(one.MelonSongID),
+			SongNumber:        one.SongNumber,
+			SongName:          one.SongName,
+			SingerName:        one.ArtistName,
+			SongInfoId:        one.SongInfoID,
+			Tags:              []string{}, //todo: tags
+			Album:             one.Album.String,
+			Octave:            one.Octave.String,
+			Description:       "", //todo:
+			IsKeep:            isKeep,
+			CommentCount:      commentCount,
+			KeepCount:         keepCount,
+			IsMr:              one.IsMR.Bool,
+			IsLive:            one.IsLive.Bool,
+			MelonLink:         CreateMelonLinkByMelonSongId(one.MelonSongID),
+			LyricsYoutubeLink: one.LyricsVideoLink.String,
+			TJYoutubeLink:     one.TJYoutubeLink.String,
 		}
 
 		// 비동기적으로 member_action 저장

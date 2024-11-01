@@ -66,6 +66,8 @@ definitions:
         type: boolean
       isRecomment:
         type: boolean
+      isWriter:
+        type: boolean
       likes:
         type: integer
       memberId:
@@ -118,6 +120,8 @@ definitions:
         type: boolean
       isRecomment:
         type: boolean
+      isWriter:
+        type: boolean
       likes:
         type: integer
       memberId:
@@ -149,6 +153,8 @@ definitions:
         type: boolean
       keepCount:
         type: integer
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       singerName:
@@ -159,6 +165,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
     type: object
   handler.FunctionCallingResponse:
     properties:
@@ -239,6 +247,8 @@ definitions:
         type: boolean
       isMr:
         type: boolean
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       singerName:
@@ -249,6 +259,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
     type: object
   handler.GetSubscribedKeepsResponse:
     properties:
@@ -299,6 +311,8 @@ definitions:
         type: boolean
       isMr:
         type: boolean
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       singerName:
@@ -309,6 +323,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
     type: object
   handler.LangchainAgentResponse:
     properties:
@@ -444,6 +460,8 @@ definitions:
         type: boolean
       keepSongId:
         type: integer
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       singerName:
@@ -454,6 +472,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
     type: object
   handler.PostCommentReportResponse:
     properties:
@@ -492,6 +512,8 @@ definitions:
       isLiked:
         type: boolean
       isRecomment:
+        type: boolean
+      isWriter:
         type: boolean
       likes:
         type: integer
@@ -682,6 +704,8 @@ definitions:
         type: boolean
       isMr:
         type: boolean
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       singerName:
@@ -692,6 +716,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
     type: object
   handler.SongResponse:
     properties:
@@ -717,6 +743,55 @@ definitions:
         type: string
       songNumber:
         type: integer
+    type: object
+  handler.SongSearchInfoV2Response:
+    properties:
+      album:
+        type: string
+      isKeep:
+        type: boolean
+      isLive:
+        type: boolean
+      isMr:
+        type: boolean
+      lyricsYoutubeLink:
+        type: string
+      melonLink:
+        type: string
+      singerName:
+        type: string
+      songId:
+        type: integer
+      songName:
+        type: string
+      songNumber:
+        type: integer
+      tjYoutubeLink:
+        type: string
+    type: object
+  handler.SongSearchInfoV2Responses:
+    properties:
+      artistName:
+        items:
+          $ref: '#/definitions/handler.SongSearchInfoV2Response'
+        type: array
+      songName:
+        items:
+          $ref: '#/definitions/handler.SongSearchInfoV2Response'
+        type: array
+      songNumber:
+        items:
+          $ref: '#/definitions/handler.SongSearchInfoV2Response'
+        type: array
+    type: object
+  handler.SongSearchPageV2Response:
+    properties:
+      nextPage:
+        type: integer
+      songs:
+        items:
+          $ref: '#/definitions/handler.SongSearchInfoV2Response'
+        type: array
     type: object
   handler.TotalChartResponse:
     properties:
@@ -766,6 +841,8 @@ definitions:
         type: boolean
       isNew:
         type: boolean
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       ranking:
@@ -778,6 +855,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
       totalScore:
         type: number
     type: object
@@ -794,6 +873,17 @@ definitions:
       time:
         type: string
       userKey:
+        type: string
+    type: object
+  handler.VersionUpdateRequest:
+    properties:
+      forceUpdateVersion:
+        type: string
+      latestVersion:
+        type: string
+      platform:
+        type: string
+      updateUrl:
         type: string
     type: object
   handler.WithdrawRequest:
@@ -838,15 +928,6 @@ definitions:
       tag:
         type: string
     type: object
-  handler.latestVersionUpdateRequest:
-    properties:
-      forceUpdate:
-        type: boolean
-      platform:
-        type: string
-      version:
-        type: string
-    type: object
   handler.newSongInfo:
     properties:
       album:
@@ -863,6 +944,8 @@ definitions:
         type: boolean
       keepCount:
         type: integer
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       singerName:
@@ -873,6 +956,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
     type: object
   handler.newSongInfoResponse:
     properties:
@@ -937,6 +1022,8 @@ definitions:
         type: boolean
       keepCount:
         type: integer
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       singerName:
@@ -947,6 +1034,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
     type: object
   handler.refreshResponseV2:
     properties:
@@ -967,6 +1056,8 @@ definitions:
         type: boolean
       isMr:
         type: boolean
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       singerName:
@@ -977,6 +1068,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
     type: object
   handler.relatedSongResponse:
     properties:
@@ -1022,6 +1115,8 @@ definitions:
         type: boolean
       keepCount:
         type: integer
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       octave:
@@ -1038,6 +1133,8 @@ definitions:
         items:
           type: string
         type: array
+      tjYoutubeLink:
+        type: string
     type: object
   handler.songReviewOptionAddRequest:
     properties:
@@ -1070,6 +1167,8 @@ definitions:
         type: boolean
       isMr:
         type: boolean
+      lyricsYoutubeLink:
+        type: string
       melonLink:
         type: string
       singerName:
@@ -1080,6 +1179,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjYoutubeLink:
+        type: string
     type: object
   handler.songSearchInfoResponses:
     properties:
@@ -1128,7 +1229,18 @@ definitions:
     type: object
   handler.versionCheckRequest:
     properties:
-      version:
+      platform:
+        type: string
+    type: object
+  handler.versionCheckResponse:
+    properties:
+      forceUpdateVersion:
+        type: string
+      latestVersion:
+        type: string
+      platform:
+        type: string
+      updateUrl:
         type: string
     type: object
   pkg.BaseResponseStruct:
@@ -2235,6 +2347,89 @@ paths:
       summary: 해당하는 댓글ID를 통해 신고하기
       tags:
       - Post
+  /v1/recent/comment:
+    get:
+      consumes:
+      - application/json
+      description: 최근 댓글 단 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size =
+        10
+      parameters:
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.SongSearchInfoV2Response'
+                  type: array
+              type: object
+      summary: 최근 댓글 단 노래 목록 가져오기
+      tags:
+      - Recent
+  /v1/recent/keep:
+    get:
+      consumes:
+      - application/json
+      description: 최근 Keep한 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size =
+        10
+      parameters:
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.SongSearchInfoV2Response'
+                  type: array
+              type: object
+      summary: 최근 Keep한 노래 목록 가져오기
+      tags:
+      - Recent
+  /v1/recent/search:
+    get:
+      consumes:
+      - application/json
+      description: 검색화면 최근 검색어 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10
+      parameters:
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    type: object
+                  type: array
+              type: object
+      summary: 검색화면 최근 검색어 가져오기
+      tags:
+      - Recent
   /v1/recommend/home:
     post:
       consumes:
@@ -2957,13 +3152,21 @@ paths:
     get:
       consumes:
       - application/json
-      description: 등록되어 있는 모든 버전 확인 가능
+      description: 플랫폼별 등록되어 있는 버전 내용 확인 가능
       produces:
       - application/json
       responses:
         "200":
-          description: 성공" {object} pkg.BaseResponseStruct{data=[]versionResponse}
-            "성공
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.versionCheckResponse'
+                  type: array
+              type: object
       summary: 모든 버전 확인
       tags:
       - App Version
@@ -2971,10 +3174,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: 헤더에 플랫폼 정보를 포함하고, request body 앱의 버전을 보내면, 최신 버전인지 여부와 강제 업데이트
-        필요 여부를 응답
+      description: request body에 플랫폼을 보내면, 해당 플랫폼의 최신 버전과 강제 업데이트 버전을 응답
       parameters:
-      - description: 현재 앱 버전 정보
+      - description: 플랫폼 정보
         in: body
         name: version
         required: true
@@ -2994,20 +3196,22 @@ paths:
     post:
       consumes:
       - application/json
-      description: 새로운 버전이 나왔을때 버전을 추가할 수 있음 (플랫폼(ios, android), 버전, 이전 버전들을 강제 업데이트
-        할지 여부)
+      description: 플랫폼별 최신 버전, 강제 업데이트 버전을 설정할 수 있다. (강제 업데이트 버전이랑 update url은 걍 필드
+        빼고 보내면 갱신 안됨)
       parameters:
       - description: 등록 버전 정보
         in: body
         name: version
         required: true
         schema:
-          $ref: '#/definitions/handler.latestVersionUpdateRequest'
+          $ref: '#/definitions/handler.VersionUpdateRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: 성공
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
       summary: 버전 추가
       tags:
       - App Version
@@ -3254,6 +3458,28 @@ paths:
       summary: LLM으로 검색하기
       tags:
       - Recommendation
+  /v2/recommend/recommendation/searchLog:
+    get:
+      consumes:
+      - application/json
+      description: Get Recent 10 Search Results for LLM
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.SearchResultForLLMResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get 10 Recent Search Results for LLM
+      tags:
+      - Recommendation
   /v2/recommend/refresh:
     post:
       consumes:
@@ -3283,6 +3509,184 @@ paths:
       summary: 새로고침 노래 추천V2
       tags:
       - Recommendation
+  /v2/search/{searchKeyword}:
+    get:
+      consumes:
+      - application/json
+      description: 노래 검색 API V2, 노래 제목 또는 아티스트 이름을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름,
+        앨범명, 노래 번호 및 추가적으로 IsKeep여부를 반환합니다.
+      parameters:
+      - description: 검색 키워드
+        in: path
+        name: searchKeyword
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.SongSearchInfoV2Responses'
+              type: object
+        "400":
+          description: 실패 - 빈 리스트 반환
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 노래 검색 API V2
+      tags:
+      - Search
+  /v2/search/artist-name:
+    get:
+      consumes:
+      - application/json
+      description: 가수로 노래 검색 API, 아티스트 이름을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명, 노래
+        번호 및 IsKeep여부를 반환합니다.
+      parameters:
+      - description: 검색 키워드
+        in: query
+        name: keyword
+        required: true
+        type: string
+      - description: 현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회
+        in: query
+        name: page
+        type: integer
+      - description: 한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.SongSearchPageV2Response'
+              type: object
+        "400":
+          description: 실패
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 가수로 노래 검색 API V2
+      tags:
+      - Search
+  /v2/search/song-name:
+    get:
+      consumes:
+      - application/json
+      description: 노래 제목으로 노래 검색 API V2, 노래 제목을 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명,
+        노래 번호 및 IsKeep여부를 반환합니다.
+      parameters:
+      - description: 검색 키워드
+        in: query
+        name: keyword
+        required: true
+        type: string
+      - description: 현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회
+        in: query
+        name: page
+        type: integer
+      - description: 한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.SongSearchPageV2Response'
+              type: object
+        "400":
+          description: 실패
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 노래 제목으로 노래 검색 API V2
+      tags:
+      - Search
+  /v2/search/song-number:
+    get:
+      consumes:
+      - application/json
+      description: 노래 번호로 노래 검색 API V2, 노래 번호를 검색합니다. \n 검색 결과는 노래 제목, 아티스트 이름, 앨범명,
+        노래 번호및 IsKeep여부를 반환합니다.
+      parameters:
+      - description: 검색 키워드
+        in: query
+        name: keyword
+        required: true
+        type: string
+      - description: 현재 조회할 노래 목록의 쪽수. 입력하지 않는다면 기본값인 1쪽을 조회. 현재는 노래 번호가 정확히 일치하는
+          1개만 반환하기 때문에 무의미
+        in: query
+        name: page
+        type: integer
+      - description: 한번에 조회할 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회. 현재는 노래 번호가 정확히 일치하는 1개만
+          반환하기 때문에 무의미
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.SongSearchPageV2Response'
+              type: object
+        "400":
+          description: 실패
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: 노래 번호로 노래 검색 API V2
+      tags:
+      - Search
   /v2/songs/{songId}/comments:
     get:
       consumes:
@@ -3420,6 +3824,36 @@ paths:
       summary: 특정 노래의 댓글 목록 가져오기V3(최신순, 오래된순 커서페이징 적용)
       tags:
       - Comment
+  /v3/tags:
+    get:
+      consumes:
+      - application/json
+      description: 태그 목록을 조회합니다 V3
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 태그 목록 가져오기 V3 (v2와 팝스타송, 캐롤송 순서가 바뀜)
+      tags:
+      - Tags
+  /v4/tags:
+    get:
+      consumes:
+      - application/json
+      description: 태그 목록을 조회합니다 V4
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 태그 목록 가져오기 V4 (v2와 팝스타송, 캐롤송 순서가 바뀜 + 뮤지컬/밴드/jpop/힙합 추가)
+      tags:
+      - Tags
 securityDefinitions:
   BearerAuth:
     in: header
