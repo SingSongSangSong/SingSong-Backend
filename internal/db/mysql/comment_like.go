@@ -898,7 +898,7 @@ func (o *CommentLike) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			commentLikeAllColumns,
 			commentLikeColumnsWithDefault,
 			commentLikeColumnsWithoutDefault,
@@ -914,7 +914,8 @@ func (o *CommentLike) Upsert(ctx context.Context, exec boil.ContextExecutor, upd
 			return errors.New("mysql: unable to upsert comment_like, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(commentLikeAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`comment_like`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `comment_like` WHERE %s",

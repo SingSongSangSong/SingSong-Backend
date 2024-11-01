@@ -15,7 +15,6 @@ import (
 )
 
 // todo: 이미지 등록
-
 type PostRequest struct {
 	Title       string  `json:"title"`
 	Content     string  `json:"content"`

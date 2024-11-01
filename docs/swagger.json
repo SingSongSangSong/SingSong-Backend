@@ -1841,6 +1841,144 @@
                 }
             }
         },
+        "/v1/recent/comment": {
+            "get": {
+                "description": "최근 댓글 단 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recent"
+                ],
+                "summary": "최근 댓글 단 노래 목록 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/recent/keep": {
+            "get": {
+                "description": "최근 Keep한 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recent"
+                ],
+                "summary": "최근 Keep한 노래 목록 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/recent/search": {
+            "get": {
+                "description": "검색화면 최근 검색어 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recent"
+                ],
+                "summary": "검색화면 최근 검색어 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/recommend/home": {
             "post": {
                 "description": "태그에 해당하는 노래를 추천합니다.",
@@ -3048,7 +3186,7 @@
         },
         "/v1/version": {
             "get": {
-                "description": "등록되어 있는 모든 버전 확인 가능",
+                "description": "플랫폼별 등록되어 있는 버전 내용 확인 가능",
                 "consumes": [
                     "application/json"
                 ],
@@ -3061,14 +3199,32 @@
                 "summary": "모든 버전 확인",
                 "responses": {
                     "200": {
-                        "description": "성공\" {object} pkg.BaseResponseStruct{data=[]versionResponse} \"성공"
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.versionCheckResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             }
         },
         "/v1/version/check": {
             "post": {
-                "description": "헤더에 플랫폼 정보를 포함하고, request body 앱의 버전을 보내면, 최신 버전인지 여부와 강제 업데이트 필요 여부를 응답",
+                "description": "request body에 플랫폼을 보내면, 해당 플랫폼의 최신 버전과 강제 업데이트 버전을 응답",
                 "consumes": [
                     "application/json"
                 ],
@@ -3081,7 +3237,7 @@
                 "summary": "버전 확인",
                 "parameters": [
                     {
-                        "description": "현재 앱 버전 정보",
+                        "description": "플랫폼 정보",
                         "name": "version",
                         "in": "body",
                         "required": true,
@@ -3102,7 +3258,7 @@
         },
         "/v1/version/update": {
             "post": {
-                "description": "새로운 버전이 나왔을때 버전을 추가할 수 있음 (플랫폼(ios, android), 버전, 이전 버전들을 강제 업데이트 할지 여부)",
+                "description": "플랫폼별 최신 버전, 강제 업데이트 버전을 설정할 수 있다. (강제 업데이트 버전이랑 update url은 걍 필드 빼고 보내면 갱신 안됨)",
                 "consumes": [
                     "application/json"
                 ],
@@ -3120,13 +3276,16 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.latestVersionUpdateRequest"
+                            "$ref": "#/definitions/handler.VersionUpdateRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "성공"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
                     }
                 }
             }
@@ -5553,6 +5712,23 @@
                 }
             }
         },
+        "handler.VersionUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "forceUpdateVersion": {
+                    "type": "string"
+                },
+                "latestVersion": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "updateUrl": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.WithdrawRequest": {
             "type": "object",
             "properties": {
@@ -5615,20 +5791,6 @@
                     }
                 },
                 "tag": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.latestVersionUpdateRequest": {
-            "type": "object",
-            "properties": {
-                "forceUpdate": {
-                    "type": "boolean"
-                },
-                "platform": {
-                    "type": "string"
-                },
-                "version": {
                     "type": "string"
                 }
             }
@@ -6094,7 +6256,24 @@
         "handler.versionCheckRequest": {
             "type": "object",
             "properties": {
-                "version": {
+                "platform": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.versionCheckResponse": {
+            "type": "object",
+            "properties": {
+                "forceUpdateVersion": {
+                    "type": "string"
+                },
+                "latestVersion": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "updateUrl": {
                     "type": "string"
                 }
             }

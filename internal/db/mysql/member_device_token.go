@@ -905,7 +905,7 @@ func (o *MemberDeviceToken) Upsert(ctx context.Context, exec boil.ContextExecuto
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			memberDeviceTokenAllColumns,
 			memberDeviceTokenColumnsWithDefault,
 			memberDeviceTokenColumnsWithoutDefault,
@@ -921,7 +921,8 @@ func (o *MemberDeviceToken) Upsert(ctx context.Context, exec boil.ContextExecuto
 			return errors.New("mysql: unable to upsert member_device_token, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(memberDeviceTokenAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`member_device_token`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `member_device_token` WHERE %s",
