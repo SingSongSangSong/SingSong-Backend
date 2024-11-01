@@ -66,6 +66,10 @@ type SongInfo struct {
 	ArtistIds       null.String  `boil:"artist_ids" json:"artist_ids,omitempty" toml:"artist_ids" yaml:"artist_ids,omitempty"`
 	MelonLikes      null.Int     `boil:"melon_likes" json:"melon_likes,omitempty" toml:"melon_likes" yaml:"melon_likes,omitempty"`
 	LyricsSummary   null.String  `boil:"lyrics_summary" json:"lyrics_summary,omitempty" toml:"lyrics_summary" yaml:"lyrics_summary,omitempty"`
+	Hiphop          null.Bool    `boil:"hiphop" json:"hiphop,omitempty" toml:"hiphop" yaml:"hiphop,omitempty"`
+	Jpop            null.Bool    `boil:"jpop" json:"jpop,omitempty" toml:"jpop" yaml:"jpop,omitempty"`
+	Musical         null.Bool    `boil:"musical" json:"musical,omitempty" toml:"musical" yaml:"musical,omitempty"`
+	Band            null.Bool    `boil:"band" json:"band,omitempty" toml:"band" yaml:"band,omitempty"`
 
 	R *songInfoR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L songInfoL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -114,6 +118,10 @@ var SongInfoColumns = struct {
 	ArtistIds       string
 	MelonLikes      string
 	LyricsSummary   string
+	Hiphop          string
+	Jpop            string
+	Musical         string
+	Band            string
 }{
 	SongInfoID:      "song_info_id",
 	SongName:        "song_name",
@@ -157,6 +165,10 @@ var SongInfoColumns = struct {
 	ArtistIds:       "artist_ids",
 	MelonLikes:      "melon_likes",
 	LyricsSummary:   "lyrics_summary",
+	Hiphop:          "hiphop",
+	Jpop:            "jpop",
+	Musical:         "musical",
+	Band:            "band",
 }
 
 var SongInfoTableColumns = struct {
@@ -202,6 +214,10 @@ var SongInfoTableColumns = struct {
 	ArtistIds       string
 	MelonLikes      string
 	LyricsSummary   string
+	Hiphop          string
+	Jpop            string
+	Musical         string
+	Band            string
 }{
 	SongInfoID:      "song_info.song_info_id",
 	SongName:        "song_info.song_name",
@@ -245,6 +261,10 @@ var SongInfoTableColumns = struct {
 	ArtistIds:       "song_info.artist_ids",
 	MelonLikes:      "song_info.melon_likes",
 	LyricsSummary:   "song_info.lyrics_summary",
+	Hiphop:          "song_info.hiphop",
+	Jpop:            "song_info.jpop",
+	Musical:         "song_info.musical",
+	Band:            "song_info.band",
 }
 
 // Generated where
@@ -330,6 +350,10 @@ var SongInfoWhere = struct {
 	ArtistIds       whereHelpernull_String
 	MelonLikes      whereHelpernull_Int
 	LyricsSummary   whereHelpernull_String
+	Hiphop          whereHelpernull_Bool
+	Jpop            whereHelpernull_Bool
+	Musical         whereHelpernull_Bool
+	Band            whereHelpernull_Bool
 }{
 	SongInfoID:      whereHelperint64{field: "`song_info`.`song_info_id`"},
 	SongName:        whereHelperstring{field: "`song_info`.`song_name`"},
@@ -373,6 +397,10 @@ var SongInfoWhere = struct {
 	ArtistIds:       whereHelpernull_String{field: "`song_info`.`artist_ids`"},
 	MelonLikes:      whereHelpernull_Int{field: "`song_info`.`melon_likes`"},
 	LyricsSummary:   whereHelpernull_String{field: "`song_info`.`lyrics_summary`"},
+	Hiphop:          whereHelpernull_Bool{field: "`song_info`.`hiphop`"},
+	Jpop:            whereHelpernull_Bool{field: "`song_info`.`jpop`"},
+	Musical:         whereHelpernull_Bool{field: "`song_info`.`musical`"},
+	Band:            whereHelpernull_Bool{field: "`song_info`.`band`"},
 }
 
 // SongInfoRels is where relationship names are stored.
@@ -392,9 +420,9 @@ func (*songInfoR) NewStruct() *songInfoR {
 type songInfoL struct{}
 
 var (
-	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "tj_link", "created_at", "updated_at", "deleted_at", "melon_song_id", "is_live", "tj_score", "genre", "year", "lyrics_video_link", "artist_gender", "octave", "tj_youtube_link", "classics", "finale", "high", "low", "rnb", "breakup", "ballads", "dance", "duet", "ssum", "carol", "rainy", "pop", "office", "wedding", "military", "artist_ids", "melon_likes", "lyrics_summary"}
+	songInfoAllColumns            = []string{"song_info_id", "song_name", "artist_name", "artist_type", "is_mr", "is_chosen_22000", "related_artists", "country", "album", "song_number", "tj_link", "created_at", "updated_at", "deleted_at", "melon_song_id", "is_live", "tj_score", "genre", "year", "lyrics_video_link", "artist_gender", "octave", "tj_youtube_link", "classics", "finale", "high", "low", "rnb", "breakup", "ballads", "dance", "duet", "ssum", "carol", "rainy", "pop", "office", "wedding", "military", "artist_ids", "melon_likes", "lyrics_summary", "hiphop", "jpop", "musical", "band"}
 	songInfoColumnsWithoutDefault = []string{"song_name", "artist_name", "artist_type", "related_artists", "country", "album", "song_number", "tj_link", "deleted_at", "melon_song_id", "genre", "year", "lyrics_video_link", "artist_gender", "octave", "tj_youtube_link", "artist_ids", "melon_likes", "lyrics_summary"}
-	songInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at", "is_live", "tj_score", "classics", "finale", "high", "low", "rnb", "breakup", "ballads", "dance", "duet", "ssum", "carol", "rainy", "pop", "office", "wedding", "military"}
+	songInfoColumnsWithDefault    = []string{"song_info_id", "is_mr", "is_chosen_22000", "created_at", "updated_at", "is_live", "tj_score", "classics", "finale", "high", "low", "rnb", "breakup", "ballads", "dance", "duet", "ssum", "carol", "rainy", "pop", "office", "wedding", "military", "hiphop", "jpop", "musical", "band"}
 	songInfoPrimaryKeyColumns     = []string{"song_info_id"}
 	songInfoGeneratedColumns      = []string{}
 )

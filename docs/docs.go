@@ -3056,7 +3056,7 @@ const docTemplate = `{
         },
         "/v1/version": {
             "get": {
-                "description": "등록되어 있는 모든 버전 확인 가능",
+                "description": "플랫폼별 등록되어 있는 버전 내용 확인 가능",
                 "consumes": [
                     "application/json"
                 ],
@@ -3069,14 +3069,32 @@ const docTemplate = `{
                 "summary": "모든 버전 확인",
                 "responses": {
                     "200": {
-                        "description": "성공\" {object} pkg.BaseResponseStruct{data=[]versionResponse} \"성공"
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.versionCheckResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     }
                 }
             }
         },
         "/v1/version/check": {
             "post": {
-                "description": "헤더에 플랫폼 정보를 포함하고, request body 앱의 버전을 보내면, 최신 버전인지 여부와 강제 업데이트 필요 여부를 응답",
+                "description": "request body에 플랫폼을 보내면, 해당 플랫폼의 최신 버전과 강제 업데이트 버전을 응답",
                 "consumes": [
                     "application/json"
                 ],
@@ -3089,7 +3107,7 @@ const docTemplate = `{
                 "summary": "버전 확인",
                 "parameters": [
                     {
-                        "description": "현재 앱 버전 정보",
+                        "description": "플랫폼 정보",
                         "name": "version",
                         "in": "body",
                         "required": true,
@@ -3110,7 +3128,7 @@ const docTemplate = `{
         },
         "/v1/version/update": {
             "post": {
-                "description": "새로운 버전이 나왔을때 버전을 추가할 수 있음 (플랫폼(ios, android), 버전, 이전 버전들을 강제 업데이트 할지 여부)",
+                "description": "플랫폼별 최신 버전, 강제 업데이트 버전을 설정할 수 있다. (강제 업데이트 버전을 빈 문자열로 보내면 강제 업데이트 버전은 갱신안됨)",
                 "consumes": [
                     "application/json"
                 ],
@@ -3128,13 +3146,16 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.latestVersionUpdateRequest"
+                            "$ref": "#/definitions/handler.VersionUpdateRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "성공"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
                     }
                 }
             }
@@ -5561,6 +5582,20 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.VersionUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "forceUpdateVersion": {
+                    "type": "string"
+                },
+                "latestVersion": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.WithdrawRequest": {
             "type": "object",
             "properties": {
@@ -5623,20 +5658,6 @@ const docTemplate = `{
                     }
                 },
                 "tag": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.latestVersionUpdateRequest": {
-            "type": "object",
-            "properties": {
-                "forceUpdate": {
-                    "type": "boolean"
-                },
-                "platform": {
-                    "type": "string"
-                },
-                "version": {
                     "type": "string"
                 }
             }
@@ -6102,7 +6123,21 @@ const docTemplate = `{
         "handler.versionCheckRequest": {
             "type": "object",
             "properties": {
-                "version": {
+                "platform": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.versionCheckResponse": {
+            "type": "object",
+            "properties": {
+                "forceUpdateVersion": {
+                    "type": "string"
+                },
+                "latestVersion": {
+                    "type": "string"
+                },
+                "platform": {
                     "type": "string"
                 }
             }
