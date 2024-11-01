@@ -51,11 +51,11 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 		}
 
 		// 기존 refreshToken삭제
-		_, err = redis.Del(c, reissueRequest.RefreshToken).Result()
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "Delete Redis error - "+err.Error(), nil)
-			return
-		}
+		//_, err = redis.Del(c, reissueRequest.RefreshToken).Result()
+		//if err != nil {
+		//	pkg.BaseResponse(c, http.StatusInternalServerError, "Delete Redis error - "+err.Error(), nil)
+		//	return
+		//}
 
 		// JSON 응답 생성
 		loginResponse := LoginResponse{
