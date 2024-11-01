@@ -6,6 +6,7 @@ import (
 	"SingSong-Server/router"
 	"context"
 	"database/sql"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
@@ -65,13 +66,14 @@ func main() {
 	var rdb *redis.Client
 	var idxConnection *pinecone.IndexConnection
 	var milvusClient client.Client
+	var s3Client *s3.Client
 
-	conf.SetupConfig(ctx, &db, &rdb, &idxConnection, &milvusClient)
+	conf.SetupConfig(ctx, &db, &rdb, &idxConnection, &milvusClient, &s3Client)
 
 	boil.SetDB(db)
 	//boil.DebugMode = true
 
-	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient)
+	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient, s3Client)
 
 	// pprof를 위한 별도의 HTTP 서버 실행
 	go func() {

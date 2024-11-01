@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
@@ -17,6 +19,10 @@ import (
 
 type GrpcConfig struct {
 	Addr string
+}
+
+type AWSConfig struct {
+	S3BucketName string
 }
 
 type AuthConfig struct {
@@ -50,6 +56,7 @@ var (
 	VectorDBConfigInstance *VectorDBConfig
 	GrpcConfigInstance     *GrpcConfig
 	Env                    string
+	AWSConfigInstance      *AWSConfig
 )
 
 func init() {
@@ -70,6 +77,8 @@ func init() {
 	} else {
 		log.Println("Running in production mode, skip .env file loading.")
 	}
+
+	AWSConfigInstance = &AWSConfig{S3BucketName: os.Getenv("S3_BUCKET_NAME")}
 
 	AuthConfigInstance = &AuthConfig{
 		SECRET_KEY:                   os.Getenv("SECRET_KEY"),
@@ -106,7 +115,7 @@ func init() {
 	}
 }
 
-func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection, milvusClient *client.Client) {
+func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection, milvusClient *client.Client, s3Client **s3.Client) {
 	var err error
 
 	// MySQL 연결 설정
@@ -159,4 +168,10 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
 	}
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatalf("failed to load configuration, %v", err)
+	}
+	*s3Client = s3.NewFromConfig(cfg)
 }
