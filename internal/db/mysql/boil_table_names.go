@@ -28,6 +28,7 @@ var TableNames = struct {
 	PostSong          string
 	RawSongInfo       string
 	Report            string
+	SearchLog         string
 	SongInfo          string
 	SongReview        string
 	SongReviewOption  string
@@ -56,6 +57,7 @@ var TableNames = struct {
 	PostSong:          "post_song",
 	RawSongInfo:       "raw_song_info",
 	Report:            "report",
+	SearchLog:         "search_log",
 	SongInfo:          "song_info",
 	SongReview:        "song_review",
 	SongReviewOption:  "song_review_option",

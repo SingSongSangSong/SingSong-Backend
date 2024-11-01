@@ -122,6 +122,7 @@ var MemberRels = struct {
 	MemberDeviceTokens string
 	Posts              string
 	PostComments       string
+	SearchLogs         string
 }{
 	Comments:           "Comments",
 	KeepListLikes:      "KeepListLikes",
@@ -130,6 +131,7 @@ var MemberRels = struct {
 	MemberDeviceTokens: "MemberDeviceTokens",
 	Posts:              "Posts",
 	PostComments:       "PostComments",
+	SearchLogs:         "SearchLogs",
 }
 
 // memberR is where relationships are stored.
@@ -141,6 +143,7 @@ type memberR struct {
 	MemberDeviceTokens MemberDeviceTokenSlice `boil:"MemberDeviceTokens" json:"MemberDeviceTokens" toml:"MemberDeviceTokens" yaml:"MemberDeviceTokens"`
 	Posts              PostSlice              `boil:"Posts" json:"Posts" toml:"Posts" yaml:"Posts"`
 	PostComments       PostCommentSlice       `boil:"PostComments" json:"PostComments" toml:"PostComments" yaml:"PostComments"`
+	SearchLogs         SearchLogSlice         `boil:"SearchLogs" json:"SearchLogs" toml:"SearchLogs" yaml:"SearchLogs"`
 }
 
 // NewStruct creates a new relationship struct
@@ -195,6 +198,13 @@ func (r *memberR) GetPostComments() PostCommentSlice {
 		return nil
 	}
 	return r.PostComments
+}
+
+func (r *memberR) GetSearchLogs() SearchLogSlice {
+	if r == nil {
+		return nil
+	}
+	return r.SearchLogs
 }
 
 // memberL is where Load methods for each relationship are stored.
@@ -582,6 +592,20 @@ func (o *Member) PostComments(mods ...qm.QueryMod) postCommentQuery {
 	)
 
 	return PostComments(queryMods...)
+}
+
+// SearchLogs retrieves all the search_log's SearchLogs with an executor.
+func (o *Member) SearchLogs(mods ...qm.QueryMod) searchLogQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("`search_log`.`member_id`=?", o.MemberID),
+	)
+
+	return SearchLogs(queryMods...)
 }
 
 // LoadComments allows an eager lookup of values, cached into the
@@ -1382,6 +1406,120 @@ func (memberL) LoadPostComments(ctx context.Context, e boil.ContextExecutor, sin
 	return nil
 }
 
+// LoadSearchLogs allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (memberL) LoadSearchLogs(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMember interface{}, mods queries.Applicator) error {
+	var slice []*Member
+	var object *Member
+
+	if singular {
+		var ok bool
+		object, ok = maybeMember.(*Member)
+		if !ok {
+			object = new(Member)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeMember)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeMember))
+			}
+		}
+	} else {
+		s, ok := maybeMember.(*[]*Member)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeMember)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeMember))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &memberR{}
+		}
+		args = append(args, object.MemberID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &memberR{}
+			}
+
+			for _, a := range args {
+				if a == obj.MemberID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.MemberID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`search_log`),
+		qm.WhereIn(`search_log.member_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load search_log")
+	}
+
+	var resultSlice []*SearchLog
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice search_log")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on search_log")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for search_log")
+	}
+
+	if len(searchLogAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.SearchLogs = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &searchLogR{}
+			}
+			foreign.R.Member = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.MemberID == foreign.MemberID {
+				local.R.SearchLogs = append(local.R.SearchLogs, foreign)
+				if foreign.R == nil {
+					foreign.R = &searchLogR{}
+				}
+				foreign.R.Member = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // AddComments adds the given related objects to the existing relationships
 // of the member, optionally inserting them as new records.
 // Appends related to o.R.Comments.
@@ -1753,6 +1891,59 @@ func (o *Member) AddPostComments(ctx context.Context, exec boil.ContextExecutor,
 	return nil
 }
 
+// AddSearchLogs adds the given related objects to the existing relationships
+// of the member, optionally inserting them as new records.
+// Appends related to o.R.SearchLogs.
+// Sets related.R.Member appropriately.
+func (o *Member) AddSearchLogs(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*SearchLog) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.MemberID = o.MemberID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `search_log` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"member_id"}),
+				strmangle.WhereClause("`", "`", 0, searchLogPrimaryKeyColumns),
+			)
+			values := []interface{}{o.MemberID, rel.SearchLogID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.MemberID = o.MemberID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &memberR{
+			SearchLogs: related,
+		}
+	} else {
+		o.R.SearchLogs = append(o.R.SearchLogs, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &searchLogR{
+				Member: o,
+			}
+		} else {
+			rel.R.Member = o
+		}
+	}
+	return nil
+}
+
 // Members retrieves all the records using an executor.
 func Members(mods ...qm.QueryMod) memberQuery {
 	mods = append(mods, qm.From("`member`"))
@@ -2078,7 +2269,7 @@ func (o *Member) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			memberAllColumns,
 			memberColumnsWithDefault,
 			memberColumnsWithoutDefault,
@@ -2097,7 +2288,8 @@ func (o *Member) Upsert(ctx context.Context, exec boil.ContextExecutor, updateCo
 			return errors.New("mysql: unable to upsert member, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(memberAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`member`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `member` WHERE %s",
