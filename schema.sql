@@ -1,5 +1,4 @@
 -- 테이블이 존재할 경우 삭제
-DROP TABLE IF EXISTS app_version;
 DROP TABLE IF EXISTS keep_song;
 DROP TABLE IF EXISTS song_info;
 DROP TABLE IF EXISTS artist;
@@ -79,17 +78,6 @@ CREATE TABLE IF NOT EXISTS keep_song (
     keep_list_id BIGINT NOT NULL,
     song_info_id BIGINT NOT NULL,
     song_number INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
--- appVersion 테이블 생성
-CREATE TABLE IF NOT EXISTS app_version (
-    app_version_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    platform VARCHAR(10) NOT NULL,
-    version VARCHAR(20) NOT NULL,
-    force_update BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL DEFAULT NULL
@@ -419,6 +407,19 @@ ALTER TABLE song_info
     ADD COLUMN jpop BOOL DEFAULT FALSE,
     ADD COLUMN musical BOOL DEFAULT FALSE,
     ADD COLUMN band BOOL DEFAULT FALSE;
+
+-- appVersion 테이블 생성
+drop table app_version;
+CREATE TABLE IF NOT EXISTS app_version (
+       app_version_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+       platform VARCHAR(10) NOT NULL,
+       latest_version VARCHAR(20) NOT NULL,
+       force_update_version VARCHAR(20) NOT NULL,
+       update_url VARCHAR(255) NOT NULL,
+       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+       deleted_at TIMESTAMP NULL DEFAULT NULL
+);
 
 CREATE TABLE search_log (
     search_log_id BIGINT AUTO_INCREMENT PRIMARY KEY,

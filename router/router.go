@@ -33,8 +33,8 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	version := r.Group("/api/v1/version")
 	{
 		version.GET("/", handler.AllVersion(db))
-		version.POST("/check", middleware.PlatformMiddleware(), handler.VersionCheck(db))
-		version.POST("/update", handler.LatestVersionUpdate(db))
+		version.POST("/check", handler.VersionCheck(db))
+		version.POST("/update", handler.VersionUpdate(db))
 	}
 
 	r.GET("/", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "Welcome to SingSong-Server"}) })
