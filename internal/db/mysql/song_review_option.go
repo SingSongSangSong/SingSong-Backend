@@ -709,7 +709,7 @@ func (o *SongReviewOption) Upsert(ctx context.Context, exec boil.ContextExecutor
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			songReviewOptionAllColumns,
 			songReviewOptionColumnsWithDefault,
 			songReviewOptionColumnsWithoutDefault,
@@ -725,7 +725,8 @@ func (o *SongReviewOption) Upsert(ctx context.Context, exec boil.ContextExecutor
 			return errors.New("mysql: unable to upsert song_review_option, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(songReviewOptionAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`song_review_option`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `song_review_option` WHERE %s",

@@ -1849,6 +1849,144 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/recent/comment": {
+            "get": {
+                "description": "최근 댓글 단 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recent"
+                ],
+                "summary": "최근 댓글 단 노래 목록 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/recent/keep": {
+            "get": {
+                "description": "최근 Keep한 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recent"
+                ],
+                "summary": "최근 Keep한 노래 목록 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/handler.SongSearchInfoV2Response"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/recent/search": {
+            "get": {
+                "description": "검색화면 최근 검색어 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Recent"
+                ],
+                "summary": "검색화면 최근 검색어 가져오기",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "size",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/recommend/home": {
             "post": {
                 "description": "태그에 해당하는 노래를 추천합니다.",

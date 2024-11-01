@@ -1086,7 +1086,7 @@ func (o *KeepListSubscribe) Upsert(ctx context.Context, exec boil.ContextExecuto
 	var err error
 
 	if !cached {
-		insert, ret := insertColumns.InsertColumnSet(
+		insert, _ := insertColumns.InsertColumnSet(
 			keepListSubscribeAllColumns,
 			keepListSubscribeColumnsWithDefault,
 			keepListSubscribeColumnsWithoutDefault,
@@ -1102,7 +1102,8 @@ func (o *KeepListSubscribe) Upsert(ctx context.Context, exec boil.ContextExecuto
 			return errors.New("mysql: unable to upsert keep_list_subscribe, could not build update column list")
 		}
 
-		ret = strmangle.SetComplement(ret, nzUniques)
+		ret := strmangle.SetComplement(keepListSubscribeAllColumns, strmangle.SetIntersect(insert, update))
+
 		cache.query = buildUpsertQueryMySQL(dialect, "`keep_list_subscribe`", update, insert)
 		cache.retQuery = fmt.Sprintf(
 			"SELECT %s FROM `keep_list_subscribe` WHERE %s",

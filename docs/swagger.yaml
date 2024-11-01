@@ -2319,6 +2319,89 @@ paths:
       summary: 해당하는 댓글ID를 통해 신고하기
       tags:
       - Post
+  /v1/recent/comment:
+    get:
+      consumes:
+      - application/json
+      description: 최근 댓글 단 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size =
+        10
+      parameters:
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.SongSearchInfoV2Response'
+                  type: array
+              type: object
+      summary: 최근 댓글 단 노래 목록 가져오기
+      tags:
+      - Recent
+  /v1/recent/keep:
+    get:
+      consumes:
+      - application/json
+      description: 최근 Keep한 노래 목록 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size =
+        10
+      parameters:
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.SongSearchInfoV2Response'
+                  type: array
+              type: object
+      summary: 최근 Keep한 노래 목록 가져오기
+      tags:
+      - Recent
+  /v1/recent/search:
+    get:
+      consumes:
+      - application/json
+      description: 검색화면 최근 검색어 가져오기. 쿼리 파라미터인 size를 별도로 지정하지 않으면 default size = 10
+      parameters:
+      - description: size
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  items:
+                    type: object
+                  type: array
+              type: object
+      summary: 검색화면 최근 검색어 가져오기
+      tags:
+      - Recent
   /v1/recommend/home:
     post:
       consumes:
