@@ -3128,7 +3128,7 @@ const docTemplate = `{
         },
         "/v1/version/update": {
             "post": {
-                "description": "플랫폼별 최신 버전, 강제 업데이트 버전을 설정할 수 있다. (강제 업데이트 버전을 빈 문자열로 보내면 강제 업데이트 버전은 갱신안됨)",
+                "description": "플랫폼별 최신 버전, 강제 업데이트 버전을 설정할 수 있다. (강제 업데이트 버전이랑 update url은 걍 필드 빼고 보내면 갱신 안됨)",
                 "consumes": [
                     "application/json"
                 ],
@@ -5593,6 +5593,9 @@ const docTemplate = `{
                 },
                 "platform": {
                     "type": "string"
+                },
+                "updateUrl": {
+                    "type": "string"
                 }
             }
         },
@@ -6138,6 +6141,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "platform": {
+                    "type": "string"
+                },
+                "updateUrl": {
                     "type": "string"
                 }
             }

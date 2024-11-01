@@ -18,6 +18,7 @@ type versionCheckResponse struct {
 	LatestVersion      string `json:"latestVersion"`
 	ForceUpdateVersion string `json:"forceUpdateVersion"`
 	Platform           string `json:"platform"`
+	UpdateUrl          string `json:"updateUrl"`
 }
 
 // VersionCheck godoc
@@ -47,6 +48,7 @@ func VersionCheck(db *sql.DB) gin.HandlerFunc {
 			LatestVersion:      version.LatestVersion,
 			ForceUpdateVersion: version.ForceUpdateVersion,
 			Platform:           version.Platform,
+			UpdateUrl:          version.UpdateURL,
 		}
 
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
@@ -55,13 +57,14 @@ func VersionCheck(db *sql.DB) gin.HandlerFunc {
 
 type VersionUpdateRequest struct {
 	LatestVersion      string `json:"latestVersion"`
-	ForceUpdateVersion string `json:"forceUpdateVersion"`
+	ForceUpdateVersion string `json:"forceUpdateVersion,omitempty"`
 	Platform           string `json:"platform"`
+	UpdateUrl          string `json:"updateUrl,omitempty"`
 }
 
 // VersionUpdate godoc
 // @Summary      버전 추가
-// @Description  플랫폼별 최신 버전, 강제 업데이트 버전을 설정할 수 있다. (강제 업데이트 버전을 빈 문자열로 보내면 강제 업데이트 버전은 갱신안됨)
+// @Description  플랫폼별 최신 버전, 강제 업데이트 버전을 설정할 수 있다. (강제 업데이트 버전이랑 update url은 걍 필드 빼고 보내면 갱신 안됨)
 // @Tags         App Version
 // @Accept       json
 // @Produce      json
@@ -76,46 +79,42 @@ func VersionUpdate(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 		// db에 정보를 조회
-		exists, err := mysql.AppVersions(qm.Where("platform = ?", request.Platform)).Exists(c.Request.Context(), db)
+		one, err := mysql.AppVersions(qm.Where("platform = ?", request.Platform)).One(c.Request.Context(), db)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error -"+err.Error(), nil)
-			return
-		}
-		if exists {
-			// 기존 버전 정보가 존재할 경우 업데이트
-			// 강제 업데이트 버전이 빈 문자열이 아닌 경우에만 업데이트
-			if request.ForceUpdateVersion != "" {
-				_, err := mysql.AppVersions(
-					qm.Where("platform = ?", request.Platform),
-				).UpdateAll(c, db, mysql.M{
-					"latest_version":       request.LatestVersion,
-					"force_update_version": request.ForceUpdateVersion,
-				})
-				if err != nil {
+			// row가 없는 경우 새로운 레코드 추가
+			if err == sql.ErrNoRows {
+				// 강제 업데이트 버전과 업데이트 URL이 필요한 경우 확인
+				if request.ForceUpdateVersion == "" || request.UpdateUrl == "" {
+					pkg.BaseResponse(c, http.StatusBadRequest, "error - force update version and update URL are required", nil)
+					return
+				}
+				// 새 버전 정보 추가
+				version := mysql.AppVersion{
+					Platform:           request.Platform,
+					LatestVersion:      request.LatestVersion,
+					ForceUpdateVersion: request.ForceUpdateVersion,
+					UpdateURL:          request.UpdateUrl,
+				}
+				if err := version.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
 					pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 					return
 				}
 			} else {
-				// 강제 업데이트 버전이 빈 문자열일 경우, 최신 버전만 업데이트
-				_, err := mysql.AppVersions(
-					qm.Where("platform = ?", request.Platform),
-				).UpdateAll(c, db, mysql.M{
-					"latest_version": request.LatestVersion,
-				})
-				if err != nil {
-					pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-					return
-				}
+				// 그 외 데이터베이스 오류 처리
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
 			}
 		} else {
-			//새로 추가
-			var forceUpdateVersion = request.ForceUpdateVersion
-			if forceUpdateVersion == "" {
-				forceUpdateVersion = "1.0.0"
+			// 기존 row가 있는 경우 업데이트
+			one.LatestVersion = request.LatestVersion
+			if request.ForceUpdateVersion != "" {
+				one.ForceUpdateVersion = request.ForceUpdateVersion
 			}
-			version := mysql.AppVersion{Platform: request.Platform, LatestVersion: request.LatestVersion, ForceUpdateVersion: forceUpdateVersion}
-			err := version.Insert(c, db, boil.Infer())
-			if err != nil {
+			if request.UpdateUrl != "" {
+				one.UpdateURL = request.UpdateUrl
+			}
+			// 업데이트 실행
+			if _, err := one.Update(c.Request.Context(), db, boil.Infer()); err != nil {
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -146,6 +145,7 @@ func AllVersion(db *sql.DB) gin.HandlerFunc {
 				Platform:           v.Platform,
 				LatestVersion:      v.LatestVersion,
 				ForceUpdateVersion: v.ForceUpdateVersion,
+				UpdateUrl:          v.UpdateURL,
 			})
 		}
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)

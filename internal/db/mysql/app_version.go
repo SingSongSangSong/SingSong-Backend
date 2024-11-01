@@ -28,6 +28,7 @@ type AppVersion struct {
 	Platform           string    `boil:"platform" json:"platform" toml:"platform" yaml:"platform"`
 	LatestVersion      string    `boil:"latest_version" json:"latest_version" toml:"latest_version" yaml:"latest_version"`
 	ForceUpdateVersion string    `boil:"force_update_version" json:"force_update_version" toml:"force_update_version" yaml:"force_update_version"`
+	UpdateURL          string    `boil:"update_url" json:"update_url" toml:"update_url" yaml:"update_url"`
 	CreatedAt          null.Time `boil:"created_at" json:"created_at,omitempty" toml:"created_at" yaml:"created_at,omitempty"`
 	UpdatedAt          null.Time `boil:"updated_at" json:"updated_at,omitempty" toml:"updated_at" yaml:"updated_at,omitempty"`
 	DeletedAt          null.Time `boil:"deleted_at" json:"deleted_at,omitempty" toml:"deleted_at" yaml:"deleted_at,omitempty"`
@@ -41,6 +42,7 @@ var AppVersionColumns = struct {
 	Platform           string
 	LatestVersion      string
 	ForceUpdateVersion string
+	UpdateURL          string
 	CreatedAt          string
 	UpdatedAt          string
 	DeletedAt          string
@@ -49,6 +51,7 @@ var AppVersionColumns = struct {
 	Platform:           "platform",
 	LatestVersion:      "latest_version",
 	ForceUpdateVersion: "force_update_version",
+	UpdateURL:          "update_url",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 	DeletedAt:          "deleted_at",
@@ -59,6 +62,7 @@ var AppVersionTableColumns = struct {
 	Platform           string
 	LatestVersion      string
 	ForceUpdateVersion string
+	UpdateURL          string
 	CreatedAt          string
 	UpdatedAt          string
 	DeletedAt          string
@@ -67,6 +71,7 @@ var AppVersionTableColumns = struct {
 	Platform:           "app_version.platform",
 	LatestVersion:      "app_version.latest_version",
 	ForceUpdateVersion: "app_version.force_update_version",
+	UpdateURL:          "app_version.update_url",
 	CreatedAt:          "app_version.created_at",
 	UpdatedAt:          "app_version.updated_at",
 	DeletedAt:          "app_version.deleted_at",
@@ -151,6 +156,7 @@ var AppVersionWhere = struct {
 	Platform           whereHelperstring
 	LatestVersion      whereHelperstring
 	ForceUpdateVersion whereHelperstring
+	UpdateURL          whereHelperstring
 	CreatedAt          whereHelpernull_Time
 	UpdatedAt          whereHelpernull_Time
 	DeletedAt          whereHelpernull_Time
@@ -159,6 +165,7 @@ var AppVersionWhere = struct {
 	Platform:           whereHelperstring{field: "`app_version`.`platform`"},
 	LatestVersion:      whereHelperstring{field: "`app_version`.`latest_version`"},
 	ForceUpdateVersion: whereHelperstring{field: "`app_version`.`force_update_version`"},
+	UpdateURL:          whereHelperstring{field: "`app_version`.`update_url`"},
 	CreatedAt:          whereHelpernull_Time{field: "`app_version`.`created_at`"},
 	UpdatedAt:          whereHelpernull_Time{field: "`app_version`.`updated_at`"},
 	DeletedAt:          whereHelpernull_Time{field: "`app_version`.`deleted_at`"},
@@ -181,8 +188,8 @@ func (*appVersionR) NewStruct() *appVersionR {
 type appVersionL struct{}
 
 var (
-	appVersionAllColumns            = []string{"app_version_id", "platform", "latest_version", "force_update_version", "created_at", "updated_at", "deleted_at"}
-	appVersionColumnsWithoutDefault = []string{"platform", "latest_version", "force_update_version", "deleted_at"}
+	appVersionAllColumns            = []string{"app_version_id", "platform", "latest_version", "force_update_version", "update_url", "created_at", "updated_at", "deleted_at"}
+	appVersionColumnsWithoutDefault = []string{"platform", "latest_version", "force_update_version", "update_url", "deleted_at"}
 	appVersionColumnsWithDefault    = []string{"app_version_id", "created_at", "updated_at"}
 	appVersionPrimaryKeyColumns     = []string{"app_version_id"}
 	appVersionGeneratedColumns      = []string{}

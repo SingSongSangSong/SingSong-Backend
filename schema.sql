@@ -415,6 +415,7 @@ CREATE TABLE IF NOT EXISTS app_version (
        platform VARCHAR(10) NOT NULL,
        latest_version VARCHAR(20) NOT NULL,
        force_update_version VARCHAR(20) NOT NULL,
+       update_url VARCHAR(255) NOT NULL,
        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
        deleted_at TIMESTAMP NULL DEFAULT NULL
