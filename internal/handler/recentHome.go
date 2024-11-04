@@ -78,8 +78,8 @@ func GetRecentKeepSongs(db *sql.DB) gin.HandlerFunc {
 
 		// 저장한 노래 가져오기
 		likeSongs, err := mysql.KeepSongs(
-			qm.From("(SELECT song_info_id, MAX(created_at) as max_created_at FROM keep_song WHERE deleted_at is null GROUP BY song_info_id) as latest_songs"),
-			qm.OrderBy("max_created_at DESC"),
+			qm.InnerJoin("(SELECT song_info_id, MAX(created_at) AS max_created_at FROM keep_song WHERE deleted_at IS NULL GROUP BY song_info_id) AS latest_songs ON keep_song.song_info_id = latest_songs.song_info_id AND keep_song.created_at = latest_songs.max_created_at"),
+			qm.OrderBy("created_at DESC"),
 			qm.Limit(size),
 		).All(c.Request.Context(), db)
 		if err != nil {
