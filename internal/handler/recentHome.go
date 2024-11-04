@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -144,9 +143,6 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
-
-		log.Printf("length of commentSongs: %v", len(commentSongs))
-		log.Printf("commentSongs: %v", commentSongs)
 
 		// interface
 		response := make([]SongSearchInfoV2Response, len(commentSongs))
