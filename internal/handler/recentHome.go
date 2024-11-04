@@ -33,7 +33,10 @@ func GetLatestSearchApi(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 최근 검색어 가져오기
-		latestSearch, err := mysql.SearchLogs(qm.Distinct("search_text"), qm.OrderBy("created_at desc"), qm.Limit(size)).All(c, db)
+		latestSearch, err := mysql.SearchLogs(
+			qm.From("(SELECT search_text, MAX(created_at) as max_created_at FROM search_log GROUP BY search_text) as latest_search"),
+			qm.OrderBy("max_created_at DESC"),
+			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -72,8 +75,12 @@ func GetRecentKeepSongs(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		// 좋아요한 노래 가져오기
-		likeSongs, err := mysql.KeepSongs(qm.Distinct("song_info_id"), qm.OrderBy("created_at desc"), qm.Limit(size)).All(c, db)
+		// 저장한 노래 가져오기
+		likeSongs, err := mysql.KeepSongs(
+			qm.From("(SELECT song_info_id, MAX(created_at) as max_created_at FROM keep_song WHERE deleted_at is null GROUP BY song_info_id) as latest_songs"),
+			qm.OrderBy("max_created_at DESC"),
+			qm.Limit(size),
+		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -88,7 +95,7 @@ func GetRecentKeepSongs(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 노래 정보 가져오기
-		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c, db)
+		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -138,7 +145,10 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 댓글 단 노래 가져오기
-		commentSongs, err := mysql.Comments(qm.Distinct("song_info_id"), qm.OrderBy("created_at desc"), qm.Limit(size)).All(c, db)
+		commentSongs, err := mysql.Comments(
+			qm.From("(SELECT song_info_id, MAX(created_at) as max_created_at FROM comment WHERE deleted_at is null GROUP BY song_info_id) as latest_songs"),
+			qm.OrderBy("max_created_at DESC"),
+			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
@@ -153,7 +163,7 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 노래 정보 가져오기
-		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c, db)
+		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
