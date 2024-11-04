@@ -23,9 +23,9 @@ var (
 )
 
 type RecordSongsRequest struct {
-	Title      string `form:"title" json:"title"`
-	SongInfoId int64  `form:"songInfoId" json:"songInfoId"`
-	IsPublic   bool   `form:"isPublic" json:"isPublic"`
+	Title    string `form:"title" json:"title"`
+	SongId   int64  `form:"songId" json:"songId"`
+	IsPublic bool   `form:"isPublic" json:"isPublic"`
 }
 
 // RecordSong godoc
@@ -36,7 +36,7 @@ type RecordSongsRequest struct {
 // @Produce      json
 // @Param        file formData file true "MP3 파일"
 // @Param        title formData string true "노래 제목"
-// @Param        songInfoId formData int64 true "노래 정보 ID"
+// @Param        songId formData int64 true "노래 정보 ID"
 // @Param        isPublic formData bool true "공개 여부"
 // @Success      200 {object} pkg.BaseResponseStruct{data=nil} "성공"
 // @Router       /v1/record/song [post]
@@ -82,11 +82,11 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		fileName := ""
 
 		if conf.Env == conf.LocalMode || conf.Env == "" {
-			fileName = fmt.Sprintf("local/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongInfoId, currentTime)
+			fileName = fmt.Sprintf("local/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongId, currentTime)
 		} else if conf.Env == conf.TestMode {
-			fileName = fmt.Sprintf("test/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongInfoId, currentTime)
+			fileName = fmt.Sprintf("test/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongId, currentTime)
 		} else if conf.Env == conf.ProductionMode {
-			fileName = fmt.Sprintf("prod/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongInfoId, currentTime)
+			fileName = fmt.Sprintf("prod/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongId, currentTime)
 		} else {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "환경 변수가 설정되지 않았습니다.", nil)
 			return
@@ -106,7 +106,7 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		}
 
 		// 노래 정보 DB에 저장
-		songRecording := mysql.SongRecording{MemberID: memberId.(int64), Title: recordSongsRequest.Title, SongInfoID: recordSongsRequest.SongInfoId, IsPublic: null.BoolFrom(recordSongsRequest.IsPublic), RecordingLink: s3URL}
+		songRecording := mysql.SongRecording{MemberID: memberId.(int64), Title: recordSongsRequest.Title, SongInfoID: recordSongsRequest.SongId, IsPublic: null.BoolFrom(recordSongsRequest.IsPublic), RecordingLink: s3URL}
 		err = songRecording.Insert(c, db, boil.Infer())
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 저장 실패", nil)
@@ -123,7 +123,7 @@ type SongRecording struct {
 	Title             string `json:"title"`
 	IsPublic          bool   `json:"isPublic"`
 	RecordingLink     string `json:"recordingLink"`
-	SongInfoID        int64  `json:"songInfoId"`
+	SongId            int64  `json:"SongId"`
 	SongNumber        int    `json:"songNumber"`
 	SongName          string `json:"songName"`
 	SingerName        string `json:"singerName"`
@@ -142,7 +142,7 @@ type SongRecording struct {
 // @Tags         Record
 // @Accept       json
 // @Produce      json
-// @Param        cursor query int false "마지막에 조회했던 커서의 songId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신곡부터 조회"
+// @Param        cursor query int false "마지막에 조회했던 커서의 SongId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신곡부터 조회"
 // @Param        size query int false "한번에 가져욜 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
 // @Success      200 {object} pkg.BaseResponseStruct{data=[]SongRecording} "성공"
 // @Router       /v1/record/list [get]
@@ -195,7 +195,7 @@ func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
 				Title:             recording.Title,
 				IsPublic:          recording.IsPublic.Bool,
 				RecordingLink:     recording.RecordingLink,
-				SongInfoID:        recording.SongInfoID,
+				SongId:            recording.SongInfoID,
 				SongNumber:        recording.R.SongInfo.SongNumber,
 				SongName:          recording.R.SongInfo.SongName,
 				SingerName:        recording.R.SongInfo.ArtistName,
@@ -280,7 +280,7 @@ func GetDetailRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 			Title:             songRecordings.Title,
 			IsPublic:          songRecordings.IsPublic.Bool,
 			RecordingLink:     songRecordings.RecordingLink,
-			SongInfoID:        songRecordings.SongInfoID,
+			SongId:            songRecordings.SongInfoID,
 			SongNumber:        songRecordings.R.SongInfo.SongNumber,
 			SongName:          songRecordings.R.SongInfo.SongName,
 			SingerName:        songRecordings.R.SongInfo.ArtistName,
