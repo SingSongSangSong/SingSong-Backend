@@ -58,14 +58,14 @@ func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	}
 }
 
-// NotificationType 정의
-type NotificationType string
+// ScreenType 정의
+type ScreenType string
 
 // 허용되는 알림 타입
 const (
 	// 필요한 다른 알림 타입을 추가 가능
-	SongNotification NotificationType = "SONG"
-	PostNotification NotificationType = "POST"
+	SongScreen ScreenType = "SONG"
+	PostScreen ScreenType = "POST"
 )
 
 type NotificationMessage struct {
@@ -73,7 +73,8 @@ type NotificationMessage struct {
 	Body              string  // 알림 내용
 	SenderMemberId    int64   // 발신자 ID
 	ReceiverMemberIds []int64 // 수신자 ID
-	Type              NotificationType
+	ScreenType        ScreenType
+	ScreenTypeId      int64 // 게시글ID or 쏭ID
 }
 
 func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage NotificationMessage) {
@@ -129,4 +130,43 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 		}
 		fmt.Printf("List of tokens that caused failures: %v\n", failedTokens)
 	}
+}
+
+func SaveNotificationHistory(db *sql.DB, notificationMessage NotificationMessage) {
+
+}
+
+// 게시글에 댓글이 달렸다는 알림 보내기 => 게시글 작성자에게는 꼭 알림
+func NotifyCommentOnPost(db *sql.DB, firebaseApp *firebase.App, memberId int64, postId int64, commentContent string) {
+	uniqueMemberIds, err := mysql.PostComments(
+		qm.Select("DISTINCT member_id"),
+		qm.Where("post_id = ?", postId),
+	).All(context.Background(), db)
+	if err != nil {
+		log.Printf("error fetching unique member ids: %v", err)
+		return
+	}
+	receiverIds := make([]int64, len(uniqueMemberIds))
+	for i, v := range uniqueMemberIds {
+		receiverIds[i] = v.MemberID
+	}
+	notification := NotificationMessage{
+		Title:             "게시글에 새로운 댓글이 달렸어요",
+		Body:              commentContent,
+		SenderMemberId:    memberId,
+		ReceiverMemberIds: receiverIds,
+		ScreenType:        PostScreen,
+	}
+	SendNotification(db, firebaseApp, notification)
+	SaveNotificationHistory(db, notification)
+}
+
+// 게시글 대댓글이 달렸을 경우엔 게시글 작성자와, 부모댓글/대댓글 작성자들에게 알림
+func NotifyRecommentOnPostComment(db *sql.DB, firebaseApp *firebase.App, memberId int64, postId int64, commentContent string) {
+
+}
+
+// 노래 댓글에 답글이 달렸다는 알림 보내기 => 부모댓글/대댓글 작성자들에게 알림
+func NotifyRecommentOnSongComment() {
+
 }

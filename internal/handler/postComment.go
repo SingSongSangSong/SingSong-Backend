@@ -3,7 +3,6 @@ package handler
 import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
-	"context"
 	"database/sql"
 	"errors"
 	firebase "firebase.google.com/go/v4"
@@ -145,28 +144,8 @@ func CommentOnPost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 			PostRecommentCount:  0,
 		}
 
-		go func() {
-			uniqueMemberIds, err := mysql.PostComments(
-				qm.Select("DISTINCT member_id"),
-				qm.Where("post_id = ?", commentRequest.PostId),
-			).All(context.Background(), db)
-			if err != nil {
-				log.Printf("error fetching unique member ids: %v", err)
-				return
-			}
-			receiverIds := make([]int64, len(uniqueMemberIds))
-			for i, v := range uniqueMemberIds {
-				receiverIds[i] = v.MemberID
-			}
-
-			SendNotification(db, firebaseApp, NotificationMessage{
-				Title:             "게시글에 새로운 댓글이 달렸어요",
-				Body:              commentRequest.Content,
-				SenderMemberId:    memberId.(int64),
-				ReceiverMemberIds: receiverIds,
-				Type:              PostNotification,
-			})
-		}()
+		// 댓글이 달렸다고 알림 보내기
+		go NotifyCommentOnPost(db, firebaseApp, memberId.(int64), commentRequest.PostId, commentRequest.Content)
 
 		// 댓글 달기 성공시 댓글 정보 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", commentResponse)

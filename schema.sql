@@ -432,3 +432,16 @@ CREATE TABLE member_device_token (
 ALTER TABLE member_device_token
     ADD CONSTRAINT fk_member_device_token_member_id
         FOREIGN KEY (member_id) REFERENCES member(member_id);
+
+CREATE TABLE notification_history (
+    notification_history_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    body VARCHAR(255) NOT NULL,
+    screen_type VARCHAR(10),
+    screen_type_id BIGINT,
+    is_read BOOL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+)
