@@ -187,7 +187,7 @@ func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
 
 		// 녹음 목록이 없을 경우
 		if len(recordings) == 0 {
-			pkg.BaseResponse(c, http.StatusOK, "녹음 목록이 없습니다.", nil)
+			pkg.BaseResponse(c, http.StatusOK, "녹음 목록이 없습니다.", GetRecordingsResponse{[]SongRecording{}, 0})
 			return
 		}
 
