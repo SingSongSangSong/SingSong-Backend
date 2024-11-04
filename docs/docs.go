@@ -2384,7 +2384,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "마지막에 조회했던 커서의 songId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신곡부터 조회",
+                        "description": "마지막에 조회했던 커서의 SongRecordingId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신곡부터 조회",
                         "name": "cursor",
                         "in": "query"
                     },
@@ -2407,10 +2407,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/handler.SongRecording"
-                                            }
+                                            "$ref": "#/definitions/handler.GetRecordingsResponse"
                                         }
                                     }
                                 }
@@ -2456,7 +2453,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "노래 정보 ID",
-                        "name": "songInfoId",
+                        "name": "songId",
                         "in": "formData",
                         "required": true
                     },
@@ -2547,7 +2544,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "녹음을 삭제한다",
+                "description": "녹음을 삭제 한다 하지만 AWS 보안상 삭제 권한을 주지 않아서 S3에서 삭제 하지 않는다.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4958,6 +4955,20 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.GetRecordingsResponse": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "songRecordings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.SongRecording"
+                    }
+                }
+            }
+        },
         "handler.GetSongsFromKeepInStoryResponse": {
             "type": "object",
             "properties": {
@@ -5721,6 +5732,9 @@ const docTemplate = `{
         "handler.SongRecording": {
             "type": "object",
             "properties": {
+                "SongId": {
+                    "type": "integer"
+                },
                 "album": {
                     "type": "string"
                 },
@@ -5747,9 +5761,6 @@ const docTemplate = `{
                 },
                 "singerName": {
                     "type": "string"
-                },
-                "songInfoId": {
-                    "type": "integer"
                 },
                 "songName": {
                     "type": "string"

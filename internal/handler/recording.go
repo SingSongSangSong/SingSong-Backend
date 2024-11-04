@@ -136,15 +136,20 @@ type SongRecording struct {
 	CreatedAt         string `json:"createdAt"`
 }
 
+type GetRecordingsResponse struct {
+	SongRecordings []SongRecording `json:"songRecordings"`
+	LastCursor     int64           `json:"lastCursor"`
+}
+
 // GetMyRecordings godoc
 // @Summary      내 녹음 목록 조회
 // @Description  내가 녹음한 노래 목록을 조회한다
 // @Tags         Record
 // @Accept       json
 // @Produce      json
-// @Param        cursor query int false "마지막에 조회했던 커서의 SongId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신곡부터 조회"
+// @Param        cursor query int false "마지막에 조회했던 커서의 SongRecordingId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신곡부터 조회"
 // @Param        size query int false "한번에 가져욜 노래 개수. 입력하지 않는다면 기본값인 20개씩 조회"
-// @Success      200 {object} pkg.BaseResponseStruct{data=[]SongRecording} "성공"
+// @Success      200 {object} pkg.BaseResponseStruct{data=GetRecordingsResponse} "성공"
 // @Router       /v1/record/list [get]
 // @Security BearerAuth
 func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
@@ -172,7 +177,7 @@ func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
 
 		recordings, err := mysql.SongRecordings(
 			qm.Load(mysql.SongRecordingRels.SongInfo),
-			qm.Where("member_id = ? AND song_info_id < ? AND deleted_at IS NULL", memberId, cursorInt),
+			qm.Where("member_id = ? AND song_recording_id < ? AND deleted_at IS NULL", memberId, cursorInt),
 			qm.OrderBy("created_at DESC"),
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
@@ -209,7 +214,12 @@ func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
 			}
 		}
 
-		pkg.BaseResponse(c, http.StatusOK, "녹음 목록 조회 성공", songRecordings)
+		response := GetRecordingsResponse{
+			SongRecordings: songRecordings,
+			LastCursor:     songRecordings[len(songRecordings)-1].SongRecordingID,
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "녹음 목록 조회 성공", response)
 	}
 }
 

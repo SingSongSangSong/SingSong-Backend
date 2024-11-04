@@ -231,6 +231,15 @@ definitions:
           $ref: '#/definitions/handler.PostCommentResponse'
         type: array
     type: object
+  handler.GetRecordingsResponse:
+    properties:
+      lastCursor:
+        type: integer
+      songRecordings:
+        items:
+          $ref: '#/definitions/handler.SongRecording'
+        type: array
+    type: object
   handler.GetSongsFromKeepInStoryResponse:
     properties:
       isLiked:
@@ -728,6 +737,8 @@ definitions:
     type: object
   handler.SongRecording:
     properties:
+      SongId:
+        type: integer
       album:
         type: string
       createdAt:
@@ -746,8 +757,6 @@ definitions:
         type: string
       singerName:
         type: string
-      songInfoId:
-        type: integer
       songName:
         type: string
       songNumber:
@@ -2673,7 +2682,7 @@ paths:
     delete:
       consumes:
       - application/json
-      description: 녹음을 삭제한다
+      description: 녹음을 삭제 한다 하지만 AWS 보안상 삭제 권한을 주지 않아서 S3에서 삭제 하지 않는다.
       parameters:
       - description: 녹음 ID
         in: path
@@ -2733,8 +2742,8 @@ paths:
       - application/json
       description: 내가 녹음한 노래 목록을 조회한다
       parameters:
-      - description: 마지막에 조회했던 커서의 songId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로
-          가장 최신곡부터 조회
+      - description: 마지막에 조회했던 커서의 SongRecordingId(이전 요청에서 lastCursor값을 주면 됨), 없다면
+          default로 가장 최신곡부터 조회
         in: query
         name: cursor
         type: integer
@@ -2752,9 +2761,7 @@ paths:
             - $ref: '#/definitions/pkg.BaseResponseStruct'
             - properties:
                 data:
-                  items:
-                    $ref: '#/definitions/handler.SongRecording'
-                  type: array
+                  $ref: '#/definitions/handler.GetRecordingsResponse'
               type: object
       security:
       - BearerAuth: []
@@ -2779,7 +2786,7 @@ paths:
         type: string
       - description: 노래 정보 ID
         in: formData
-        name: songInfoId
+        name: songId
         required: true
         type: integer
       - description: 공개 여부
