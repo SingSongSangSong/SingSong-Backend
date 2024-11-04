@@ -122,7 +122,6 @@ type SongRecording struct {
 	SongRecordingID   int64  `json:"songRecordingId"`
 	Title             string `json:"title"`
 	IsPublic          bool   `json:"isPublic"`
-	RecordingLink     string `json:"recordingLink"`
 	SongId            int64  `json:"SongId"`
 	SongNumber        int    `json:"songNumber"`
 	SongName          string `json:"songName"`
@@ -199,7 +198,6 @@ func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
 				SongRecordingID:   recording.SongRecordingID,
 				Title:             recording.Title,
 				IsPublic:          recording.IsPublic.Bool,
-				RecordingLink:     recording.RecordingLink,
 				SongId:            recording.SongInfoID,
 				SongNumber:        recording.R.SongInfo.SongNumber,
 				SongName:          recording.R.SongInfo.SongName,
@@ -289,7 +287,6 @@ func GetDetailRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 			SongRecordingID:   songRecordings.SongRecordingID,
 			Title:             songRecordings.Title,
 			IsPublic:          songRecordings.IsPublic.Bool,
-			RecordingLink:     songRecordings.RecordingLink,
 			SongId:            songRecordings.SongInfoID,
 			SongNumber:        songRecordings.R.SongInfo.SongNumber,
 			SongName:          songRecordings.R.SongInfo.SongName,
