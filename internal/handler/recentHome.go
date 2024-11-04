@@ -34,7 +34,10 @@ func GetLatestSearchApi(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 최근 검색어 가져오기
-		latestSearch, err := mysql.SearchLogs(qm.Distinct("search_text"), qm.OrderBy("created_at desc"), qm.Limit(size)).All(c.Request.Context(), db)
+		latestSearch, err := mysql.SearchLogs(
+			qm.From("(SELECT search_text, MAX(created_at) as max_created_at FROM search_log GROUP BY search_text) as latest_search"),
+			qm.OrderBy("max_created_at DESC"),
+			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
