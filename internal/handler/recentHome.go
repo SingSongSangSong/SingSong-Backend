@@ -35,8 +35,8 @@ func GetLatestSearchApi(db *sql.DB) gin.HandlerFunc {
 
 		// 최근 검색어 가져오기
 		latestSearch, err := mysql.SearchLogs(
-			qm.From("(SELECT search_text, MAX(created_at) as max_created_at FROM search_log GROUP BY search_text) as latest_search"),
-			qm.OrderBy("max_created_at DESC"),
+			qm.InnerJoin("(SELECT search_text, MAX(created_at) AS max_created_at FROM search_log GROUP BY search_text) AS latest_search ON search_long.search_text = latest_search.search_text AND search_log.created_at = latest_search.max_created_at"),
+			qm.OrderBy("created_at DESC"),
 			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
@@ -46,7 +46,7 @@ func GetLatestSearchApi(db *sql.DB) gin.HandlerFunc {
 		// interface
 		response := make([]interface{}, len(latestSearch))
 		for i, search := range latestSearch {
-			response[i] = search.SearchText
+			response[len(latestSearch)-1-i] = search.SearchText
 		}
 
 		// 성공 응답
@@ -147,8 +147,8 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 
 		// 댓글 단 노래 가져오기
 		commentSongs, err := mysql.Comments(
-			qm.From("(SELECT song_info_id, MAX(created_at) as max_created_at FROM comment WHERE deleted_at is null GROUP BY song_info_id) as latest_songs"),
-			qm.OrderBy("max_created_at DESC"),
+			qm.InnerJoin("(SELECT song_info_id, MAX(created_at) AS max_created_at FROM comment WHERE deleted_at IS NULL GROUP BY song_info_id) AS latest_comment ON comment.song_info_id = latest_comment.song_info_id AND comment.created_at = latest_comment.max_created_at"),
+			qm.OrderBy("created_at DESC"),
 			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
