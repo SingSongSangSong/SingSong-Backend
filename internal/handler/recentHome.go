@@ -35,7 +35,7 @@ func GetLatestSearchApi(db *sql.DB) gin.HandlerFunc {
 
 		// 최근 검색어 가져오기
 		latestSearch, err := mysql.SearchLogs(
-			qm.InnerJoin("(SELECT search_text, MAX(created_at) AS max_created_at FROM search_log GROUP BY search_text) AS latest_search ON search_long.search_text = latest_search.search_text AND search_log.created_at = latest_search.max_created_at"),
+			qm.InnerJoin("(SELECT search_text, MAX(created_at) AS max_created_at FROM search_log GROUP BY search_text) AS latest_search ON search_log.search_text = latest_search.search_text AND search_log.created_at = latest_search.max_created_at"),
 			qm.OrderBy("created_at DESC"),
 			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
@@ -46,7 +46,7 @@ func GetLatestSearchApi(db *sql.DB) gin.HandlerFunc {
 		// interface
 		response := make([]interface{}, len(latestSearch))
 		for i, search := range latestSearch {
-			response[len(latestSearch)-1-i] = search.SearchText
+			response[i] = search.SearchText
 		}
 
 		// 성공 응답
