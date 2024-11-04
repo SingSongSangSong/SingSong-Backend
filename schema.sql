@@ -430,3 +430,19 @@ CREATE TABLE search_log (
     deleted_at TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE
 );
+
+
+CREATE TABLE song_recording (
+    song_recording_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    song_info_id BIGINT NOT NULL,
+    member_id BIGINT NOT NULL,
+    recording_link VARCHAR(255) NOT NULL,
+    description VARCHAR(255),
+    title VARCHAR(255) NOT NULL,
+    is_public BOOL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (song_info_id) REFERENCES song_info(song_info_id) ON DELETE CASCADE,
+    FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE
+);
