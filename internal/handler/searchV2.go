@@ -10,6 +10,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -57,6 +58,15 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 		searchKeyword := c.Param("searchKeyword")
 		// 혹시 모를 공백 제거
 		searchKeyword = strings.TrimSpace(searchKeyword)
+
+		// 검색어가 한국어라면 띄어쓰기 제거
+		// 한국어 여부를 확인하는 정규식
+		var koreanRegex = regexp.MustCompile(`[가-힣]`)
+		// 검색어가 한국어를 포함하는지 확인
+		if koreanRegex.MatchString(searchKeyword) {
+			// 한국어가 포함된 경우 띄어쓰기 제거
+			searchKeyword = strings.ReplaceAll(searchKeyword, " ", "")
+		}
 
 		// 노래 이름으로 검색
 		songsWithName, err := mysql.SongInfos(
@@ -214,6 +224,18 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find keyword in query", nil)
 			return
 		}
+
+		searchKeyword = strings.TrimSpace(searchKeyword)
+
+		// 검색어가 한국어라면 띄어쓰기 제거
+		// 한국어 여부를 확인하는 정규식
+		var koreanRegex = regexp.MustCompile(`[가-힣]`)
+		// 검색어가 한국어를 포함하는지 확인
+		if koreanRegex.MatchString(searchKeyword) {
+			// 한국어가 포함된 경우 띄어쓰기 제거
+			searchKeyword = strings.ReplaceAll(searchKeyword, " ", "")
+		}
+
 		pageValue := c.DefaultQuery("page", defaultSearchPage)
 		sizeValue := c.DefaultQuery("size", defaultSearchSize)
 
@@ -316,6 +338,17 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find keyword in query", nil)
 			return
 		}
+		// 혹시 모를 공백 제거
+		searchKeyword = strings.TrimSpace(searchKeyword)
+		// 검색어가 한국어라면 띄어쓰기 제거
+		// 한국어 여부를 확인하는 정규식
+		var koreanRegex = regexp.MustCompile(`[가-힣]`)
+		// 검색어가 한국어를 포함하는지 확인
+		if koreanRegex.MatchString(searchKeyword) {
+			// 한국어가 포함된 경우 띄어쓰기 제거
+			searchKeyword = strings.ReplaceAll(searchKeyword, " ", "")
+		}
+
 		pageValue := c.Query("page")
 		if pageValue == "" {
 			pageValue = defaultSearchPage
@@ -424,6 +457,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find keyword in query", nil)
 			return
 		}
+
 		pageValue := c.Query("page")
 		if pageValue == "" {
 			pageValue = defaultSearchPage
