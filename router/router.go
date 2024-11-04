@@ -230,6 +230,9 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	record := r.Group("/api/v1/record")
 	{
 		record.POST("/song", middleware.AuthMiddleware(db), handler.RecordSong(db, s3Client))
+		record.GET("/list", middleware.AuthMiddleware(db), handler.GetMyRecordings(db))
+		record.GET("/:songRecordingId/my", middleware.AuthMiddleware(db), handler.GetDetailRecording(db, s3Client))
+		record.DELETE("/:songRecordingId/my", middleware.AuthMiddleware(db), handler.DeleteMyRecording(db, s3Client))
 	}
 
 	// 스웨거 설정
