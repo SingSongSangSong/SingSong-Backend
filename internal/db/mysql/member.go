@@ -123,6 +123,7 @@ var MemberRels = struct {
 	Posts              string
 	PostComments       string
 	SearchLogs         string
+	SongRecordings     string
 }{
 	Comments:           "Comments",
 	KeepListLikes:      "KeepListLikes",
@@ -132,6 +133,7 @@ var MemberRels = struct {
 	Posts:              "Posts",
 	PostComments:       "PostComments",
 	SearchLogs:         "SearchLogs",
+	SongRecordings:     "SongRecordings",
 }
 
 // memberR is where relationships are stored.
@@ -144,6 +146,7 @@ type memberR struct {
 	Posts              PostSlice              `boil:"Posts" json:"Posts" toml:"Posts" yaml:"Posts"`
 	PostComments       PostCommentSlice       `boil:"PostComments" json:"PostComments" toml:"PostComments" yaml:"PostComments"`
 	SearchLogs         SearchLogSlice         `boil:"SearchLogs" json:"SearchLogs" toml:"SearchLogs" yaml:"SearchLogs"`
+	SongRecordings     SongRecordingSlice     `boil:"SongRecordings" json:"SongRecordings" toml:"SongRecordings" yaml:"SongRecordings"`
 }
 
 // NewStruct creates a new relationship struct
@@ -205,6 +208,13 @@ func (r *memberR) GetSearchLogs() SearchLogSlice {
 		return nil
 	}
 	return r.SearchLogs
+}
+
+func (r *memberR) GetSongRecordings() SongRecordingSlice {
+	if r == nil {
+		return nil
+	}
+	return r.SongRecordings
 }
 
 // memberL is where Load methods for each relationship are stored.
@@ -606,6 +616,20 @@ func (o *Member) SearchLogs(mods ...qm.QueryMod) searchLogQuery {
 	)
 
 	return SearchLogs(queryMods...)
+}
+
+// SongRecordings retrieves all the song_recording's SongRecordings with an executor.
+func (o *Member) SongRecordings(mods ...qm.QueryMod) songRecordingQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("`song_recording`.`member_id`=?", o.MemberID),
+	)
+
+	return SongRecordings(queryMods...)
 }
 
 // LoadComments allows an eager lookup of values, cached into the
@@ -1520,6 +1544,120 @@ func (memberL) LoadSearchLogs(ctx context.Context, e boil.ContextExecutor, singu
 	return nil
 }
 
+// LoadSongRecordings allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (memberL) LoadSongRecordings(ctx context.Context, e boil.ContextExecutor, singular bool, maybeMember interface{}, mods queries.Applicator) error {
+	var slice []*Member
+	var object *Member
+
+	if singular {
+		var ok bool
+		object, ok = maybeMember.(*Member)
+		if !ok {
+			object = new(Member)
+			ok = queries.SetFromEmbeddedStruct(&object, &maybeMember)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", object, maybeMember))
+			}
+		}
+	} else {
+		s, ok := maybeMember.(*[]*Member)
+		if ok {
+			slice = *s
+		} else {
+			ok = queries.SetFromEmbeddedStruct(&slice, maybeMember)
+			if !ok {
+				return errors.New(fmt.Sprintf("failed to set %T from embedded struct %T", slice, maybeMember))
+			}
+		}
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &memberR{}
+		}
+		args = append(args, object.MemberID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &memberR{}
+			}
+
+			for _, a := range args {
+				if a == obj.MemberID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.MemberID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(
+		qm.From(`song_recording`),
+		qm.WhereIn(`song_recording.member_id in ?`, args...),
+	)
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load song_recording")
+	}
+
+	var resultSlice []*SongRecording
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice song_recording")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on song_recording")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for song_recording")
+	}
+
+	if len(songRecordingAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.SongRecordings = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &songRecordingR{}
+			}
+			foreign.R.Member = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.MemberID == foreign.MemberID {
+				local.R.SongRecordings = append(local.R.SongRecordings, foreign)
+				if foreign.R == nil {
+					foreign.R = &songRecordingR{}
+				}
+				foreign.R.Member = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // AddComments adds the given related objects to the existing relationships
 // of the member, optionally inserting them as new records.
 // Appends related to o.R.Comments.
@@ -1935,6 +2073,59 @@ func (o *Member) AddSearchLogs(ctx context.Context, exec boil.ContextExecutor, i
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &searchLogR{
+				Member: o,
+			}
+		} else {
+			rel.R.Member = o
+		}
+	}
+	return nil
+}
+
+// AddSongRecordings adds the given related objects to the existing relationships
+// of the member, optionally inserting them as new records.
+// Appends related to o.R.SongRecordings.
+// Sets related.R.Member appropriately.
+func (o *Member) AddSongRecordings(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*SongRecording) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.MemberID = o.MemberID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE `song_recording` SET %s WHERE %s",
+				strmangle.SetParamNames("`", "`", 0, []string{"member_id"}),
+				strmangle.WhereClause("`", "`", 0, songRecordingPrimaryKeyColumns),
+			)
+			values := []interface{}{o.MemberID, rel.SongRecordingID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.MemberID = o.MemberID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &memberR{
+			SongRecordings: related,
+		}
+	} else {
+		o.R.SongRecordings = append(o.R.SongRecordings, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &songRecordingR{
 				Member: o,
 			}
 		} else {

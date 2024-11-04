@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/handler"
 	"SingSong-Server/middleware"
 	"database/sql"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
@@ -16,7 +17,7 @@ import (
 	"net/http"
 )
 
-func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, milvusClient *client.Client) *gin.Engine {
+func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, milvusClient *client.Client, s3Client *s3.Client) *gin.Engine {
 
 	//gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
@@ -224,6 +225,14 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		recent.GET("/search", handler.GetLatestSearchApi(db))
 		recent.GET("/keep", handler.GetRecentKeepSongs(db))
 		recent.GET("/comment", handler.GetRecentCommentsongs(db))
+	}
+
+	record := r.Group("/api/v1/record")
+	{
+		record.POST("/song", middleware.AuthMiddleware(db), handler.RecordSong(db, s3Client))
+		record.GET("/list", middleware.AuthMiddleware(db), handler.GetMyRecordings(db))
+		record.GET("/:songRecordingId/my", middleware.AuthMiddleware(db), handler.GetDetailRecording(db, s3Client))
+		record.DELETE("/:songRecordingId/my", middleware.AuthMiddleware(db), handler.DeleteMyRecording(db, s3Client))
 	}
 
 	// 스웨거 설정
