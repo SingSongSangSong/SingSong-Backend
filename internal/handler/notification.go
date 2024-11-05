@@ -13,11 +13,12 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // todo: https://firebase.google.com/docs/cloud-messaging/send-message?hl=ko#go
 // todo: 댓글 작성자/게시글 작성자한테는 알림을 보내면 안됨 + 그밖에 예외처리 필요 (+ 제목에 게시글 제목이나 댓글내용을 알려줘야하는지 생각해보기!)
-// todo: 알림 히스토리 저장
+// todo: 내 알림 조회 api
 
 type AnnouncementRequest struct {
 	Title string `json:"title"`
@@ -171,7 +172,36 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 	}
 }
 
+// 알림 허용을 하지 않은 사람도 앱 내에서 알림을 볼 수 있도록 하기 위해 따로 저장함
 func SaveNotificationHistory(db *sql.DB, notificationMessage NotificationMessage) {
+	ctx := context.Background()
+	if len(notificationMessage.ReceiverMemberIds) == 0 { // todo: 본인에게 보낸 알림을 제외하긴 해야 됨
+		return
+	}
+
+	// 배치 삽입
+	values := make([]interface{}, 0, len(notificationMessage.ReceiverMemberIds)*5)
+	placeholders := make([]string, len(notificationMessage.ReceiverMemberIds))
+
+	for i, memberId := range notificationMessage.ReceiverMemberIds {
+		values = append(values,
+			memberId,
+			notificationMessage.Title,
+			notificationMessage.Body,
+			string(notificationMessage.ScreenType),
+			notificationMessage.ScreenTypeId,
+		)
+		placeholders[i] = "(?, ?, ?, ?, ?, false)"
+	}
+
+	query := fmt.Sprintf(`
+		INSERT INTO notification_history (member_id, title, body, screen_type, screen_type_id, is_read) 
+		VALUES %s`, strings.Join(placeholders, ","))
+
+	_, err := db.ExecContext(ctx, query, values...)
+	if err != nil {
+		log.Printf("error inserting notification history: %v", err)
+	}
 }
 
 func ToUniqueMemberIds(memberIds []int64) []int64 {
