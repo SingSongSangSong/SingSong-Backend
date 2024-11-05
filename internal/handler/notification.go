@@ -116,6 +116,7 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 		registrationTokens = append(registrationTokens, device.DeviceToken)
 	}
 
+	//todo: 딥링크 추가
 	message := &messaging.MulticastMessage{
 		Notification: &messaging.Notification{
 			Title: notificationMessage.Title,
@@ -124,6 +125,20 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 		Data: map[string]string{
 			"screenType": string(notificationMessage.ScreenType),
 			"screenId":   strconv.FormatInt(notificationMessage.ScreenTypeId, 10),
+		},
+		Android: &messaging.AndroidConfig{
+			Priority: "high",
+			Notification: &messaging.AndroidNotification{
+				Sound:     "default",
+				ChannelID: "default-channel-id",
+			},
+		},
+		APNS: &messaging.APNSConfig{
+			Payload: &messaging.APNSPayload{
+				Aps: &messaging.Aps{
+					Sound: "default",
+				},
+			},
 		},
 		Tokens: registrationTokens,
 	}
