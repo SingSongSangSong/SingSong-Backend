@@ -1227,9 +1227,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/notifications/test": {
+        "/v1/notifications/announcements": {
             "post": {
-                "description": "알림 전송 테스트",
+                "description": "공지사항 전송",
                 "consumes": [
                     "application/json"
                 ],
@@ -1239,7 +1239,18 @@ const docTemplate = `{
                 "tags": [
                     "Notification"
                 ],
-                "summary": "알림 전송 테스트",
+                "summary": "공지사항 전송",
+                "parameters": [
+                    {
+                        "description": "알림 내용",
+                        "name": "AnnouncementRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.AnnouncementRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "성공",
@@ -4401,6 +4412,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.AnnouncementRequest": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.ChartResponse": {
             "type": "object",
             "properties": {

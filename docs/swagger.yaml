@@ -1,5 +1,12 @@
 basePath: /api
 definitions:
+  handler.AnnouncementRequest:
+    properties:
+      body:
+        type: string
+      title:
+        type: string
+    type: object
   handler.ChartResponse:
     properties:
       artistName:
@@ -1956,11 +1963,18 @@ paths:
       summary: 멤버 회원 탈퇴
       tags:
       - Member
-  /v1/notifications/test:
+  /v1/notifications/announcements:
     post:
       consumes:
       - application/json
-      description: 알림 전송 테스트
+      description: 공지사항 전송
+      parameters:
+      - description: 알림 내용
+        in: body
+        name: AnnouncementRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AnnouncementRequest'
       produces:
       - application/json
       responses:
@@ -1968,7 +1982,7 @@ paths:
           description: 성공
           schema:
             $ref: '#/definitions/pkg.BaseResponseStruct'
-      summary: 알림 전송 테스트
+      summary: 공지사항 전송
       tags:
       - Notification
   /v1/posts:

@@ -229,7 +229,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 
 	notification := r.Group("/api/v1/notifications")
 	{
-		notification.POST("/test", handler.TestNotification(db, firebaseApp))
+		notification.POST("/announcements", handler.SendAnnouncement(db, firebaseApp))
 	}
 
 	// 스웨거 설정

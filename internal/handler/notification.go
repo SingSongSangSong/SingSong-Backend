@@ -16,44 +16,51 @@ import (
 )
 
 // todo: https://firebase.google.com/docs/cloud-messaging/send-message?hl=ko#go
+//todo: 한꺼번에 전송시 제한 걸리면 나눠서 전송
 
-// TestNotification godoc
-// @Summary      알림 전송 테스트
-// @Description  알림 전송 테스트
+type AnnouncementRequest struct {
+	Title string `json:"title"`
+	Body  string `json:"body"`
+}
+
+// SendAnnouncementNotification godoc
+// @Summary      공지사항 전송
+// @Description  공지사항 전송
 // @Tags         Notification
 // @Accept       json
 // @Produce      json
+// @Param        AnnouncementRequest  body   AnnouncementRequest  true  "알림 내용"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
-// @Router       /v1/notifications/test [post]
-func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
+// @Router       /v1/notifications/announcements [post]
+func SendAnnouncement(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		client, err := firebaseApp.Messaging(context.Background())
-		if err != nil {
-			log.Printf("error getting Messaging client: %v", err)
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+		announcementRequest := &AnnouncementRequest{}
+		if err := c.ShouldBindJSON(&announcementRequest); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
 		}
 
-		// 안드로이드 테스트
-		message := &messaging.Message{
-			Token: "test token",
-			Notification: &messaging.Notification{
-				Title: "안녕 이건 title이고",
-				Body:  "이건 body란다",
-			},
-			Data: map[string]string{
-				"screenType": "POST",
-				"screenId":   "30",
-			},
-		}
-
-		// 메시지 전송에 타임아웃을 주고 싶다면 ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) 이걸 쓸 수 있다
-		_, err = client.Send(context.Background(), message)
+		members, err := mysql.Members(
+			qm.Where("deleted_at is null"),
+		).All(context.Background(), db)
 		if err != nil {
-			log.Printf("error sending android message: %v", err)
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			log.Printf("error fetching members: %v", err)
 			return
 		}
+		receiverIds := make([]int64, len(members))
+		for i, v := range members {
+			receiverIds[i] = v.MemberID
+		}
+
+		notification := NotificationMessage{
+			Title:             announcementRequest.Title,
+			Body:              announcementRequest.Body,
+			ReceiverMemberIds: receiverIds,
+			ScreenType:        HomeScreen,
+			ScreenTypeId:      0,
+		}
+		go SendNotification(db, firebaseApp, notification)
+		go SaveNotificationHistory(db, notification)
 
 		pkg.BaseResponse(c, http.StatusOK, "success", nil)
 	}
@@ -97,7 +104,7 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 
 	all, err := mysql.MemberDeviceTokens(
 		qm.WhereIn("member_id in ?", ids...),
-		qm.Where("is_activate = true"),
+		qm.Where("is_activate = true and deleted_at is null"),
 	).All(ctx, db)
 	if err != nil {
 		log.Printf("error - "+err.Error(), err)
