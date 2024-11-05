@@ -155,7 +155,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		comment.GET("/:songId", middleware.AuthMiddleware(db), handler.GetCommentOnSong(db))
 		comment.POST("/report", middleware.AuthMiddleware(db), handler.ReportComment(db))
 		comment.GET("/recomment/:commentId", middleware.AuthMiddleware(db), handler.GetReCommentOnSong(db))
-		comment.POST("/:commentId/like", middleware.AuthMiddleware(db), handler.LikeComment(db))
+		comment.POST("/:commentId/like", middleware.AuthMiddleware(db), handler.LikeComment(db, firebaseApp))
 		comment.GET("/latest", middleware.AuthMiddleware(db), handler.GetLatestComments(db))
 		comment.DELETE("/:commentId", middleware.AuthMiddleware(db), handler.DeleteComment(db))
 		comment.GET("/my", middleware.AuthMiddleware(db), handler.GetMySongComment(db))
@@ -202,7 +202,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		post.GET("/:postId", middleware.AuthMiddleware(db), handler.GetPost(db))
 		post.DELETE("/:postId", middleware.AuthMiddleware(db), handler.DeletePost(db))
 		post.POST("/:postId/reports", middleware.AuthMiddleware(db), handler.ReportPost(db))
-		post.POST("/:postId/likes", middleware.AuthMiddleware(db), handler.LikePost(db))
+		post.POST("/:postId/likes", middleware.AuthMiddleware(db), handler.LikePost(db, firebaseApp))
 		post.GET("/:postId/comments", middleware.AuthMiddleware(db), handler.GetCommentOnPost(db))
 	}
 
@@ -216,7 +216,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 		postComment.POST("", middleware.AuthMiddleware(db), handler.CommentOnPost(db, firebaseApp))
 		postComment.GET("/:postCommentId/recomments", middleware.AuthMiddleware(db), handler.GetReCommentOnPost(db))
 		postComment.POST("/report", middleware.AuthMiddleware(db), handler.ReportPostComment(db))
-		postComment.POST("/:postCommentId/like", middleware.AuthMiddleware(db), handler.LikePostComment(db))
+		postComment.POST("/:postCommentId/like", middleware.AuthMiddleware(db), handler.LikePostComment(db, firebaseApp))
 		postComment.DELETE("/:postCommentId", middleware.AuthMiddleware(db), handler.DeletePostComment(db))
 	}
 

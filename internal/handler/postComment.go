@@ -649,7 +649,7 @@ func ReportPostComment(db *sql.DB) gin.HandlerFunc {
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
 // @Router       /v1/posts/comments/{postCommentId}/like [post]
 // @Security BearerAuth
-func LikePostComment(db *sql.DB) gin.HandlerFunc {
+func LikePostComment(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
@@ -724,6 +724,8 @@ func LikePostComment(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
+
+		go NotifyLikeOnPostComment(db, firebaseApp, postCommentId, postComment.PostID, postComment.Content.String)
 
 		pkg.BaseResponse(c, http.StatusOK, "success", postComment.Likes)
 		return

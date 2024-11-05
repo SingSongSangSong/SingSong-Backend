@@ -16,6 +16,8 @@ import (
 )
 
 // todo: https://firebase.google.com/docs/cloud-messaging/send-message?hl=ko#go
+// todo: 댓글 작성자/게시글 작성자한테는 알림을 보내면 안됨 + 그밖에 예외처리 필요 (+ 제목에 게시글 제목이나 댓글내용을 알려줘야하는지 생각해보기!)
+// todo: 알림 히스토리 저장
 
 type AnnouncementRequest struct {
 	Title string `json:"title"`
@@ -184,12 +186,10 @@ func ToUniqueMemberIds(memberIds []int64) []int64 {
 	return result
 }
 
-//todo: 댓글 작성자한테는 보내면 안됨!, 제목에 게시글 제목이나 댓글내용을 알려줘야하나?, 예외처리 필요
-
 // 게시글에 그냥 댓글이 달렸다는 알림 => 게시글 작성자에게는 꼭 알림
 func NotifyCommentOnPost(db *sql.DB, firebaseApp *firebase.App, postId int64, commentContent string) {
 	post, err := mysql.Posts(
-		qm.Where("post_id = ?", postId),
+		qm.Where("post_id = ? and deleted_at is null", postId),
 	).One(context.Background(), db)
 	if err != nil {
 		log.Printf("error fetching post: %v", err)
@@ -216,7 +216,7 @@ func NotifyRecommentOnPostComment(db *sql.DB, firebaseApp *firebase.App, parentP
 		qm.Where("post_id = ? and deleted_at is null", postId),
 	).One(context.Background(), db)
 	if err != nil {
-		log.Printf("no post to send notification", err)
+		log.Printf("error fetching post: %v", err)
 		return
 	}
 
@@ -225,7 +225,7 @@ func NotifyRecommentOnPostComment(db *sql.DB, firebaseApp *firebase.App, parentP
 		qm.Where("post_comment_id = ? and deleted_at is null", parentPostCommentId),
 	).One(context.Background(), db)
 	if err != nil {
-		log.Printf("error fetching parent comment: "+err.Error(), err)
+		log.Printf("error fetching parent post comment: "+err.Error(), err)
 		return
 	}
 
@@ -265,7 +265,7 @@ func NotifyRecommentOnSongComment(db *sql.DB, firebaseApp *firebase.App, parentC
 		qm.Where("comment_id = ? and deleted_at is null", parentCommentId),
 	).One(context.Background(), db)
 	if err != nil {
-		log.Printf("error fetching parent comment: "+err.Error(), err)
+		log.Printf("error fetching parent song comment: "+err.Error(), err)
 		return
 	}
 
@@ -297,4 +297,71 @@ func NotifyRecommentOnSongComment(db *sql.DB, firebaseApp *firebase.App, parentC
 	SaveNotificationHistory(db, notification)
 }
 
-//todo:  게시즐 좋아요/ 게시글댓글 좋아요 / 노래댓글 좋아요 알림
+// 게시글 좋아요 -> 게시글 작성자에게 알림
+func NotifyLikeOnPost(db *sql.DB, firebaseApp *firebase.App, postId int64, postTitle string) {
+	post, err := mysql.Posts(
+		qm.Where("post_id = ? and deleted_at is null", postId),
+	).One(context.Background(), db)
+	if err != nil {
+		log.Printf("error fetching post: %v", err)
+		return
+	}
+	receiverId := make([]int64, 1)
+	receiverId = append(receiverId, post.MemberID)
+
+	notification := NotificationMessage{
+		Title:             "누군가 당신의 게시글에 좋아요를 눌렀어요!",
+		Body:              postTitle,
+		ReceiverMemberIds: receiverId,
+		ScreenType:        PostScreen,
+		ScreenTypeId:      postId,
+	}
+	SendNotification(db, firebaseApp, notification)
+	SaveNotificationHistory(db, notification)
+}
+
+// 게시글 댓글 좋아요 -> 댓글 작성자에게 알림
+func NotifyLikeOnPostComment(db *sql.DB, firebaseApp *firebase.App, postCommentId int64, postId int64, commentContent string) {
+	postComment, err := mysql.PostComments(
+		qm.Where("post_comment_id = ? and deleted_at is null", postCommentId),
+	).One(context.Background(), db)
+	if err != nil {
+		log.Printf("error fetching post comment: "+err.Error(), err)
+		return
+	}
+	receiverId := make([]int64, 1)
+	receiverId = append(receiverId, postComment.MemberID)
+
+	notification := NotificationMessage{
+		Title:             "누군가 당신의 댓글에 좋아요를 눌렀어요!",
+		Body:              commentContent,
+		ReceiverMemberIds: receiverId,
+		ScreenType:        PostScreen,
+		ScreenTypeId:      postId,
+	}
+	SendNotification(db, firebaseApp, notification)
+	SaveNotificationHistory(db, notification)
+}
+
+// 노래 댓글 좋아요 -> 노래 댓글 작성자에게 알림
+func NotifyLikeOnSongComment(db *sql.DB, firebaseApp *firebase.App, songCommentId int64, songId int64, commentContent string) {
+	songComment, err := mysql.Comments(
+		qm.Where("comment_id = ? and deleted_at is null", songCommentId),
+	).One(context.Background(), db)
+	if err != nil {
+		log.Printf("error fetching song comment: "+err.Error(), err)
+		return
+	}
+	receiverId := make([]int64, 1)
+	receiverId = append(receiverId, songComment.MemberID)
+
+	notification := NotificationMessage{
+		Title:             "누군가 당신의 댓글에 좋아요를 눌렀어요!",
+		Body:              commentContent,
+		ReceiverMemberIds: receiverId,
+		ScreenType:        SongScreen,
+		ScreenTypeId:      songId,
+	}
+	SendNotification(db, firebaseApp, notification)
+	SaveNotificationHistory(db, notification)
+}

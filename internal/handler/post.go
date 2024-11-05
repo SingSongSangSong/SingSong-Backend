@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"errors"
+	firebase "firebase.google.com/go/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -519,7 +520,7 @@ func ReportPost(db *sql.DB) gin.HandlerFunc {
 // @Success      200 {object} pkg.BaseResponseStruct{data=int} "성공"
 // @Router       /v1/posts/{postId}/likes [post]
 // @Security BearerAuth
-func LikePost(db *sql.DB) gin.HandlerFunc {
+func LikePost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
@@ -594,6 +595,8 @@ func LikePost(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
+
+		go NotifyLikeOnPost(db, firebaseApp, postId, post.Title)
 
 		pkg.BaseResponse(c, http.StatusOK, "success", post.Likes)
 		return
