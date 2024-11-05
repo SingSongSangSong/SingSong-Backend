@@ -1982,7 +1982,7 @@ paths:
           description: 성공
           schema:
             $ref: '#/definitions/pkg.BaseResponseStruct'
-      summary: 공지사항 전송
+      summary: 디바이스 토큰이 활성화된 모든 유저에게 공지사항 전송
       tags:
       - Notification
   /v1/posts:

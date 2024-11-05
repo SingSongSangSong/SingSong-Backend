@@ -1239,7 +1239,7 @@ const docTemplate = `{
                 "tags": [
                     "Notification"
                 ],
-                "summary": "공지사항 전송",
+                "summary": "디바이스 토큰이 활성화된 모든 유저에게 공지사항 전송",
                 "parameters": [
                     {
                         "description": "알림 내용",
