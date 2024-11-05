@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
+	firebase "firebase.google.com/go/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -47,7 +48,7 @@ type CommentResponse struct {
 // @Success      200 {object} pkg.BaseResponseStruct{data=CommentResponse} "성공"
 // @Router       /v1/comment [post]
 // @Security BearerAuth
-func CommentOnSong(db *sql.DB) gin.HandlerFunc {
+func CommentOnSong(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// CommentRequest 받기
 		commentRequest := &CommentRequest{}
@@ -94,6 +95,10 @@ func CommentOnSong(db *sql.DB) gin.HandlerFunc {
 			Recomments:      []CommentResponse{},
 		}
 
+		if m.IsRecomment.Bool { //대댓글인경우
+			// 대댓글 달렸다고 알림 보내기
+			go NotifyRecommentOnSongComment(db, firebaseApp, m.ParentCommentID.Int64, m.SongInfoID, m.Content.String)
+		}
 		// 댓글 달기 성공시 댓글 정보 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", commentResponse)
 	}

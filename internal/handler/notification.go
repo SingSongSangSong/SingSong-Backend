@@ -12,6 +12,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // todo: https://firebase.google.com/docs/cloud-messaging/send-message?hl=ko#go
@@ -35,14 +36,14 @@ func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 
 		// 안드로이드 테스트
 		message := &messaging.Message{
-			Token: "invalidtoken", // 알림을 보낼 대상 클라이언트의 FCM 토큰
+			Token: "test token",
 			Notification: &messaging.Notification{
-				Title: "이건 제목이구",
+				Title: "안녕 이건 title이고",
 				Body:  "이건 body란다",
 			},
 			Data: map[string]string{
-				"key1": "value1",
-				"key2": "value2",
+				"screenType": "POST",
+				"screenId":   "30",
 			},
 		}
 
@@ -54,7 +55,7 @@ func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 			return
 		}
 
-		pkg.BaseResponse(c, http.StatusOK, "error - "+err.Error(), nil)
+		pkg.BaseResponse(c, http.StatusOK, "success", nil)
 	}
 }
 
@@ -66,12 +67,12 @@ const (
 	// 필요한 다른 알림 타입을 추가 가능
 	SongScreen ScreenType = "SONG"
 	PostScreen ScreenType = "POST"
+	HomeScreen ScreenType = "HOME"
 )
 
 type NotificationMessage struct {
 	Title             string  // 알림 제목
 	Body              string  // 알림 내용
-	SenderMemberId    int64   // 발신자 ID
 	ReceiverMemberIds []int64 // 수신자 ID
 	ScreenType        ScreenType
 	ScreenTypeId      int64 // 게시글ID or 쏭ID
@@ -113,6 +114,10 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 			Title: notificationMessage.Title,
 			Body:  notificationMessage.Body,
 		},
+		Data: map[string]string{
+			"screenType": string(notificationMessage.ScreenType),
+			"screenId":   strconv.FormatInt(notificationMessage.ScreenTypeId, 10),
+		},
 		Tokens: registrationTokens,
 	}
 
@@ -123,6 +128,7 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 	}
 	if br.FailureCount > 0 {
 		var failedTokens []string
+		//todo: request entity was not found 처리필요?
 		for _, resp := range br.Responses {
 			if !resp.Success {
 				failedTokens = append(failedTokens, resp.Error.Error())
@@ -133,40 +139,131 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 }
 
 func SaveNotificationHistory(db *sql.DB, notificationMessage NotificationMessage) {
-
 }
 
-// 게시글에 댓글이 달렸다는 알림 보내기 => 게시글 작성자에게는 꼭 알림
-func NotifyCommentOnPost(db *sql.DB, firebaseApp *firebase.App, memberId int64, postId int64, commentContent string) {
-	uniqueMemberIds, err := mysql.PostComments(
-		qm.Select("DISTINCT member_id"),
+func ToUniqueMemberIds(memberIds []int64) []int64 {
+	uniqueMemberIds := make(map[int64]struct{})
+	for _, id := range memberIds {
+		uniqueMemberIds[id] = struct{}{}
+	}
+	var result []int64
+	for id := range uniqueMemberIds {
+		result = append(result, id)
+	}
+	return result
+}
+
+//todo: 댓글 작성자한테는 보내면 안됨!, 제목에 게시글 제목이나 댓글내용을 알려줘야하나?, 예외처리 필요
+
+// 게시글에 그냥 댓글이 달렸다는 알림 => 게시글 작성자에게는 꼭 알림
+func NotifyCommentOnPost(db *sql.DB, firebaseApp *firebase.App, postId int64, commentContent string) {
+	post, err := mysql.Posts(
 		qm.Where("post_id = ?", postId),
-	).All(context.Background(), db)
+	).One(context.Background(), db)
 	if err != nil {
-		log.Printf("error fetching unique member ids: %v", err)
+		log.Printf("error fetching post: %v", err)
 		return
 	}
-	receiverIds := make([]int64, len(uniqueMemberIds))
-	for i, v := range uniqueMemberIds {
-		receiverIds[i] = v.MemberID
-	}
+	receiverId := make([]int64, 1)
+	receiverId = append(receiverId, post.MemberID)
+
 	notification := NotificationMessage{
-		Title:             "게시글에 새로운 댓글이 달렸어요",
+		Title:             "게시글에 새로운 댓글이 달렸어요!",
 		Body:              commentContent,
-		SenderMemberId:    memberId,
-		ReceiverMemberIds: receiverIds,
+		ReceiverMemberIds: receiverId,
 		ScreenType:        PostScreen,
+		ScreenTypeId:      postId,
 	}
 	SendNotification(db, firebaseApp, notification)
 	SaveNotificationHistory(db, notification)
 }
 
-// 게시글 대댓글이 달렸을 경우엔 게시글 작성자와, 부모댓글/대댓글 작성자들에게 알림
-func NotifyRecommentOnPostComment(db *sql.DB, firebaseApp *firebase.App, memberId int64, postId int64, commentContent string) {
+// 게시글 대댓글 => 게시글 작성자와, 부모댓글/대댓글 작성자들에게 알림
+func NotifyRecommentOnPostComment(db *sql.DB, firebaseApp *firebase.App, parentPostCommentId int64, postId int64, commentContent string) {
+	// 게시글 작성자
+	post, err := mysql.Posts(
+		qm.Where("post_id = ? and deleted_at is null", postId),
+	).One(context.Background(), db)
+	if err != nil {
+		log.Printf("no post to send notification", err)
+		return
+	}
 
+	// 부모댓글 작성자
+	parentComment, err := mysql.PostComments(
+		qm.Where("post_comment_id = ? and deleted_at is null", parentPostCommentId),
+	).One(context.Background(), db)
+	if err != nil {
+		log.Printf("error fetching parent comment: "+err.Error(), err)
+		return
+	}
+
+	// 답댓글 작성자
+	babyComments, err := mysql.PostComments(
+		qm.Where("parent_post_comment_id = ? and deleted_at is null", parentPostCommentId),
+	).All(context.Background(), db)
+	if err != nil {
+		log.Printf("error fetching baby post comments: %v", err)
+		return
+	}
+
+	var receiverIds []int64
+	for _, v := range babyComments {
+		receiverIds = append(receiverIds, v.MemberID)
+	}
+	receiverIds = append(receiverIds, post.MemberID)
+	receiverIds = append(receiverIds, parentComment.MemberID)
+
+	receiverIds = ToUniqueMemberIds(receiverIds)
+
+	notification := NotificationMessage{
+		Title:             "댓글에 새로운 답글이 달렸어요!",
+		Body:              commentContent,
+		ReceiverMemberIds: receiverIds,
+		ScreenType:        PostScreen,
+		ScreenTypeId:      postId,
+	}
+	SendNotification(db, firebaseApp, notification)
+	SaveNotificationHistory(db, notification)
 }
 
 // 노래 댓글에 답글이 달렸다는 알림 보내기 => 부모댓글/대댓글 작성자들에게 알림
-func NotifyRecommentOnSongComment() {
+func NotifyRecommentOnSongComment(db *sql.DB, firebaseApp *firebase.App, parentCommentId int64, songId int64, commentContent string) {
+	// 부모댓글 작성자
+	parentComment, err := mysql.Comments(
+		qm.Where("comment_id = ? and deleted_at is null", parentCommentId),
+	).One(context.Background(), db)
+	if err != nil {
+		log.Printf("error fetching parent comment: "+err.Error(), err)
+		return
+	}
 
+	// 답댓글 작성자
+	babyComments, err := mysql.Comments(
+		qm.Where("parent_comment_id = ? and deleted_at is null", parentCommentId),
+	).All(context.Background(), db)
+	if err != nil {
+		log.Printf("error baby comments: %v", err)
+		return
+	}
+
+	var receiverIds []int64
+	for _, v := range babyComments {
+		receiverIds = append(receiverIds, v.MemberID)
+	}
+	receiverIds = append(receiverIds, parentComment.MemberID)
+
+	receiverIds = ToUniqueMemberIds(receiverIds)
+
+	notification := NotificationMessage{
+		Title:             "댓글에 새로운 답글이 달렸어요!",
+		Body:              commentContent,
+		ReceiverMemberIds: receiverIds,
+		ScreenType:        SongScreen,
+		ScreenTypeId:      songId,
+	}
+	SendNotification(db, firebaseApp, notification)
+	SaveNotificationHistory(db, notification)
 }
+
+//todo:  게시즐 좋아요/ 게시글댓글 좋아요 / 노래댓글 좋아요 알림
