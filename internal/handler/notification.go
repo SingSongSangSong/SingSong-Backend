@@ -16,7 +16,6 @@ import (
 )
 
 // todo: https://firebase.google.com/docs/cloud-messaging/send-message?hl=ko#go
-//todo: 한꺼번에 전송시 제한 걸리면 나눠서 전송
 
 type AnnouncementRequest struct {
 	Title string `json:"title"`
@@ -24,7 +23,7 @@ type AnnouncementRequest struct {
 }
 
 // SendAnnouncementNotification godoc
-// @Summary      공지사항 전송
+// @Summary      디바이스 토큰이 활성화된 모든 유저에게 공지사항 전송
 // @Description  공지사항 전송
 // @Tags         Notification
 // @Accept       json
@@ -116,47 +115,57 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 		registrationTokens = append(registrationTokens, device.DeviceToken)
 	}
 
-	//todo: 딥링크 추가
-	message := &messaging.MulticastMessage{
-		Notification: &messaging.Notification{
-			Title: notificationMessage.Title,
-			Body:  notificationMessage.Body,
-		},
-		Data: map[string]string{
-			"screenType": string(notificationMessage.ScreenType),
-			"screenId":   strconv.FormatInt(notificationMessage.ScreenTypeId, 10),
-		},
-		Android: &messaging.AndroidConfig{
-			Priority: "high",
-			Notification: &messaging.AndroidNotification{
-				Sound:     "default",
-				ChannelID: "default-channel-id",
+	// 500개씩 나누어서 전송
+	const batchSize = 500
+	for start := 0; start < len(registrationTokens); start += batchSize {
+		end := start + batchSize
+		if end > len(registrationTokens) {
+			end = len(registrationTokens)
+		}
+		batchTokens := registrationTokens[start:end]
+
+		//todo: 딥링크 추가
+		message := &messaging.MulticastMessage{
+			Notification: &messaging.Notification{
+				Title: notificationMessage.Title,
+				Body:  notificationMessage.Body,
 			},
-		},
-		APNS: &messaging.APNSConfig{
-			Payload: &messaging.APNSPayload{
-				Aps: &messaging.Aps{
-					Sound: "default",
+			Data: map[string]string{
+				"screenType": string(notificationMessage.ScreenType),
+				"screenId":   strconv.FormatInt(notificationMessage.ScreenTypeId, 10),
+			},
+			Android: &messaging.AndroidConfig{
+				Priority: "high",
+				Notification: &messaging.AndroidNotification{
+					Sound:     "default",
+					ChannelID: "default-channel-id",
 				},
 			},
-		},
-		Tokens: registrationTokens,
-	}
-
-	br, err := client.SendEachForMulticast(ctx, message)
-	if err != nil {
-		log.Printf("error sending notifications - " + err.Error())
-		return
-	}
-	if br.FailureCount > 0 {
-		var failedTokens []string
-		//todo: request entity was not found 처리필요?
-		for _, resp := range br.Responses {
-			if !resp.Success {
-				failedTokens = append(failedTokens, resp.Error.Error())
-			}
+			APNS: &messaging.APNSConfig{
+				Payload: &messaging.APNSPayload{
+					Aps: &messaging.Aps{
+						Sound: "default",
+					},
+				},
+			},
+			Tokens: batchTokens,
 		}
-		fmt.Printf("List of tokens that caused failures: %v\n", failedTokens)
+
+		br, err := client.SendEachForMulticast(ctx, message)
+		if err != nil {
+			log.Printf("error sending notifications - " + err.Error())
+			return
+		}
+		if br.FailureCount > 0 {
+			var failedTokens []string
+			//todo: request entity was not found 처리필요?
+			for _, resp := range br.Responses {
+				if !resp.Success {
+					failedTokens = append(failedTokens, resp.Error.Error())
+				}
+			}
+			fmt.Printf("List of tokens that caused failures: %v\n", failedTokens)
+		}
 	}
 }
 
