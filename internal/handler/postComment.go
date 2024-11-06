@@ -146,10 +146,10 @@ func CommentOnPost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 
 		if postComment.IsRecomment.Bool { //대댓글인경우
 			// 대댓글 달렸다고 알림 보내기
-			go NotifyRecommentOnPostComment(db, firebaseApp, postComment.ParentPostCommentID.Int64, postComment.PostID, postComment.Content.String)
+			go NotifyRecommentOnPostComment(db, firebaseApp, memberId.(int64), postComment.ParentPostCommentID.Int64, postComment.PostID, postComment.Content.String)
 		} else { //부모댓글인 경우
 			// 댓글이 달렸다고 알림 보내기
-			go NotifyCommentOnPost(db, firebaseApp, commentRequest.PostId, commentRequest.Content)
+			go NotifyCommentOnPost(db, firebaseApp, memberId.(int64), commentRequest.PostId, commentRequest.Content)
 		}
 
 		// 댓글 달기 성공시 댓글 정보 반환
@@ -725,7 +725,7 @@ func LikePostComment(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 			return
 		}
 
-		go NotifyLikeOnPostComment(db, firebaseApp, postCommentId, postComment.PostID, postComment.Content.String)
+		go NotifyLikeOnPostComment(db, firebaseApp, memberId.(int64), postCommentId, postComment.PostID, postComment.Content.String)
 
 		pkg.BaseResponse(c, http.StatusOK, "success", postComment.Likes)
 		return

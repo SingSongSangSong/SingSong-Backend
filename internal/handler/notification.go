@@ -17,7 +17,7 @@ import (
 )
 
 // todo: https://firebase.google.com/docs/cloud-messaging/send-message?hl=ko#go
-// todo: 댓글 작성자/게시글 작성자한테는 알림을 보내면 안됨 + 그밖에 예외처리 필요 (+ 제목에 게시글 제목이나 댓글내용을 알려줘야하는지 생각해보기!)
+// todo: 댓글 작성자/게시글 작성자한테는 알림을 보내면 안됨(테스트 필요) + 그밖에 예외처리 필요(중요!!) (+ 제목에 게시글 제목이나 댓글내용을 알려줘야하는지 생각해보기!)
 // todo: 내 알림 조회 api
 
 type AnnouncementRequest struct {
@@ -217,12 +217,15 @@ func ToUniqueMemberIds(memberIds []int64) []int64 {
 }
 
 // 게시글에 그냥 댓글이 달렸다는 알림 => 게시글 작성자에게는 꼭 알림
-func NotifyCommentOnPost(db *sql.DB, firebaseApp *firebase.App, postId int64, commentContent string) {
+func NotifyCommentOnPost(db *sql.DB, firebaseApp *firebase.App, senderId int64, postId int64, commentContent string) {
 	post, err := mysql.Posts(
 		qm.Where("post_id = ? and deleted_at is null", postId),
 	).One(context.Background(), db)
 	if err != nil {
 		log.Printf("error fetching post: %v", err)
+		return
+	}
+	if post.MemberID == senderId {
 		return
 	}
 	receiverId := make([]int64, 1)
@@ -240,13 +243,16 @@ func NotifyCommentOnPost(db *sql.DB, firebaseApp *firebase.App, postId int64, co
 }
 
 // 게시글 대댓글 => 게시글 작성자와, 부모댓글/대댓글 작성자들에게 알림
-func NotifyRecommentOnPostComment(db *sql.DB, firebaseApp *firebase.App, parentPostCommentId int64, postId int64, commentContent string) {
+func NotifyRecommentOnPostComment(db *sql.DB, firebaseApp *firebase.App, senderId int64, parentPostCommentId int64, postId int64, commentContent string) {
 	// 게시글 작성자
 	post, err := mysql.Posts(
 		qm.Where("post_id = ? and deleted_at is null", postId),
 	).One(context.Background(), db)
 	if err != nil {
 		log.Printf("error fetching post: %v", err)
+		return
+	}
+	if post.MemberID == senderId {
 		return
 	}
 
@@ -270,10 +276,20 @@ func NotifyRecommentOnPostComment(db *sql.DB, firebaseApp *firebase.App, parentP
 
 	var receiverIds []int64
 	for _, v := range babyComments {
-		receiverIds = append(receiverIds, v.MemberID)
+		if v.MemberID != senderId { // senderId와 다른 멤버만 추가
+			receiverIds = append(receiverIds, v.MemberID)
+		}
 	}
-	receiverIds = append(receiverIds, post.MemberID)
-	receiverIds = append(receiverIds, parentComment.MemberID)
+	if post.MemberID != senderId {
+		receiverIds = append(receiverIds, post.MemberID)
+	}
+	if parentComment.MemberID != senderId {
+		receiverIds = append(receiverIds, parentComment.MemberID)
+	}
+
+	if len(receiverIds) == 0 || receiverIds == nil { // 알림 보낼게 없다면 리턴
+		return
+	}
 
 	receiverIds = ToUniqueMemberIds(receiverIds)
 
@@ -289,7 +305,7 @@ func NotifyRecommentOnPostComment(db *sql.DB, firebaseApp *firebase.App, parentP
 }
 
 // 노래 댓글에 답글이 달렸다는 알림 보내기 => 부모댓글/대댓글 작성자들에게 알림
-func NotifyRecommentOnSongComment(db *sql.DB, firebaseApp *firebase.App, parentCommentId int64, songId int64, commentContent string) {
+func NotifyRecommentOnSongComment(db *sql.DB, firebaseApp *firebase.App, senderId int64, parentCommentId int64, songId int64, commentContent string) {
 	// 부모댓글 작성자
 	parentComment, err := mysql.Comments(
 		qm.Where("comment_id = ? and deleted_at is null", parentCommentId),
@@ -310,9 +326,13 @@ func NotifyRecommentOnSongComment(db *sql.DB, firebaseApp *firebase.App, parentC
 
 	var receiverIds []int64
 	for _, v := range babyComments {
-		receiverIds = append(receiverIds, v.MemberID)
+		if v.MemberID != senderId {
+			receiverIds = append(receiverIds, v.MemberID)
+		}
 	}
-	receiverIds = append(receiverIds, parentComment.MemberID)
+	if parentComment.MemberID != senderId {
+		receiverIds = append(receiverIds, parentComment.MemberID)
+	}
 
 	receiverIds = ToUniqueMemberIds(receiverIds)
 
@@ -328,7 +348,7 @@ func NotifyRecommentOnSongComment(db *sql.DB, firebaseApp *firebase.App, parentC
 }
 
 // 게시글 좋아요 -> 게시글 작성자에게 알림
-func NotifyLikeOnPost(db *sql.DB, firebaseApp *firebase.App, postId int64, postTitle string) {
+func NotifyLikeOnPost(db *sql.DB, firebaseApp *firebase.App, senderId int64, postId int64, postTitle string) {
 	post, err := mysql.Posts(
 		qm.Where("post_id = ? and deleted_at is null", postId),
 	).One(context.Background(), db)
@@ -336,6 +356,10 @@ func NotifyLikeOnPost(db *sql.DB, firebaseApp *firebase.App, postId int64, postT
 		log.Printf("error fetching post: %v", err)
 		return
 	}
+	if post.MemberID == senderId {
+		return
+	}
+
 	receiverId := make([]int64, 1)
 	receiverId = append(receiverId, post.MemberID)
 
@@ -351,7 +375,7 @@ func NotifyLikeOnPost(db *sql.DB, firebaseApp *firebase.App, postId int64, postT
 }
 
 // 게시글 댓글 좋아요 -> 댓글 작성자에게 알림
-func NotifyLikeOnPostComment(db *sql.DB, firebaseApp *firebase.App, postCommentId int64, postId int64, commentContent string) {
+func NotifyLikeOnPostComment(db *sql.DB, firebaseApp *firebase.App, senderId int64, postCommentId int64, postId int64, commentContent string) {
 	postComment, err := mysql.PostComments(
 		qm.Where("post_comment_id = ? and deleted_at is null", postCommentId),
 	).One(context.Background(), db)
@@ -359,6 +383,10 @@ func NotifyLikeOnPostComment(db *sql.DB, firebaseApp *firebase.App, postCommentI
 		log.Printf("error fetching post comment: "+err.Error(), err)
 		return
 	}
+	if postComment.MemberID == senderId {
+		return
+	}
+
 	receiverId := make([]int64, 1)
 	receiverId = append(receiverId, postComment.MemberID)
 
@@ -374,7 +402,7 @@ func NotifyLikeOnPostComment(db *sql.DB, firebaseApp *firebase.App, postCommentI
 }
 
 // 노래 댓글 좋아요 -> 노래 댓글 작성자에게 알림
-func NotifyLikeOnSongComment(db *sql.DB, firebaseApp *firebase.App, songCommentId int64, songId int64, commentContent string) {
+func NotifyLikeOnSongComment(db *sql.DB, firebaseApp *firebase.App, senderId int64, songCommentId int64, songId int64, commentContent string) {
 	songComment, err := mysql.Comments(
 		qm.Where("comment_id = ? and deleted_at is null", songCommentId),
 	).One(context.Background(), db)
@@ -382,6 +410,10 @@ func NotifyLikeOnSongComment(db *sql.DB, firebaseApp *firebase.App, songCommentI
 		log.Printf("error fetching song comment: "+err.Error(), err)
 		return
 	}
+	if songComment.MemberID == senderId {
+		return
+	}
+
 	receiverId := make([]int64, 1)
 	receiverId = append(receiverId, songComment.MemberID)
 

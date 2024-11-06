@@ -596,7 +596,7 @@ func LikePost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 			return
 		}
 
-		go NotifyLikeOnPost(db, firebaseApp, postId, post.Title)
+		go NotifyLikeOnPost(db, firebaseApp, memberId.(int64), postId, post.Title)
 
 		pkg.BaseResponse(c, http.StatusOK, "success", post.Likes)
 		return

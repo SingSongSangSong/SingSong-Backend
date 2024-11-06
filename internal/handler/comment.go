@@ -97,7 +97,7 @@ func CommentOnSong(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 
 		if m.IsRecomment.Bool { //대댓글인경우
 			// 대댓글 달렸다고 알림 보내기
-			go NotifyRecommentOnSongComment(db, firebaseApp, m.ParentCommentID.Int64, m.SongInfoID, m.Content.String)
+			go NotifyRecommentOnSongComment(db, firebaseApp, memberId.(int64), m.ParentCommentID.Int64, m.SongInfoID, m.Content.String)
 		}
 		// 댓글 달기 성공시 댓글 정보 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", commentResponse)
@@ -472,7 +472,7 @@ func LikeComment(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 			return
 		}
 
-		go NotifyLikeOnSongComment(db, firebaseApp, commentId, comment.SongInfoID, comment.Content.String)
+		go NotifyLikeOnSongComment(db, firebaseApp, memberId.(int64), commentId, comment.SongInfoID, comment.Content.String)
 
 		pkg.BaseResponse(c, http.StatusOK, "success", comment.Likes.Int)
 		return
