@@ -26,6 +26,10 @@ type AWSConfig struct {
 	S3BucketName string
 }
 
+type NotificationConfig struct {
+	DeepLinkBase string
+}
+
 type AuthConfig struct {
 	SECRET_KEY                   string
 	KAKAO_REST_API_KEY           string
@@ -53,11 +57,12 @@ const (
 )
 
 var (
-	AuthConfigInstance     *AuthConfig
-	VectorDBConfigInstance *VectorDBConfig
-	GrpcConfigInstance     *GrpcConfig
-	Env                    string
-	AWSConfigInstance      *AWSConfig
+	AuthConfigInstance         *AuthConfig
+	VectorDBConfigInstance     *VectorDBConfig
+	GrpcConfigInstance         *GrpcConfig
+	Env                        string
+	AWSConfigInstance          *AWSConfig
+	NotificationConfigInstance *NotificationConfig
 )
 
 func init() {
@@ -80,6 +85,9 @@ func init() {
 	}
 
 	AWSConfigInstance = &AWSConfig{S3BucketName: os.Getenv("S3_BUCKET_NAME")}
+	NotificationConfigInstance = &NotificationConfig{
+		DeepLinkBase: os.Getenv("DEEP_LINK_BASE"),
+	}
 
 	AuthConfigInstance = &AuthConfig{
 		SECRET_KEY:                   os.Getenv("SECRET_KEY"),

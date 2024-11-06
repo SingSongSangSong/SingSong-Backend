@@ -481,12 +481,13 @@ definitions:
         type: string
       createdAt:
         type: string
+      deepLink:
+        type: string
       isRead:
         type: boolean
       notificationId:
         type: integer
       screenType:
-        description: 'todo: 딥링크?'
         type: string
       screenTypeId:
         type: integer

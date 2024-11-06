@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"SingSong-Server/conf"
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"context"
@@ -88,6 +89,18 @@ type NotificationMessage struct {
 }
 
 func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage NotificationMessage) {
+	deepLink := conf.NotificationConfigInstance.DeepLinkBase
+	if notificationMessage.ScreenType == HomeScreen {
+		deepLink = deepLink + "/home"
+	} else if notificationMessage.ScreenType == SongScreen {
+		deepLink = deepLink + "/song/" + strconv.FormatInt(notificationMessage.ScreenTypeId, 10)
+	} else if notificationMessage.ScreenType == PostScreen {
+		deepLink = deepLink + "/playground/" + strconv.FormatInt(notificationMessage.ScreenTypeId, 10)
+	} else {
+		log.Printf("invalid screen type")
+		return
+	}
+
 	ctx := context.Background()
 	client, err := firebaseApp.Messaging(ctx)
 	if err != nil {
@@ -127,7 +140,6 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 		}
 		batchTokens := registrationTokens[start:end]
 
-		//todo: 딥링크 추가
 		message := &messaging.MulticastMessage{
 			Notification: &messaging.Notification{
 				Title: notificationMessage.Title,
@@ -136,6 +148,7 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 			Data: map[string]string{
 				"screenType": string(notificationMessage.ScreenType),
 				"screenId":   strconv.FormatInt(notificationMessage.ScreenTypeId, 10),
+				"deepLink":   deepLink,
 			},
 			Android: &messaging.AndroidConfig{
 				Priority: "high",
@@ -175,7 +188,7 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 // 알림 허용을 하지 않은 사람도 앱 내에서 알림을 볼 수 있도록 하기 위해 따로 저장함
 func SaveNotificationHistory(db *sql.DB, notificationMessage NotificationMessage) {
 	ctx := context.Background()
-	if len(notificationMessage.ReceiverMemberIds) == 0 { // todo: 본인에게 보낸 알림을 제외하긴 해야 됨
+	if len(notificationMessage.ReceiverMemberIds) == 0 {
 		return
 	}
 
@@ -434,14 +447,14 @@ type NotificationPageResponse struct {
 }
 
 type NotificationResponse struct {
-	NotificationId int64  `json:"notificationId"`
-	Title          string `json:"title"`
-	Body           string `json:"body"`
-	//todo: 딥링크?
-	ScreenType   string    `json:"screenType"`
-	ScreenTypeId int64     `json:"screenTypeId"`
-	IsRead       bool      `json:"isRead"`
-	CreatedAt    time.Time `json:"createdAt"`
+	NotificationId int64     `json:"notificationId"`
+	Title          string    `json:"title"`
+	Body           string    `json:"body"`
+	DeepLink       string    `json:"deepLink"`
+	ScreenType     string    `json:"screenType"`
+	ScreenTypeId   int64     `json:"screenTypeId"`
+	IsRead         bool      `json:"isRead"`
+	CreatedAt      time.Time `json:"createdAt"`
 }
 
 // ListNotifications godoc
@@ -496,12 +509,23 @@ func ListNotifications(db *sql.DB) gin.HandlerFunc {
 
 		response := make([]NotificationResponse, 0, len(notifications))
 		for _, notification := range notifications {
+			deepLink := conf.NotificationConfigInstance.DeepLinkBase
+			if notification.ScreenType.String == string(HomeScreen) {
+				deepLink = deepLink + "/home"
+			} else if notification.ScreenType.String == string(SongScreen) {
+				deepLink = deepLink + "/song/" + strconv.FormatInt(notification.ScreenTypeID.Int64, 10)
+			} else if notification.ScreenType.String == string(PostScreen) {
+				deepLink = deepLink + "/playground/" + strconv.FormatInt(notification.ScreenTypeID.Int64, 10)
+			} else {
+				deepLink = ""
+			}
 			response = append(response, NotificationResponse{
 				NotificationId: notification.NotificationHistoryID,
 				Title:          notification.Title,
 				Body:           notification.Body,
 				ScreenType:     notification.ScreenType.String,
 				ScreenTypeId:   notification.ScreenTypeID.Int64,
+				DeepLink:       deepLink,
 				IsRead:         notification.IsRead.Bool,
 				CreatedAt:      notification.CreatedAt.Time,
 			})

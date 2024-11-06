@@ -5434,6 +5434,9 @@ const docTemplate = `{
                 "createdAt": {
                     "type": "string"
                 },
+                "deepLink": {
+                    "type": "string"
+                },
                 "isRead": {
                     "type": "boolean"
                 },
@@ -5441,7 +5444,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "screenType": {
-                    "description": "todo: 딥링크?",
                     "type": "string"
                 },
                 "screenTypeId": {
