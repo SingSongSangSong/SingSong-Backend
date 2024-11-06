@@ -347,6 +347,10 @@ func NotifyRecommentOnSongComment(db *sql.DB, firebaseApp *firebase.App, senderI
 		receiverIds = append(receiverIds, parentComment.MemberID)
 	}
 
+	if len(receiverIds) == 0 || receiverIds == nil { // 알림 보낼게 없다면 리턴
+		return
+	}
+
 	receiverIds = ToUniqueMemberIds(receiverIds)
 
 	notification := NotificationMessage{
