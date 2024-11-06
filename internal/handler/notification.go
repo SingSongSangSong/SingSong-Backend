@@ -538,3 +538,71 @@ func ListNotifications(db *sql.DB) gin.HandlerFunc {
 		pkg.BaseResponse(c, http.StatusOK, "success", NotificationPageResponse{response, response[len(response)-1].NotificationId})
 	}
 }
+
+type TestNotificationRequest struct {
+	Title       string `json:"title"`
+	Body        string `json:"body"`
+	DeviceToken string `json:"deviceToken"`
+}
+
+// TestNotification godoc
+// @Summary      알림이 잘 전송되는지 테스트
+// @Description  알림이 잘 전송되는지 테스트
+// @Tags         Notification
+// @Accept       json
+// @Produce      json
+// @Param        TestNotificationRequest  body   TestNotificationRequest  true  "알림 내용"
+// @Success      200 {object} pkg.BaseResponseStruct{} "성공"
+// @Router       /v1/notifications/test [post]
+func TestNotification(firebaseApp *firebase.App) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		testRequest := &TestNotificationRequest{}
+		if err := c.ShouldBindJSON(&testRequest); err != nil {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+			return
+		}
+
+		ctx := context.Background()
+		client, err := firebaseApp.Messaging(ctx)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error getting Messaging client: "+err.Error(), nil)
+			return
+		}
+
+		deepLink := conf.NotificationConfigInstance.DeepLinkBase + "/home"
+		message := &messaging.Message{
+			Notification: &messaging.Notification{
+				Title: testRequest.Title,
+				Body:  testRequest.Body,
+			},
+			Data: map[string]string{
+				"screenType": string(HomeScreen),
+				"screenId":   strconv.FormatInt(0, 10),
+				"deepLink":   deepLink,
+			},
+			Android: &messaging.AndroidConfig{
+				Priority: "high",
+				Notification: &messaging.AndroidNotification{
+					Sound:     "default",
+					ChannelID: "default-channel-id",
+				},
+			},
+			APNS: &messaging.APNSConfig{
+				Payload: &messaging.APNSPayload{
+					Aps: &messaging.Aps{
+						Sound: "default",
+					},
+				},
+			},
+			Token: testRequest.DeviceToken,
+		}
+
+		_, err = client.Send(ctx, message)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error sending notification - "+err.Error(), nil)
+			return
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "success", nil)
+	}
+}

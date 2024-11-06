@@ -875,6 +875,15 @@ definitions:
           $ref: '#/definitions/handler.SongSearchInfoV2Response'
         type: array
     type: object
+  handler.TestNotificationRequest:
+    properties:
+      body:
+        type: string
+      deviceToken:
+        type: string
+      title:
+        type: string
+    type: object
   handler.TotalChartResponse:
     properties:
       female:
@@ -2094,6 +2103,28 @@ paths:
       security:
       - BearerAuth: []
       summary: 내게 온 알림 목록 조회 (커서 기반 페이징)
+      tags:
+      - Notification
+  /v1/notifications/test:
+    post:
+      consumes:
+      - application/json
+      description: 알림이 잘 전송되는지 테스트
+      parameters:
+      - description: 알림 내용
+        in: body
+        name: TestNotificationRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.TestNotificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 알림이 잘 전송되는지 테스트
       tags:
       - Notification
   /v1/posts:

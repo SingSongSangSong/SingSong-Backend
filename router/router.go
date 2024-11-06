@@ -240,6 +240,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	{
 		notification.POST("/announcements", handler.SendAnnouncement(db, firebaseApp))
 		notification.GET("/my", middleware.AuthMiddleware(db), handler.ListNotifications(db))
+		notification.POST("/test", handler.TestNotification(firebaseApp))
 	}
 
 	// 스웨거 설정

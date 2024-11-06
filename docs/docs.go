@@ -1321,6 +1321,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/notifications/test": {
+            "post": {
+                "description": "알림이 잘 전송되는지 테스트",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "알림이 잘 전송되는지 테스트",
+                "parameters": [
+                    {
+                        "description": "알림 내용",
+                        "name": "TestNotificationRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.TestNotificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/posts": {
             "get": {
                 "security": [
@@ -6034,6 +6068,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.SongSearchInfoV2Response"
                     }
+                }
+            }
+        },
+        "handler.TestNotificationRequest": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "deviceToken": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },
