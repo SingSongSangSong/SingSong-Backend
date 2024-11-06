@@ -14,11 +14,11 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // todo: https://firebase.google.com/docs/cloud-messaging/send-message?hl=ko#go
 // todo: 댓글 작성자/게시글 작성자한테는 알림을 보내면 안됨(테스트 필요) + 그밖에 예외처리 필요(중요!!) (+ 제목에 게시글 제목이나 댓글내용을 알려줘야하는지 생각해보기!)
-// todo: 내 알림 조회 api
 
 type AnnouncementRequest struct {
 	Title string `json:"title"`
@@ -426,4 +426,87 @@ func NotifyLikeOnSongComment(db *sql.DB, firebaseApp *firebase.App, senderId int
 	}
 	SendNotification(db, firebaseApp, notification)
 	SaveNotificationHistory(db, notification)
+}
+
+type NotificationPageResponse struct {
+	Notifications []NotificationResponse `json:"notifications"`
+	LastCursor    int64                  `json:"lastCursor"`
+}
+
+type NotificationResponse struct {
+	NotificationId int64  `json:"notificationId"`
+	Title          string `json:"title"`
+	Body           string `json:"body"`
+	//todo: 딥링크?
+	ScreenType   string    `json:"screenType"`
+	ScreenTypeId int64     `json:"screenTypeId"`
+	IsRead       bool      `json:"isRead"`
+	CreatedAt    time.Time `json:"createdAt"`
+}
+
+// ListNotifications godoc
+// @Summary      내게 온 알림 목록 조회 (커서 기반 페이징)
+// @Description  내게 온 알림 목록 조회 (커서 기반 페이징)
+// @Tags         Notification
+// @Accept       json
+// @Produce      json
+// @Param        cursor query int false "마지막에 조회했던 커서의 notificationId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 알림부터 조회"
+// @Param        size query int false "한번에 조회할 알림 개수. 입력하지 않는다면 기본값인 20개씩 조회"
+// @Success      200 {object} pkg.BaseResponseStruct{data=NotificationPageResponse} "성공"
+// @Failure      400 "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
+// @Failure      500 "서버 에러일 경우 500 실패"
+// @Router       /v1/notifications/my [get]
+// @Security BearerAuth
+func ListNotifications(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		memberId, exists := c.Get("memberId")
+		if !exists {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
+			return
+		}
+
+		sizeStr := c.DefaultQuery("size", defaultSize)
+		sizeInt, err := strconv.Atoi(sizeStr)
+		if err != nil || sizeInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid size parameter", nil)
+			return
+		}
+
+		cursorStr := c.DefaultQuery("cursor", "9223372036854775807") //int64 최대값
+		cursorInt, err := strconv.ParseInt(cursorStr, 10, 64)
+		if err != nil || cursorInt < 0 {
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - invalid cursor parameter", nil)
+			return
+		}
+
+		notifications, err := mysql.NotificationHistories(
+			qm.Where("member_id = ?", memberId),
+			qm.And("notification_history_id < ?", cursorInt),
+			qm.OrderBy("notification_history_id desc"),
+			qm.Limit(sizeInt),
+		).All(c.Request.Context(), db)
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			return
+		}
+		if len(notifications) == 0 {
+			pkg.BaseResponse(c, http.StatusOK, "success", NotificationPageResponse{[]NotificationResponse{}, 0})
+			return
+		}
+
+		response := make([]NotificationResponse, 0, len(notifications))
+		for _, notification := range notifications {
+			response = append(response, NotificationResponse{
+				NotificationId: notification.NotificationHistoryID,
+				Title:          notification.Title,
+				Body:           notification.Body,
+				ScreenType:     notification.ScreenType.String,
+				ScreenTypeId:   notification.ScreenTypeID.Int64,
+				IsRead:         notification.IsRead.Bool,
+				CreatedAt:      notification.CreatedAt.Time,
+			})
+		}
+
+		pkg.BaseResponse(c, http.StatusOK, "success", NotificationPageResponse{response, response[len(response)-1].NotificationId})
+	}
 }

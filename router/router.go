@@ -5,8 +5,8 @@ import (
 	"SingSong-Server/internal/handler"
 	"SingSong-Server/middleware"
 	"database/sql"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	firebase "firebase.google.com/go/v4"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
@@ -239,6 +239,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	notification := r.Group("/api/v1/notifications")
 	{
 		notification.POST("/announcements", handler.SendAnnouncement(db, firebaseApp))
+		notification.GET("/my", middleware.AuthMiddleware(db), handler.ListNotifications(db))
 	}
 
 	// 스웨거 설정
