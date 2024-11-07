@@ -16,7 +16,7 @@ COPY . .
 
 # Enable Go modules and build the application
 RUN go mod tidy
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags="-s -w" -o bin/main main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -ldflags="-s -w" -o bin/main main.go
 
 # Optional: Compress the binary with UPX
 RUN upx --best --lzma bin/main
