@@ -216,9 +216,9 @@ func testFirebaseFile() {
 	// project_id 로그 출력
 	if credentials.ProjectID == "" {
 		log.Println("Project ID is not set in the JSON file.")
+		log.Printf("JSON file content: %s", string(content))
 	} else {
 		log.Printf("Project ID: %s\n", credentials.ProjectID)
-		log.Printf("JSON file content: %s", string(content))
 	}
 
 	// 애플리케이션 실행 로직 추가
