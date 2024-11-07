@@ -3,6 +3,7 @@ package conf
 import (
 	"context"
 	"database/sql"
+	firebase "firebase.google.com/go/v4"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -23,6 +24,10 @@ type GrpcConfig struct {
 
 type AWSConfig struct {
 	S3BucketName string
+}
+
+type NotificationConfig struct {
+	DeepLinkBase string
 }
 
 type AuthConfig struct {
@@ -52,11 +57,12 @@ const (
 )
 
 var (
-	AuthConfigInstance     *AuthConfig
-	VectorDBConfigInstance *VectorDBConfig
-	GrpcConfigInstance     *GrpcConfig
-	Env                    string
-	AWSConfigInstance      *AWSConfig
+	AuthConfigInstance         *AuthConfig
+	VectorDBConfigInstance     *VectorDBConfig
+	GrpcConfigInstance         *GrpcConfig
+	Env                        string
+	AWSConfigInstance          *AWSConfig
+	NotificationConfigInstance *NotificationConfig
 )
 
 func init() {
@@ -79,6 +85,9 @@ func init() {
 	}
 
 	AWSConfigInstance = &AWSConfig{S3BucketName: os.Getenv("S3_BUCKET_NAME")}
+	NotificationConfigInstance = &NotificationConfig{
+		DeepLinkBase: os.Getenv("DEEP_LINK_BASE"),
+	}
 
 	AuthConfigInstance = &AuthConfig{
 		SECRET_KEY:                   os.Getenv("SECRET_KEY"),
@@ -115,7 +124,7 @@ func init() {
 	}
 }
 
-func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection, milvusClient *client.Client, s3Client **s3.Client) {
+func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection, milvusClient *client.Client, firebaseApp **firebase.App, s3Client **s3.Client) {
 	var err error
 
 	// MySQL 연결 설정
@@ -174,4 +183,10 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 		log.Fatalf("failed to load configuration, %v", err)
 	}
 	*s3Client = s3.NewFromConfig(cfg)
+
+	// export 환경변수 추가했었다
+	*firebaseApp, err = firebase.NewApp(ctx, nil)
+	if err != nil {
+		log.Fatalf("Failed to initialize firebase: %v", err)
+	}
 }

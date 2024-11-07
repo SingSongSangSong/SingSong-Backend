@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"errors"
+	firebase "firebase.google.com/go/v4"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
@@ -51,7 +52,7 @@ type PostCommentResponse struct {
 // @Success      200 {object} pkg.BaseResponseStruct{data=PostCommentResponse} "성공"
 // @Router       /v1/posts/comments [post]
 // @Security BearerAuth
-func CommentOnPost(db *sql.DB) gin.HandlerFunc {
+func CommentOnPost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// CommentRequest 받기
 		commentRequest := &PostCommentRequest{}
@@ -141,6 +142,14 @@ func CommentOnPost(db *sql.DB) gin.HandlerFunc {
 			Likes:               postComment.Likes,
 			SongOnPostComment:   make([]SongOnPost, 0),
 			PostRecommentCount:  0,
+		}
+
+		if postComment.IsRecomment.Bool { //대댓글인경우
+			// 대댓글 달렸다고 알림 보내기
+			go NotifyRecommentOnPostComment(db, firebaseApp, memberId.(int64), postComment.ParentPostCommentID.Int64, postComment.PostID, postComment.Content.String)
+		} else { //부모댓글인 경우
+			// 댓글이 달렸다고 알림 보내기
+			go NotifyCommentOnPost(db, firebaseApp, memberId.(int64), commentRequest.PostId, commentRequest.Content)
 		}
 
 		// 댓글 달기 성공시 댓글 정보 반환
@@ -640,7 +649,7 @@ func ReportPostComment(db *sql.DB) gin.HandlerFunc {
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
 // @Router       /v1/posts/comments/{postCommentId}/like [post]
 // @Security BearerAuth
-func LikePostComment(db *sql.DB) gin.HandlerFunc {
+func LikePostComment(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
@@ -715,6 +724,8 @@ func LikePostComment(db *sql.DB) gin.HandlerFunc {
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
+
+		go NotifyLikeOnPostComment(db, firebaseApp, memberId.(int64), postCommentId, postComment.PostID, postComment.Content.String)
 
 		pkg.BaseResponse(c, http.StatusOK, "success", postComment.Likes)
 		return
