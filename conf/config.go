@@ -3,6 +3,7 @@ package conf
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	firebase "firebase.google.com/go/v4"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -189,4 +190,36 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Failed to initialize firebase: %v", err)
 	}
+
+	testFirebaseFile()
+}
+
+func testFirebaseFile() {
+	filePath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Printf("Error reading file: %v", err)
+	}
+
+	// JSON 구조체 정의
+	var credentials struct {
+		ProjectID string `json:"project_id"`
+	}
+
+	// JSON 파싱
+	err = json.Unmarshal(content, &credentials)
+	if err != nil {
+		log.Printf("Error parsing JSON: %v", err)
+	}
+
+	// project_id 로그 출력
+	if credentials.ProjectID == "" {
+		log.Println("Project ID is not set in the JSON file.")
+	} else {
+		log.Printf("Project ID: %s\n", credentials.ProjectID)
+	}
+
+	// 애플리케이션 실행 로직 추가
+	fmt.Println("Application is running...")
 }
