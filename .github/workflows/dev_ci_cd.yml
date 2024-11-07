@@ -49,6 +49,7 @@ jobs:
         run: |
           sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST << EOF
           echo "Connected to Raspberry Pi"
+          export SERVER_MODE=test
           nohup /home/sunwupark/Downloads/SingSong/golang_server_run.sh $DOCKER_IMAGE > golang_server_run.log 2>&1 &
           echo "Docker update script started in the background."
           EOF

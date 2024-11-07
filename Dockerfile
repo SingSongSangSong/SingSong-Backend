@@ -31,6 +31,8 @@ COPY --from=builder /etc/passwd /etc/passwd
 # Copy the compiled Go binary
 COPY --from=builder /usr/src/app/bin/main ./main
 
+ENV SERVER_MODE=test
+
 # Set the user (non-root user with ID)
 USER 1000
 
