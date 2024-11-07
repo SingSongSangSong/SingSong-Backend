@@ -1,6 +1,6 @@
 # Builder stage
 FROM golang:1.22-alpine as builder
-RUN apk update && apk add --no-cache git ca-certificates upx
+RUN apk update && apk add --no-cache git ca-certificates upx tzdata
 
 WORKDIR /usr/src/app
 ENV GO111MODULE=on
@@ -32,7 +32,7 @@ COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /usr/src/app/bin/main ./main
 
 ENV SERVER_MODE=test
-
+ENV TZ=Asia/Seoul
 # Set the user (non-root user with ID)
 USER 1000
 

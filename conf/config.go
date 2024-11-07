@@ -79,7 +79,7 @@ func init() {
 			log.Printf("Error loading .env file during auth configuration.")
 		}
 	} else if Env == TestMode {
-		log.Println("Running in production mode, skip .env file loading.")
+		log.Println("Running in test mode, skip .env file loading.")
 	} else {
 		log.Println("Running in production mode, skip .env file loading.")
 	}
