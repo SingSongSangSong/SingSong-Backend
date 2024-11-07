@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"SingSong-Server/conf"
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"context"
@@ -19,7 +18,7 @@ import (
 )
 
 // todo: https://firebase.google.com/docs/cloud-messaging/send-message?hl=ko#go
-// todo: 댓글 작성자/게시글 작성자한테는 알림을 보내면 안됨(테스트 필요) + 그밖에 예외처리 필요(중요!!) (+ 제목에 게시글 제목이나 댓글내용을 알려줘야하는지 생각해보기!)
+// todo: 제목에 게시글 제목이나 댓글내용을 알려줘야하는지 생각해보기!
 
 type AnnouncementRequest struct {
 	Title string `json:"title"`
@@ -89,13 +88,22 @@ type NotificationMessage struct {
 }
 
 func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage NotificationMessage) {
-	deepLink := conf.NotificationConfigInstance.DeepLinkBase
+	var deepLink string
+	var err error
 	if notificationMessage.ScreenType == HomeScreen {
-		deepLink = deepLink + "/home"
+		deepLink = CreateHomeDeepLink()
 	} else if notificationMessage.ScreenType == SongScreen {
-		deepLink = deepLink + "/song/" + strconv.FormatInt(notificationMessage.ScreenTypeId, 10)
+		deepLink, err = CreateSongDeepLink(db, notificationMessage.ScreenTypeId)
+		if err != nil {
+			log.Printf("error creating song deepLink: %v", err)
+			return
+		}
 	} else if notificationMessage.ScreenType == PostScreen {
-		deepLink = deepLink + "/playground/" + strconv.FormatInt(notificationMessage.ScreenTypeId, 10)
+		deepLink, err = CreatePostDeepLink(db, notificationMessage.ScreenTypeId)
+		if err != nil {
+			log.Printf("error creating post deepLink: %v", err)
+			return
+		}
 	} else {
 		log.Printf("invalid screen type")
 		return
@@ -513,13 +521,21 @@ func ListNotifications(db *sql.DB) gin.HandlerFunc {
 
 		response := make([]NotificationResponse, 0, len(notifications))
 		for _, notification := range notifications {
-			deepLink := conf.NotificationConfigInstance.DeepLinkBase
+			var deepLink string
 			if notification.ScreenType.String == string(HomeScreen) {
-				deepLink = deepLink + "/home"
+				deepLink = CreateHomeDeepLink()
 			} else if notification.ScreenType.String == string(SongScreen) {
-				deepLink = deepLink + "/song/" + strconv.FormatInt(notification.ScreenTypeID.Int64, 10)
+				deepLink, err = CreateSongDeepLink(db, notification.ScreenTypeID.Int64)
+				if err != nil {
+					log.Printf("error creating song deepLink: %v", err)
+					deepLink = ""
+				}
 			} else if notification.ScreenType.String == string(PostScreen) {
-				deepLink = deepLink + "/playground/" + strconv.FormatInt(notification.ScreenTypeID.Int64, 10)
+				deepLink, err = CreatePostDeepLink(db, notification.ScreenTypeID.Int64)
+				if err != nil {
+					log.Printf("error creating post deepLink: %v", err)
+					deepLink = ""
+				}
 			} else {
 				deepLink = ""
 			}
@@ -554,7 +570,7 @@ type TestNotificationRequest struct {
 // @Param        TestNotificationRequest  body   TestNotificationRequest  true  "알림 내용"
 // @Success      200 {object} pkg.BaseResponseStruct{} "성공"
 // @Router       /v1/notifications/test [post]
-func TestNotification(firebaseApp *firebase.App) gin.HandlerFunc {
+func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		testRequest := &TestNotificationRequest{}
 		if err := c.ShouldBindJSON(&testRequest); err != nil {
@@ -569,7 +585,15 @@ func TestNotification(firebaseApp *firebase.App) gin.HandlerFunc {
 			return
 		}
 
-		deepLink := conf.NotificationConfigInstance.DeepLinkBase + "/home"
+		deepLink, err := CreateSongDeepLink(db, 15818)
+		//deepLink, err := CreatePostDeepLink(db, 84)
+		//deepLink := CreateHomeDeepLink()
+		if err != nil {
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error "+err.Error(), nil)
+			return
+		}
+		log.Printf("deepLink: %v", deepLink)
+
 		message := &messaging.Message{
 			Notification: &messaging.Notification{
 				Title: testRequest.Title,
