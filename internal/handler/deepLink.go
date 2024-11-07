@@ -21,7 +21,7 @@ func CreateSongDeepLink(db *sql.DB, songInfoId int64) (string, error) {
 
 	// 문자열 생성
 	result := fmt.Sprintf(
-		"%ssong?songId=%d&&songName=%s&&singerName=%s&&album=%s&&melonLink=%s&&isMr=%t&&isLive=%t",
+		"%shome/song?songId=%d&&songName=%s&&singerName=%s&&album=%s&&melonLink=%s&&isMr=%t&&isLive=%t",
 		conf.NotificationConfigInstance.DeepLinkBase,
 		one.SongInfoID,
 		one.SongName,
@@ -58,7 +58,7 @@ func CreatePostDeepLink(db *sql.DB, postId int64) (string, error) {
 
 	// 문자열 생성
 	result := fmt.Sprintf(
-		"%splayground?postId=%d&&title=%s&&content=%s&&createdAt=%s&&nickname=%s&&likes=%d&&commentCount=%d",
+		"%splayground/post?postId=%d&&title=%s&&content=%s&&createdAt=%s&&nickname=%s&&likes=%d&&commentCount=%d",
 		conf.NotificationConfigInstance.DeepLinkBase,
 		one.PostID,
 		url.QueryEscape(one.Title),
