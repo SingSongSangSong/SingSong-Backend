@@ -249,7 +249,7 @@ func NotifyCommentOnPost(db *sql.DB, firebaseApp *firebase.App, senderId int64, 
 	if post.MemberID == senderId {
 		return
 	}
-	receiverId := make([]int64, 1)
+	receiverId := make([]int64, 0, 1)
 	receiverId = append(receiverId, post.MemberID)
 
 	notification := NotificationMessage{
@@ -385,7 +385,7 @@ func NotifyLikeOnPost(db *sql.DB, firebaseApp *firebase.App, senderId int64, pos
 		return
 	}
 
-	receiverId := make([]int64, 1)
+	receiverId := make([]int64, 0, 1)
 	receiverId = append(receiverId, post.MemberID)
 
 	notification := NotificationMessage{
@@ -412,7 +412,7 @@ func NotifyLikeOnPostComment(db *sql.DB, firebaseApp *firebase.App, senderId int
 		return
 	}
 
-	receiverId := make([]int64, 1)
+	receiverId := make([]int64, 0, 1)
 	receiverId = append(receiverId, postComment.MemberID)
 
 	notification := NotificationMessage{
@@ -439,7 +439,7 @@ func NotifyLikeOnSongComment(db *sql.DB, firebaseApp *firebase.App, senderId int
 		return
 	}
 
-	receiverId := make([]int64, 1)
+	receiverId := make([]int64, 0, 1)
 	receiverId = append(receiverId, songComment.MemberID)
 
 	notification := NotificationMessage{
