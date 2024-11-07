@@ -1,23 +1,41 @@
-# Use the official Golang image as a build stage
-FROM golang:1.22
+# Builder stage
+FROM golang:1.22-alpine as builder
+RUN apk update && apk add --no-cache git ca-certificates upx
 
-# Set the Current Working Directory inside the container
-WORKDIR /app
+WORKDIR /usr/src/app
+ENV GO111MODULE=on
+ENV GOPROXY=https://proxy.golang.org,direct
 
-# Copy go.mod and go.sum files to the container
+# Copy go.mod and go.sum for dependency resolution
 COPY go.mod go.sum ./
-
-# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
+RUN go mod verify
 
-# Copy the rest of the source code into the container
+# Copy the rest of the application source code
 COPY . .
 
-# Set environment variable to test mode
-ENV SERVER_MODE=test
+# Enable Go modules and build the application
+RUN go mod tidy
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -ldflags="-s -w" -o bin/main main.go
 
-# Expose port 8080 to the outside world
+# Optional: Compress the binary with UPX
+RUN upx --best --lzma bin/main
+
+# Executable image stage
+FROM scratch
+
+# Copy certificates and user information
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /etc/passwd /etc/passwd
+
+# Copy the compiled Go binary
+COPY --from=builder /usr/src/app/bin/main ./main
+
+# Set the user (non-root user with ID)
+USER 1000
+
+# Expose the application's port
 EXPOSE 8080
 
-# Command to run the Go application
-CMD ["go", "run", "main.go"]
+# Run the compiled binary
+ENTRYPOINT ["./main"]
