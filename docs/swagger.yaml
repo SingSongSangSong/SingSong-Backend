@@ -1,5 +1,12 @@
 basePath: /api
 definitions:
+  handler.AnnouncementRequest:
+    properties:
+      body:
+        type: string
+      title:
+        type: string
+    type: object
   handler.ChartResponse:
     properties:
       artistName:
@@ -459,6 +466,34 @@ definitions:
       lastCursor:
         type: integer
     type: object
+  handler.NotificationPageResponse:
+    properties:
+      lastCursor:
+        type: integer
+      notifications:
+        items:
+          $ref: '#/definitions/handler.NotificationResponse'
+        type: array
+    type: object
+  handler.NotificationResponse:
+    properties:
+      body:
+        type: string
+      createdAt:
+        type: string
+      deepLink:
+        type: string
+      isRead:
+        type: boolean
+      notificationId:
+        type: integer
+      screenType:
+        type: string
+      screenTypeId:
+        type: integer
+      title:
+        type: string
+    type: object
   handler.PlaylistAddRequest:
     properties:
       songId:
@@ -753,8 +788,6 @@ definitions:
         type: string
       melonLink:
         type: string
-      recordingLink:
-        type: string
       singerName:
         type: string
       songName:
@@ -841,6 +874,15 @@ definitions:
         items:
           $ref: '#/definitions/handler.SongSearchInfoV2Response'
         type: array
+    type: object
+  handler.TestNotificationRequest:
+    properties:
+      body:
+        type: string
+      deviceToken:
+        type: string
+      title:
+        type: string
     type: object
   handler.TotalChartResponse:
     properties:
@@ -2005,6 +2047,86 @@ paths:
       summary: 멤버 회원 탈퇴
       tags:
       - Member
+  /v1/notifications/announcements:
+    post:
+      consumes:
+      - application/json
+      description: 공지사항 전송
+      parameters:
+      - description: 알림 내용
+        in: body
+        name: AnnouncementRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AnnouncementRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 디바이스 토큰이 활성화된 모든 유저에게 공지사항 전송
+      tags:
+      - Notification
+  /v1/notifications/my:
+    get:
+      consumes:
+      - application/json
+      description: 내게 온 알림 목록 조회 (커서 기반 페이징)
+      parameters:
+      - description: 마지막에 조회했던 커서의 notificationId(이전 요청에서 lastCursor값을 주면 됨), 없다면
+          default로 가장 최신 알림부터 조회
+        in: query
+        name: cursor
+        type: integer
+      - description: 한번에 조회할 알림 개수. 입력하지 않는다면 기본값인 20개씩 조회
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            allOf:
+            - $ref: '#/definitions/pkg.BaseResponseStruct'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.NotificationPageResponse'
+              type: object
+        "400":
+          description: query param 값이 들어왔는데, 숫자가 아니라면 400 실패
+        "500":
+          description: 서버 에러일 경우 500 실패
+      security:
+      - BearerAuth: []
+      summary: 내게 온 알림 목록 조회 (커서 기반 페이징)
+      tags:
+      - Notification
+  /v1/notifications/test:
+    post:
+      consumes:
+      - application/json
+      description: 알림이 잘 전송되는지 테스트
+      parameters:
+      - description: 알림 내용
+        in: body
+        name: TestNotificationRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.TestNotificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 성공
+          schema:
+            $ref: '#/definitions/pkg.BaseResponseStruct'
+      summary: 알림이 잘 전송되는지 테스트
+      tags:
+      - Notification
   /v1/posts:
     get:
       consumes:

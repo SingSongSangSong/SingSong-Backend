@@ -1227,6 +1227,134 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/notifications/announcements": {
+            "post": {
+                "description": "공지사항 전송",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "디바이스 토큰이 활성화된 모든 유저에게 공지사항 전송",
+                "parameters": [
+                    {
+                        "description": "알림 내용",
+                        "name": "AnnouncementRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.AnnouncementRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/notifications/my": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "내게 온 알림 목록 조회 (커서 기반 페이징)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "내게 온 알림 목록 조회 (커서 기반 페이징)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "마지막에 조회했던 커서의 notificationId(이전 요청에서 lastCursor값을 주면 됨), 없다면 default로 가장 최신 알림부터 조회",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "한번에 조회할 알림 개수. 입력하지 않는다면 기본값인 20개씩 조회",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/pkg.BaseResponseStruct"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/handler.NotificationPageResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "query param 값이 들어왔는데, 숫자가 아니라면 400 실패"
+                    },
+                    "500": {
+                        "description": "서버 에러일 경우 500 실패"
+                    }
+                }
+            }
+        },
+        "/v1/notifications/test": {
+            "post": {
+                "description": "알림이 잘 전송되는지 테스트",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "알림이 잘 전송되는지 테스트",
+                "parameters": [
+                    {
+                        "description": "알림 내용",
+                        "name": "TestNotificationRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.TestNotificationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "성공",
+                        "schema": {
+                            "$ref": "#/definitions/pkg.BaseResponseStruct"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/posts": {
             "get": {
                 "security": [
@@ -4601,6 +4729,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handler.AnnouncementRequest": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.ChartResponse": {
             "type": "object",
             "properties": {
@@ -5306,6 +5445,49 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.NotificationPageResponse": {
+            "type": "object",
+            "properties": {
+                "lastCursor": {
+                    "type": "integer"
+                },
+                "notifications": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.NotificationResponse"
+                    }
+                }
+            }
+        },
+        "handler.NotificationResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deepLink": {
+                    "type": "string"
+                },
+                "isRead": {
+                    "type": "boolean"
+                },
+                "notificationId": {
+                    "type": "integer"
+                },
+                "screenType": {
+                    "type": "string"
+                },
+                "screenTypeId": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "handler.PlaylistAddRequest": {
             "type": "object",
             "properties": {
@@ -5756,9 +5938,6 @@ const docTemplate = `{
                 "melonLink": {
                     "type": "string"
                 },
-                "recordingLink": {
-                    "type": "string"
-                },
                 "singerName": {
                     "type": "string"
                 },
@@ -5889,6 +6068,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handler.SongSearchInfoV2Response"
                     }
+                }
+            }
+        },
+        "handler.TestNotificationRequest": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "deviceToken": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         },

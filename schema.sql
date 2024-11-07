@@ -333,19 +333,6 @@ ALTER TABLE llm_search_log
     ADD CONSTRAINT fk_llm_search_log_member_id
     FOREIGN KEY (member_id) REFERENCES member(member_id);
 
-CREATE TABALE user_device_token (
-    user_device_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    member_id BIGINT NOT NULL,
-    device_token VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL DEFAULT NULL
-);
-
-ALTER TABLE user_device_token
-    ADD CONSTRAINT fk_member_id
-    FOREIGN KEY (member_id) REFERENCES member(member_id)
-
 ALTER TABLE song_info
 DROP COLUMN tags,
 DROP COLUMN artist_id,
@@ -446,3 +433,31 @@ CREATE TABLE song_recording (
     FOREIGN KEY (song_info_id) REFERENCES song_info(song_info_id) ON DELETE CASCADE,
     FOREIGN KEY (member_id) REFERENCES member(member_id) ON DELETE CASCADE
 );
+
+
+CREATE TABLE member_device_token (
+     member_device_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+     member_id BIGINT NOT NULL,
+     device_token VARCHAR(255) NOT NULL,
+     is_activate BOOL DEFAULT TRUE,
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     deleted_at TIMESTAMP NULL DEFAULT NULL
+);
+
+ALTER TABLE member_device_token
+    ADD CONSTRAINT fk_member_device_token_member_id
+        FOREIGN KEY (member_id) REFERENCES member(member_id);
+
+CREATE TABLE notification_history (
+    notification_history_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    body VARCHAR(255) NOT NULL,
+    screen_type VARCHAR(10),
+    screen_type_id BIGINT,
+    is_read BOOL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL
+)
