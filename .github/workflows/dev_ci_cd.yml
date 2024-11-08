@@ -2,7 +2,7 @@ name: Go
 
 on:
   push:
-    branches: ["feat/#235"]
+    branches: ["develop_for_rasp"]
 
 jobs:
   build:

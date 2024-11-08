@@ -33,7 +33,7 @@ RUN go mod tidy
 # - GOOS=linux GOARCH=arm64: 리눅스 및 ARM64 환경에 맞춰 빌드합니다.
 # - -ldflags="-s -w": 디버그 정보를 제거하여 바이너리 파일 크기를 줄입니다.
 # - -o bin/main: 빌드된 실행 파일을 지정된 위치에 저장합니다.
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -v -ldflags="-s -w" -o bin/main main.go | tee build.log
+RUN CGO_ENABLED=0 go build -o bin/main main.go
 
 # Optional: 실행 파일을 압축하여 크기를 줄입니다.
 # - upx --best --lzma: UPX를 사용해 최적의 압축을 적용하고, LZMA 알고리즘을 사용하여 추가 압축합니다.
@@ -47,7 +47,6 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 # 타임존 정보 복사
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
-
 # 빌드 단계에서 생성된 실행 파일을 최종 이미지에 복사합니다.
 COPY --from=builder /usr/src/app/bin/main ./main
 
