@@ -64,7 +64,7 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 					COUNT(DISTINCT c.comment_id) AS comment_count,
 					COUNT(DISTINCT ks.keep_song_id) AS keep_count,
 					EXISTS (
-						SELECT 1 FROM keep_song WHERE song_info_id = si.song_info_id AND keep_list_id IN (
+						SELECT 1 FROM keep_song WHERE song_info_id = si.song_info_id AND deleted_at IS NULL AND keep_list_id IN (
 							SELECT keep_list_id FROM keep_list WHERE member_id = ? AND deleted_at IS NULL
 						)
 					) AS is_keep
