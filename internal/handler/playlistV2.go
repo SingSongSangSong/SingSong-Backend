@@ -158,6 +158,8 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 				KeepSongId:        keepSongId,
 				LyricsYoutubeLink: keepSong.LyricsYoutubeLink.String,
 				TJYoutubeLink:     keepSong.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(keepSong.LyricsYoutubeLink.String),
+				TJVideoID:         ExtractVideoID(keepSong.TJYoutubeLink.String),
 			}
 			keepSongs = append(keepSongs, playlistAddResponse)
 		}

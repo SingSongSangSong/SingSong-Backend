@@ -28,6 +28,8 @@ type songInfoResponse struct {
 	MelonLink         string   `json:"melonLink"`
 	LyricsYoutubeLink string   `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string   `json:"tjYoutubeLink"`
+	LyricsVideoID     string   `json:"lyricsVideoId"`
+	TJVideoID         string   `json:"tjVideoId"`
 }
 
 // GetSongInfo godoc
@@ -110,6 +112,8 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			MelonLink:         CreateMelonLinkByMelonSongId(one.MelonSongID),
 			LyricsYoutubeLink: one.LyricsVideoLink.String,
 			TJYoutubeLink:     one.TJYoutubeLink.String,
+			LyricsVideoID:     ExtractVideoID(one.LyricsVideoLink.String),
+			TJVideoID:         ExtractVideoID(one.TJYoutubeLink.String),
 		}
 
 		// 비동기적으로 member_action 저장

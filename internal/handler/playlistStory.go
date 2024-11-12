@@ -41,6 +41,8 @@ type KeepStorySongs struct {
 	MelonLink         string `json:"melonLink"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 // GetKeepForStory godoc
@@ -245,6 +247,8 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(songInfo.MelonSongID),
 				LyricsYoutubeLink: songInfo.LyricsVideoLink.String,
 				TJYoutubeLink:     songInfo.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(songInfo.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(songInfo.TJYoutubeLink.String),
 			}
 		}
 
@@ -420,6 +424,8 @@ type GetSongsFromKeepStories struct {
 	MelonLink         string `json:"melonLink"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 // GetSongsFromKeepInStory godoc
@@ -490,6 +496,8 @@ func GetSongsFromKeepInStory(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(v.MelonSongID),
 				LyricsYoutubeLink: v.LyricsVideoLink.String,
 				TJYoutubeLink:     v.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(v.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(v.TJYoutubeLink.String),
 			}
 		}
 		// 좋아요 여부 확인

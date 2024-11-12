@@ -31,6 +31,8 @@ type PlaylistAddResponse struct {
 	KeepSongId        int64  `json:"keepSongId"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 // GoRoutine으로 회원가입시에 플레이리스트를 생성한다 (context따로 가져와야함)
@@ -134,6 +136,8 @@ func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(row.MelonSongID),
 				LyricsYoutubeLink: row.LyricsVideoLink.String,
 				TJYoutubeLink:     row.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(row.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(row.TJYoutubeLink.String),
 			}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}
@@ -215,6 +219,8 @@ func DeleteSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(row.MelonSongID),
 				LyricsYoutubeLink: row.LyricsVideoLink.String,
 				TJYoutubeLink:     row.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(row.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(row.TJYoutubeLink.String),
 			}
 			keepSongs = append(keepSongs, response)
 		}
@@ -274,6 +280,8 @@ func GetSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(row.MelonSongID),
 				LyricsYoutubeLink: row.LyricsVideoLink.String,
 				TJYoutubeLink:     row.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(row.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(row.TJYoutubeLink.String),
 			}
 			PlaylistAddResponseList = append(PlaylistAddResponseList, response)
 		}

@@ -30,6 +30,8 @@ type FunctionCallingDetailResponse struct {
 	CommentCount      int    `json:"commentCount"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 type FunctionCallingResponse struct {
@@ -230,6 +232,8 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(songInfoMap[item].MelonSongID),
 				LyricsYoutubeLink: songInfoMap[item].LyricsVideoLink.String,
 				TJYoutubeLink:     songInfoMap[item].TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(songInfoMap[item].LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(songInfoMap[item].TJYoutubeLink.String),
 			})
 		}
 

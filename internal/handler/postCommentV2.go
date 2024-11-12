@@ -269,6 +269,8 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 								MelonLink:         CreateMelonLinkByMelonSongId(songInfo.MelonSongID), // Set according to your logic
 								LyricsYoutubeLink: songInfo.LyricsVideoLink.String,
 								TJYoutubeLink:     songInfo.TJYoutubeLink.String,
+								LyricsVideoID:     ExtractVideoID(songInfo.LyricsVideoLink.String),
+								TJVideoID:         ExtractVideoID(songInfo.TJYoutubeLink.String),
 							}
 							// Add to the list of songs for this postComment
 							songsOnPost = append(songsOnPost, songOnPost)

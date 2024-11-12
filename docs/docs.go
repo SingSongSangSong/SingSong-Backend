@@ -4973,6 +4973,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -4990,6 +4993,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -5143,6 +5149,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -5160,6 +5169,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -5241,6 +5253,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -5258,6 +5273,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -5514,6 +5532,9 @@ const docTemplate = `{
                 "keepSongId": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -5531,6 +5552,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -5888,6 +5912,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -5905,6 +5932,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6011,6 +6041,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6028,6 +6061,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6318,6 +6354,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6335,6 +6374,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6438,6 +6480,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6455,6 +6500,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6490,6 +6538,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6507,6 +6558,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6580,6 +6634,9 @@ const docTemplate = `{
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6606,6 +6663,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6660,6 +6720,9 @@ const docTemplate = `{
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6677,6 +6740,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
