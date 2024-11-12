@@ -127,6 +127,8 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(melonSongId),
 				LyricsYoutubeLink: lyricsLink.String,
 				TJYoutubeLink:     tjLink.String,
+				LyricsVideoID:     ExtractVideoID(lyricsLink.String),
+				TJVideoID:         ExtractVideoID(tjLink.String),
 			})
 		}
 

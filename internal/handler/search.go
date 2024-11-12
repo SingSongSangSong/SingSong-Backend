@@ -21,6 +21,8 @@ type songSearchInfoResponse struct {
 	MelonLink         string `json:"melonLink"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 type songSearchInfoResponses struct {
@@ -96,6 +98,8 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 
@@ -112,6 +116,8 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 
@@ -128,6 +134,8 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 
@@ -209,6 +217,8 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 		response := songSearchPageResponse{
@@ -288,6 +298,8 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 		response := songSearchPageResponse{
@@ -354,6 +366,8 @@ func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 		response := songSearchPageResponse{

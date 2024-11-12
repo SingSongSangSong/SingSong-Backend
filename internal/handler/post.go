@@ -168,6 +168,8 @@ type SongOnPost struct {
 	MelonLink         string `json:"melonLink"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 // GetPost godoc
@@ -248,6 +250,8 @@ func GetPost(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 
