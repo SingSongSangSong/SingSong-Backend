@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
@@ -243,30 +242,4 @@ func FunctionCallingWithTypesRecommedation(db *sql.DB) gin.HandlerFunc {
 		// 결과를 JSON 형식으로 반환
 		pkg.BaseResponse(c, http.StatusOK, "success", functionCallingResponse)
 	}
-}
-
-// ExtractVideoID는 유튜브 URL에서 동영상 ID를 추출합니다.
-// 동영상 ID를 찾을 수 없을 경우 빈 문자열을 반환합니다.
-func ExtractVideoID(inputURL string) string {
-	parsedURL, err := url.Parse(inputURL)
-	if err != nil {
-		return ""
-	}
-
-	// 쿼리 파라미터에서 "v" 값 확인
-	queryParams := parsedURL.Query()
-	if videoID, found := queryParams["v"]; found && len(videoID[0]) == 11 {
-		return videoID[0]
-	}
-
-	// /embed/ 또는 /v/ 경로에서 동영상 ID 추출
-	pathSegments := strings.Split(parsedURL.Path, "/")
-	for _, segment := range pathSegments {
-		if len(segment) == 11 {
-			return segment
-		}
-	}
-
-	// 동영상 ID를 찾지 못한 경우 빈 문자열 반환
-	return ""
 }

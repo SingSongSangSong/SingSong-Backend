@@ -8,6 +8,7 @@ import (
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -174,4 +175,30 @@ func GetMelonLink(c *gin.Context, songInfoId string, db *sql.DB) string {
 		link = "https://www.melon.com/song/detail.htm?songId=" + one.MelonSongID.String
 	}
 	return link
+}
+
+// ExtractVideoID는 유튜브 URL에서 동영상 ID를 추출합니다.
+// 동영상 ID를 찾을 수 없을 경우 빈 문자열을 반환합니다.
+func ExtractVideoID(inputURL string) string {
+	parsedURL, err := url.Parse(inputURL)
+	if err != nil {
+		return ""
+	}
+
+	// 쿼리 파라미터에서 "v" 값 확인
+	queryParams := parsedURL.Query()
+	if videoID, found := queryParams["v"]; found && len(videoID[0]) == 11 {
+		return videoID[0]
+	}
+
+	// /embed/ 또는 /v/ 경로에서 동영상 ID 추출
+	pathSegments := strings.Split(parsedURL.Path, "/")
+	for _, segment := range pathSegments {
+		if len(segment) == 11 {
+			return segment
+		}
+	}
+
+	// 동영상 ID를 찾지 못한 경우 빈 문자열 반환
+	return ""
 }
