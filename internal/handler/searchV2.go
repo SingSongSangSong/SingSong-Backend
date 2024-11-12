@@ -27,6 +27,8 @@ type SongSearchInfoV2Response struct {
 	IsKeep            bool   `json:"isKeep"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 type SongSearchInfoV2Responses struct {
@@ -142,6 +144,8 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 
@@ -159,6 +163,8 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 
@@ -176,6 +182,8 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 
@@ -301,6 +309,8 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 		response := SongSearchPageV2Response{
@@ -419,6 +429,8 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 		response := SongSearchPageV2Response{
@@ -515,6 +527,8 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 				IsKeep:            keepSongMap[song.SongInfoID],
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 		response := SongSearchPageV2Response{

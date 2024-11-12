@@ -36,6 +36,8 @@ type refreshResponse struct {
 	MelonLink         string `json:"melonLink"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 var (
@@ -174,6 +176,8 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 				refreshedSongs[i].MelonLink = CreateMelonLinkByMelonSongId(foundSong.MelonSongID)
 				refreshedSongs[i].LyricsYoutubeLink = foundSong.LyricsVideoLink.String
 				refreshedSongs[i].TJYoutubeLink = foundSong.TJYoutubeLink.String
+				refreshedSongs[i].LyricsVideoID = ExtractVideoID(foundSong.LyricsVideoLink.String)
+				refreshedSongs[i].TJVideoID = ExtractVideoID(foundSong.TJYoutubeLink.String)
 			}
 
 			// 댓글 수 및 Keep 수 추가

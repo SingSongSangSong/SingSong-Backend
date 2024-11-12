@@ -26,6 +26,8 @@ type newSongInfo struct {
 	IsRecentlyUpdated bool   `json:"isRecentlyUpdated"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 type newSongInfoResponse struct {
@@ -149,6 +151,8 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 				IsRecentlyUpdated: song.CreatedAt.Time.After(sevenDaysAgo), //song.CreatedAt이 7일 이내인지
 				LyricsYoutubeLink: song.LyricsVideoLink.String,
 				TJYoutubeLink:     song.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
 			})
 		}
 

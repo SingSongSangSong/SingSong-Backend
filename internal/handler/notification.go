@@ -25,7 +25,7 @@ type AnnouncementRequest struct {
 	Body  string `json:"body"`
 }
 
-// SendAnnouncementNotification godoc
+// SendAnnouncement godoc
 // @Summary      디바이스 토큰이 활성화된 모든 유저에게 공지사항 전송
 // @Description  공지사항 전송
 // @Tags         Notification

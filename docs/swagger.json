@@ -4965,6 +4965,9 @@
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -4982,6 +4985,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -5135,6 +5141,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -5152,6 +5161,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -5233,6 +5245,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -5250,6 +5265,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -5506,6 +5524,9 @@
                 "keepSongId": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -5523,6 +5544,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -5880,6 +5904,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -5897,6 +5924,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6003,6 +6033,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6020,6 +6053,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6310,6 +6346,9 @@
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6327,6 +6366,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6430,6 +6472,9 @@
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6447,6 +6492,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6482,6 +6530,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6499,6 +6550,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6572,6 +6626,9 @@
                 "keepCount": {
                     "type": "integer"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6598,6 +6655,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"
@@ -6652,6 +6712,9 @@
                 "isMr": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6669,6 +6732,9 @@
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"

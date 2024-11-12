@@ -218,6 +218,8 @@ func FunctionCallingWithTypesRecommedation(db *sql.DB) gin.HandlerFunc {
 			songNumberForMap := int(item.SongNumber)
 			nullMelongSongId := null.StringFrom(item.MelonSongId)
 
+			// parse TJVideoId and LyricsVideoId
+
 			functionCallingResponse.Songs = append(functionCallingResponse.Songs, FunctionCallingDetailResponse{
 				SongNumber:        songNumberForMap,
 				SongName:          item.SongName,
@@ -232,6 +234,8 @@ func FunctionCallingWithTypesRecommedation(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(nullMelongSongId),
 				LyricsYoutubeLink: item.LyricsYoutubeLink, //todo:
 				TJYoutubeLink:     item.TjYoutubeLink,
+				LyricsVideoID:     ExtractVideoID(item.LyricsYoutubeLink),
+				TJVideoID:         ExtractVideoID(item.TjYoutubeLink),
 			})
 		}
 

@@ -114,6 +114,8 @@ func GetRecentKeepSongs(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(songInfo.MelonSongID),
 				LyricsYoutubeLink: songInfo.LyricsVideoLink.String,
 				TJYoutubeLink:     songInfo.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(songInfo.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(songInfo.TJYoutubeLink.String),
 			}
 		}
 
@@ -182,6 +184,8 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(songInfo.MelonSongID),
 				LyricsYoutubeLink: songInfo.LyricsVideoLink.String,
 				TJYoutubeLink:     songInfo.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(songInfo.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(songInfo.TJYoutubeLink.String),
 			}
 		}
 

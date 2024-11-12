@@ -24,6 +24,8 @@ type relatedSong struct {
 	MelonLink         string `json:"melonLink"`
 	LyricsYoutubeLink string `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string `json:"tjYoutubeLink"`
+	LyricsVideoID     string `json:"lyricsVideoId"`
+	TJVideoID         string `json:"tjVideoId"`
 }
 
 type relatedSongResponse struct {
@@ -190,6 +192,8 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			relatedSongs[i].MelonLink = CreateMelonLinkByMelonSongId(found.MelonSongID)
 			relatedSongs[i].LyricsYoutubeLink = found.LyricsVideoLink.String
 			relatedSongs[i].TJYoutubeLink = found.TJYoutubeLink.String
+			relatedSongs[i].LyricsVideoID = ExtractVideoID(found.LyricsVideoLink.String)
+			relatedSongs[i].TJVideoID = ExtractVideoID(found.TJYoutubeLink.String)
 		}
 
 		nextPage := pageInt + 1

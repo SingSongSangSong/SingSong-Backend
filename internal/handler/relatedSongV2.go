@@ -212,6 +212,8 @@ func RelatedSongV2(db *sql.DB, milvusClient *client.Client) gin.HandlerFunc {
 				MelonLink:         CreateMelonLinkByMelonSongId(found.MelonSongID),
 				LyricsYoutubeLink: found.LyricsVideoLink.String,
 				TJYoutubeLink:     found.TJYoutubeLink.String,
+				LyricsVideoID:     ExtractVideoID(found.LyricsVideoLink.String),
+				TJVideoID:         ExtractVideoID(found.TJYoutubeLink.String),
 			})
 		}
 		nextPage := pageInt + 1
