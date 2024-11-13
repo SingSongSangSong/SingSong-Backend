@@ -166,9 +166,15 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 				},
 			},
 			APNS: &messaging.APNSConfig{
+				Headers: map[string]string{
+					"apns-priority": "10",
+				},
 				Payload: &messaging.APNSPayload{
 					Aps: &messaging.Aps{
-						Sound: "default",
+						Alert: &messaging.ApsAlert{
+							Title: notificationMessage.Title,
+							Body:  notificationMessage.Body,
+						},
 					},
 				},
 			},
@@ -612,9 +618,15 @@ func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 				},
 			},
 			APNS: &messaging.APNSConfig{
+				Headers: map[string]string{
+					"apns-priority": "10",
+				},
 				Payload: &messaging.APNSPayload{
 					Aps: &messaging.Aps{
-						Sound: "default",
+						Alert: &messaging.ApsAlert{
+							Title: testRequest.Title,
+							Body:  testRequest.Body,
+						},
 					},
 				},
 			},
