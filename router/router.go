@@ -7,6 +7,8 @@ import (
 	"database/sql"
 	firebase "firebase.google.com/go/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
@@ -15,13 +17,39 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
+	"log"
 	"net/http"
 )
 
 func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, milvusClient *client.Client, firebaseApp *firebase.App, s3Client *s3.Client) *gin.Engine {
+	// To initialize Sentry's handler, you need to initialize Sentry itself beforehand
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:           conf.SentryConfigInstance.Dsn,
+		EnableTracing: true,
+		// Set TracesSampleRate to 1.0 to capture 100%
+		// of transactions for tracing.
+		// We recommend adjusting this value in production,
+		TracesSampleRate: 1.0,
+		Environment:      conf.Env,
+	}); err != nil {
+		log.Printf("Sentry initialization failed: %v\n", err)
+	}
 
 	//gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+
+	// Once it's done, you can attach the handler as one of your middleware
+	r.Use(sentrygin.New(sentrygin.Options{
+		Repanic: true,
+	}))
+
+	//r.Use(func(ctx *gin.Context) {
+	//	if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+	//		hub.Scope().SetTag("http_method", ctx.Request.Method)
+	//		hub.Scope().SetTag("request_path", ctx.FullPath())
+	//	}
+	//	ctx.Next()
+	//})
 
 	// Datadog tracer
 	if conf.Env == conf.ProductionMode {

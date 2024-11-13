@@ -30,6 +30,10 @@ type NotificationConfig struct {
 	DeepLinkBase string
 }
 
+type SentryConfig struct {
+	Dsn string
+}
+
 type AuthConfig struct {
 	SECRET_KEY                   string
 	KAKAO_REST_API_KEY           string
@@ -63,6 +67,7 @@ var (
 	Env                        string
 	AWSConfigInstance          *AWSConfig
 	NotificationConfigInstance *NotificationConfig
+	SentryConfigInstance       *SentryConfig
 )
 
 func init() {
@@ -121,6 +126,10 @@ func init() {
 			}
 			return "python-gRPC" // 기본값
 		}(),
+	}
+
+	SentryConfigInstance = &SentryConfig{
+		Dsn: os.Getenv("SENTRY_DSN"),
 	}
 }
 
