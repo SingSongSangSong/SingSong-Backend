@@ -133,7 +133,7 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 						FROM (
 							SELECT ks2.song_info_id
 							FROM keep_song AS ks2
-							WHERE ks2.keep_list_id = kl.keep_list_id
+							WHERE ks2.keep_list_id = kl.keep_list_id AND ks2.deleted_at IS NULL
 							ORDER BY ks2.created_at DESC
 							LIMIT 4
 						) AS sub
@@ -141,14 +141,14 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 					(
 						SELECT COUNT(ks3.song_info_id)
 						FROM keep_song AS ks3
-						WHERE ks3.keep_list_id = kl.keep_list_id
+						WHERE ks3.keep_list_id = kl.keep_list_id AND ks3.deleted_at IS NULL
 					) AS songCount
 				FROM 
 					keep_list AS kl
 				LEFT JOIN 
 					member AS m ON kl.member_id = m.member_id
 				WHERE 
-					kl.keep_name NOT LIKE '%Anonymous의 플레이리스트%'		
+					kl.keep_name NOT LIKE '%Anonymous의 플레이리스트%' AND kl.deleted_at IS NULL
 			`
 
 		// 블록된 회원 제외 조건 추가
