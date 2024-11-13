@@ -121,20 +121,34 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 
 		// 기본 SQL 쿼리 생성 각 KeepList별로 최근에 추가한 노래 4개만 보여주기
 		query := `
-			SELECT kl.keep_list_id, kl.keep_name, m.member_id, m.nickname, kl.likes, kl.updated_at, 
-				(
-					SELECT GROUP_CONCAT(ks2.song_info_id ORDER BY ks2.created_at DESC LIMIT 4)
-					FROM keep_song AS ks2
-					WHERE ks2.keep_list_id = kl.keep_list_id
-				) AS songInfoIds,
-				(
-					SELECT COUNT(ks3.song_info_id)
-					FROM keep_song AS ks3
-					WHERE ks3.keep_list_id = kl.keep_list_id
-				) AS songCount
-			FROM keep_list AS kl
-			LEFT JOIN member AS m ON kl.member_id = m.member_id
-			WHERE kl.keep_name NOT LIKE '%Anonymous의 플레이리스트%'
+				SELECT 
+					kl.keep_list_id, 
+					kl.keep_name, 
+					m.member_id, 
+					m.nickname, 
+					kl.likes, 
+					kl.updated_at, 
+					(
+						SELECT GROUP_CONCAT(sub.song_info_id)
+						FROM (
+							SELECT ks2.song_info_id
+							FROM keep_song AS ks2
+							WHERE ks2.keep_list_id = kl.keep_list_id AND ks2.deleted_at IS NULL
+							ORDER BY ks2.created_at DESC
+							LIMIT 4
+						) AS sub
+					) AS songInfoIds,
+					(
+						SELECT COUNT(ks3.song_info_id)
+						FROM keep_song AS ks3
+						WHERE ks3.keep_list_id = kl.keep_list_id AND ks3.deleted_at IS NULL
+					) AS songCount
+				FROM 
+					keep_list AS kl
+				LEFT JOIN 
+					member AS m ON kl.member_id = m.member_id
+				WHERE 
+					kl.keep_name NOT LIKE '%Anonymous의 플레이리스트%' AND kl.deleted_at IS NULL
 			`
 
 		// 블록된 회원 제외 조건 추가
