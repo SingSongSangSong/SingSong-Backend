@@ -6195,6 +6195,9 @@ const docTemplate = `{
                 "isNew": {
                     "type": "boolean"
                 },
+                "lyricsVideoId": {
+                    "type": "string"
+                },
                 "lyricsYoutubeLink": {
                     "type": "string"
                 },
@@ -6215,6 +6218,9 @@ const docTemplate = `{
                 },
                 "songNumber": {
                     "type": "integer"
+                },
+                "tjVideoId": {
+                    "type": "string"
                 },
                 "tjYoutubeLink": {
                     "type": "string"

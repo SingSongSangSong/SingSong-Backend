@@ -14,20 +14,22 @@ import (
 )
 
 type V2RedisChartResponse struct {
-	Ranking       int         `json:"ranking"`
-	SongInfoId    int         `json:"song_info_id"`
-	TotalScore    float32     `json:"total_score"`
-	New           int         `json:"new"`
-	RankingChange int         `json:"ranking_change"`
-	ArtistName    string      `json:"artist_name"`
-	SongName      string      `json:"song_name"`
-	SongNumber    int         `json:"song_number"`
-	IsMR          int         `json:"is_mr"`
-	IsLive        int         `json:"is_live"`
-	Album         string      `json:"album"`
-	Gender        string      `json:"gender"`
-	AgeGroup      string      `json:"age_group"`
-	MelonSongId   null.String `json:"melon_song_id"`
+	Ranking           int         `json:"ranking"`
+	SongInfoId        int         `json:"song_info_id"`
+	TotalScore        float32     `json:"total_score"`
+	New               int         `json:"new"`
+	RankingChange     int         `json:"ranking_change"`
+	ArtistName        string      `json:"artist_name"`
+	SongName          string      `json:"song_name"`
+	SongNumber        int         `json:"song_number"`
+	IsMR              int         `json:"is_mr"`
+	IsLive            int         `json:"is_live"`
+	Album             string      `json:"album"`
+	Gender            string      `json:"gender"`
+	AgeGroup          string      `json:"age_group"`
+	MelonSongId       null.String `json:"melon_song_id"`
+	LyricsYoutubeLink string      `json:"lyrics_video_link,omitempty"`
+	TJYoutubeLink     string      `json:"tj_youtube_link,omitempty"`
 }
 
 // ChartResponse 카멜케이스 구조체
@@ -46,6 +48,8 @@ type V2ChartSong struct {
 	MelonLink         string  `json:"melonLink"`
 	LyricsYoutubeLink string  `json:"lyricsYoutubeLink"`
 	TJYoutubeLink     string  `json:"tjYoutubeLink"`
+	LyricsVideoID     string  `json:"lyricsVideoId"`
+	TJVideoID         string  `json:"tjVideoId"`
 }
 
 type V2ChartOfKey struct {
@@ -69,8 +73,10 @@ func convertOldToNewV2(old []V2RedisChartResponse) []V2ChartSong {
 			IsLive:            o.IsLive == 1, // 1, 0 -> true/false로 변환
 			Album:             o.Album,
 			MelonLink:         CreateMelonLinkByMelonSongId(o.MelonSongId),
-			LyricsYoutubeLink: "", //todo:
-			TJYoutubeLink:     "",
+			LyricsYoutubeLink: o.LyricsYoutubeLink,
+			TJYoutubeLink:     o.TJYoutubeLink,
+			LyricsVideoID:     ExtractVideoID(o.LyricsYoutubeLink),
+			TJVideoID:         ExtractVideoID(o.TJYoutubeLink),
 		})
 	}
 	return newCharts

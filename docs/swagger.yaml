@@ -956,6 +956,8 @@ definitions:
         type: boolean
       isNew:
         type: boolean
+      lyricsVideoId:
+        type: string
       lyricsYoutubeLink:
         type: string
       melonLink:
@@ -970,6 +972,8 @@ definitions:
         type: string
       songNumber:
         type: integer
+      tjVideoId:
+        type: string
       tjYoutubeLink:
         type: string
       totalScore:
