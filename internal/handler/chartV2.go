@@ -137,6 +137,7 @@ func GetChartV2(rdb *redis.Client) gin.HandlerFunc {
 		// 전체 차트 만들기
 		location, err := time.LoadLocation("Asia/Seoul")
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot load location", nil)
 			return
 		}
@@ -159,6 +160,7 @@ func GetChartV2(rdb *redis.Client) gin.HandlerFunc {
 					})
 				}
 
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot find chart", wholeCharts)
 				return
 			}
@@ -167,6 +169,7 @@ func GetChartV2(rdb *redis.Client) gin.HandlerFunc {
 			err = json.Unmarshal([]byte(chart), &redisChart)
 			if err != nil {
 				log.Printf("JSON Unmarshal error: %v", err)
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}

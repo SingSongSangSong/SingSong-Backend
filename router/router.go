@@ -22,13 +22,9 @@ import (
 )
 
 func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, milvusClient *client.Client, firebaseApp *firebase.App, s3Client *s3.Client) *gin.Engine {
-	// To initialize Sentry's handler, you need to initialize Sentry itself beforehand
 	if err := sentry.Init(sentry.ClientOptions{
-		Dsn:           conf.SentryConfigInstance.Dsn,
-		EnableTracing: true,
-		// Set TracesSampleRate to 1.0 to capture 100%
-		// of transactions for tracing.
-		// We recommend adjusting this value in production,
+		Dsn:              conf.SentryConfigInstance.Dsn,
+		EnableTracing:    false, // 무료 플랜이므로 trace 비활성화
 		TracesSampleRate: 1.0,
 		Environment:      conf.Env,
 	}); err != nil {
@@ -38,18 +34,10 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	//gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
-	// Once it's done, you can attach the handler as one of your middleware
+	// sentry
 	r.Use(sentrygin.New(sentrygin.Options{
 		Repanic: true,
 	}))
-
-	//r.Use(func(ctx *gin.Context) {
-	//	if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
-	//		hub.Scope().SetTag("http_method", ctx.Request.Method)
-	//		hub.Scope().SetTag("request_path", ctx.FullPath())
-	//	}
-	//	ctx.Next()
-	//})
 
 	// Datadog tracer
 	if conf.Env == conf.ProductionMode {
