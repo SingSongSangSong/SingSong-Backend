@@ -60,7 +60,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 			go CreatePlaylist(db, m.Nickname.String+null.StringFrom("의 플레이리스트").String, m.MemberID)
 			go ActivateDeviceToken(db, loginRequest.DeviceToken, m.MemberID)
 
-			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, rdb, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID)
+			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshTokenV2(c, rdb, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID)
 			if tokenErr != nil {
 				pkg.SendToSentryWithStack(c, tokenErr)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
@@ -209,13 +209,13 @@ func createAccessTokenAndRefreshTokenV2(c *gin.Context, redis *redis.Client, pay
 	jwtAccessValidityStr := JWT_ACCESS_VALIDITY_SECONDS
 	if jwtAccessValidityStr == "" {
 		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
-		return "", "", fmt.Errorf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
+		return "", "", errors.Wrap(fmt.Errorf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다"), "최초 에러 발생 지점")
 	}
 
 	jwtAccessValidity, err := strconv.ParseInt(jwtAccessValidityStr, 10, 64)
 	if err != nil {
 		log.Printf("환경 변수 변환 실패: %v", err)
-		return "", "", fmt.Errorf("환경 변수 변환 실패: %v", err)
+		return "", "", errors.Wrap(fmt.Errorf("환경 변수 변환 실패: %v", err), "최초 에러 발생 지점")
 	}
 
 	accessTokenExpiresAt := time.Now().Add(time.Duration(jwtAccessValidity) * time.Second).Unix()
@@ -234,13 +234,13 @@ func createAccessTokenAndRefreshTokenV2(c *gin.Context, redis *redis.Client, pay
 	jwtRefreshValidityStr := JWT_REFRESH_VALIDITY_SECONDS
 	if jwtRefreshValidityStr == "" {
 		log.Printf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
-		return "", "", errors.New("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
+		return "", "", errors.Wrap(fmt.Errorf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다"), "최초 에러 발생 지점")
 	}
 
 	jwtRefreshValidity, err := strconv.ParseInt(jwtRefreshValidityStr, 10, 64)
 	if err != nil {
 		log.Printf("환경 변수 변환 실패: %v", err)
-		return "", "", fmt.Errorf("환경 변수 변환 실패: %v", err)
+		return "", "", errors.Wrap(fmt.Errorf("환경 변수 변환 실패: %v", err), "최초 에러 발생 지점")
 	}
 
 	refreshTokenExpiresAt := time.Now().Add(time.Duration(jwtRefreshValidity) * time.Second).Unix()
@@ -259,13 +259,13 @@ func createAccessTokenAndRefreshTokenV2(c *gin.Context, redis *redis.Client, pay
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS512, at)
 	accessTokenString, err := accessToken.SignedString([]byte(SECRET_KEY))
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS512, rt)
 	refreshTokenString, err := refreshToken.SignedString([]byte(SECRET_KEY))
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	payload.BirthYear = birthYear
@@ -274,12 +274,12 @@ func createAccessTokenAndRefreshTokenV2(c *gin.Context, redis *redis.Client, pay
 
 	claims, err := json.Marshal(payload)
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	_, err = redis.Set(c, refreshTokenString, claims, time.Duration(jwtRefreshValidity)*time.Second).Result()
 	if err != nil {
-		return "", "", err
+		return "", "", errors.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	return accessTokenString, refreshTokenString, nil
