@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -393,7 +394,8 @@ func generatePresignedURL(s3Client *s3.Client, bucketName, key string, expiratio
 	}, s3.WithPresignExpires(expiration))
 
 	if err != nil {
-		return "", fmt.Errorf("Presigned URL 생성 실패: %w", err)
+		return "",
+			errors.Wrap(fmt.Errorf("Presigned URL 생성 실패: %w", err), "최초 에러 발생 지점")
 	}
 
 	return req.URL, nil

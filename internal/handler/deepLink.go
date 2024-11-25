@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"log"
 	"net/url"
@@ -16,7 +17,7 @@ func CreateSongDeepLink(db *sql.DB, songInfoId int64) (string, error) {
 	one, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(context.Background(), db)
 	if err != nil {
 		log.Printf("error fetching song info: %v", err)
-		return "", err
+		return "", errors.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	// 문자열 생성
@@ -45,7 +46,7 @@ func CreatePostDeepLink(db *sql.DB, postId int64) (string, error) {
 	).One(context.Background(), db)
 	if err != nil {
 		log.Printf("error fetching post: %v", err)
-		return "", err
+		return "", errors.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	//deleted_at이 NULL인 댓글만 카운트

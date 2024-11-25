@@ -6,11 +6,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/friendsofgo/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-proto/go-api/v2/schemapb"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/null/v8"
 	"log"
@@ -223,12 +223,12 @@ func getUserProfile(milvus *client.Client, memberID int64) (*schemapb.VectorFiel
 		[]string{"profile_vector"},
 	)
 	if err != nil || len(res) == 0 {
-		return nil, errors.New("no profile found")
+		return nil, errors.Wrap(err, "no profile found")
 	}
 	//dimension := res.GetColumn("profile_vector").FieldData().GetVectors().Dim
 	profileColumn := res.GetColumn("profile_vector").FieldData().GetVectors().GetFloatVector().Data
 	if len(profileColumn) == 0 {
-		return nil, errors.New("no profile found")
+		return nil, errors.Wrap(fmt.Errorf("profileColumn length 0"), "no profile found")
 	}
 	return res.GetColumn("profile_vector").FieldData().GetVectors(), nil
 }
@@ -268,7 +268,7 @@ func recommendSimilarSongs(milvus *client.Client, userVector *schemapb.VectorFie
 	)
 	if err != nil {
 		log.Printf("Search failed: %v", err)
-		return nil, err
+		return nil, errors.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	return res[0].IDs.FieldData().GetScalars().GetLongData().Data, nil
