@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -52,7 +53,8 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
@@ -77,6 +79,7 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -88,6 +91,7 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -98,6 +102,7 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -106,6 +111,7 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -114,6 +120,7 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepList.KeepListID),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -222,7 +229,8 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
@@ -250,12 +258,12 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 		//page, size를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert page to int", nil)
 			return
 		}
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
@@ -269,6 +277,7 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 			qm.Offset(offset),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -277,6 +286,7 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -285,6 +295,7 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepList.KeepListID),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -339,7 +350,8 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 		// 검색어를 쿼리 파라미터에서 가져오기
@@ -371,12 +383,12 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 		//page, size를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert page to int", nil)
 			return
 		}
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
@@ -389,6 +401,7 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 			qm.Offset(offset),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -397,6 +410,7 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -405,6 +419,7 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepList.KeepListID),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -478,7 +493,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 		//page를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert page to int", nil)
 			return
 		}
 
@@ -487,6 +502,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("song_number = ?", searchKeyword),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -495,6 +511,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -503,6 +520,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepList.KeepListID),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

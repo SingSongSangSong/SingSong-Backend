@@ -131,6 +131,7 @@ func HomeRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection *pi
 		wg.Wait()
 
 		if overallErr != nil {
+			pkg.SendToSentryWithStack(c, overallErr)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

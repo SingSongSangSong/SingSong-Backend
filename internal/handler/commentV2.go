@@ -69,6 +69,7 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -100,6 +101,7 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL", songId),
 		).Count(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -131,6 +133,7 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 		).All(c.Request.Context(), db)
 
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -147,6 +150,7 @@ func GetCommentsOnSongV2(db *sql.DB) gin.HandlerFunc {
 			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

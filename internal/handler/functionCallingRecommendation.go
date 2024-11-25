@@ -53,6 +53,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 		// Get memberId from the middleware (assumed that the middleware sets the memberId)
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -67,6 +68,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 		// Ensure memberId is cast to int64
 		memberIdInt, ok := memberId.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - invalid memberId type", nil)
 			return
 		}
@@ -98,6 +100,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 		response, err := client.GetFunctionCallingRecommendation(context.Background(), rpcRequest)
 		if err != nil {
 			log.Printf("Error calling gRPC: %v", err)
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -124,6 +127,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 		// MelonSongId 가져오기
 		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -138,6 +142,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberIdInt),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -146,6 +151,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepList.KeepListID),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -170,6 +176,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 		// 쿼리 실행 (KeepCount)
 		rows, err := db.QueryContext(c.Request.Context(), keepCountQuery, songInfoInterface...)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -181,6 +188,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 			var songInfoId int64
 			var songCount int
 			if err := rows.Scan(&songInfoId, &songCount); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -199,6 +207,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 		// 쿼리 실행 (CommentCount)
 		commentRows, err := db.QueryContext(c.Request.Context(), commentCountQuery, songInfoInterface...)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -210,6 +219,7 @@ func FunctionCallingRecommedation(db *sql.DB) gin.HandlerFunc {
 			var songInfoId int64
 			var commentCount int
 			if err := commentRows.Scan(&songInfoId, &commentCount); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}

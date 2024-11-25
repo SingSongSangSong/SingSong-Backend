@@ -40,6 +40,7 @@ func GetMemberInfo(db *sql.DB) gin.HandlerFunc {
 		// Get member info
 		member, err := mysql.Members(qm.Where("member_id = ?", memberId)).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -91,6 +92,7 @@ func UpdateNickname(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId), qm.And("deleted_at IS NULL"),
 		).UpdateAll(c.Request.Context(), db, mysql.M{"nickname": null.StringFrom(updateNicknameRequest.Nickname)})
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -141,6 +143,7 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 				"nickname":   "(알수없음)",
 			})
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -148,6 +151,7 @@ func Withdraw(db *sql.DB, redis *redis.Client) gin.HandlerFunc {
 		// Delete redis
 		_, err = redis.Del(c, withdrawRequest.RefreshToken).Result()
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -176,6 +180,7 @@ func Logout(redis *redis.Client) gin.HandlerFunc {
 		// Delete redis
 		_, err := redis.Del(c, withdrawRequest.RefreshToken).Result()
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

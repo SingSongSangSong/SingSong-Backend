@@ -6,11 +6,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/friendsofgo/errors"
 	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-proto/go-api/v2/schemapb"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/null/v8"
 	"log"
@@ -62,6 +62,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 		// memberId 및 gender 가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -74,6 +75,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 		// memberId를 int64로 변환
 		memberIdInt, ok := memberId.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - invalid memberId type", nil)
 			return
 		}
@@ -87,6 +89,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 			log.Printf("No profile found for memberId %d fetching Gender Profile", memberIdInt)
 			userVector, err = fetchGenderProfile(milvus, gender.(string))
 			if err != nil || userVector == nil || len(userVector.GetFloatVector().Data) == 0 {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - no user profile vector", nil)
 				return
 			}
@@ -95,6 +98,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 		// 추천 노래 가져오기
 		recommendation, err := recommendSimilarSongs(milvus, userVector, vectorQuerySize)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -125,6 +129,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 
 		// SQL 실행 전에 songInfoIds가 비어 있는지 확인
 		if len(songInfoIds) == 0 {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "err - no song Ids", nil)
 			return
 		}
@@ -161,6 +166,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 		// SQL 쿼리 실행 및 결과 매핑
 		rows, err := db.Query(query, args...)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -181,6 +187,7 @@ func GetRecommendationV2(db *sql.DB, redisClient *redis.Client, milvus *client.C
 				&song.CommentCount, &song.KeepCount, &song.IsKeep,
 			)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -216,12 +223,12 @@ func getUserProfile(milvus *client.Client, memberID int64) (*schemapb.VectorFiel
 		[]string{"profile_vector"},
 	)
 	if err != nil || len(res) == 0 {
-		return nil, errors.New("no profile found")
+		return nil, errors.Wrap(err, "no profile found")
 	}
 	//dimension := res.GetColumn("profile_vector").FieldData().GetVectors().Dim
 	profileColumn := res.GetColumn("profile_vector").FieldData().GetVectors().GetFloatVector().Data
 	if len(profileColumn) == 0 {
-		return nil, errors.New("no profile found")
+		return nil, errors.Wrap(fmt.Errorf("profileColumn length 0"), "no profile found")
 	}
 	return res.GetColumn("profile_vector").FieldData().GetVectors(), nil
 }
@@ -261,7 +268,7 @@ func recommendSimilarSongs(milvus *client.Client, userVector *schemapb.VectorFie
 	)
 	if err != nil {
 		log.Printf("Search failed: %v", err)
-		return nil, err
+		return nil, errors.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	return res[0].IDs.FieldData().GetScalars().GetLongData().Data, nil
