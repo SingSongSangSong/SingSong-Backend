@@ -84,8 +84,7 @@ func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 			m := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId))
 			row, errors := m.One(c.Request.Context(), db)
 			if errors != nil {
-				pkg.SendToSentryWithStack(c, errors)
-				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
+				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
 				return
 			}
 
