@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
@@ -52,6 +53,7 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -78,6 +80,7 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -90,6 +93,7 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 		// Keep 여부 가져오기
 		keepLists, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -101,6 +105,7 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 			qm.WhereIn("keep_list_id = ?", keepListInterface...),
 			qm.AndIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -112,12 +117,14 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 		// Comments 수 가져오기
 		commentsCounts, err := mysql.Comments(qm.WhereIn("song_info_id IN ?", songInfoInterface...), qm.And("deleted_at is null")).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error comments - "+err.Error(), nil)
 			return
 		}
 		// Keep 수 가져오기
 		keepCounts, err := mysql.KeepSongs(qm.WhereIn("song_info_id IN ?", songInfoInterface...), qm.And("deleted_at is null")).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error keepsongs- "+err.Error(), nil)
 			return
 		}

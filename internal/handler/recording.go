@@ -45,6 +45,7 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -88,6 +89,7 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		} else if conf.Env == conf.ProductionMode {
 			fileName = fmt.Sprintf("prod/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongId, currentTime)
 		} else {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "환경 변수가 설정되지 않았습니다.", nil)
 			return
 		}
@@ -101,6 +103,7 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 			Body:   file,
 		})
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "S3 업로드 실패", nil)
 			return
 		}
@@ -109,6 +112,7 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		songRecording := mysql.SongRecording{MemberID: memberId.(int64), Title: recordSongsRequest.Title, SongInfoID: recordSongsRequest.SongId, IsPublic: null.BoolFrom(recordSongsRequest.IsPublic), RecordingLink: s3URL}
 		err = songRecording.Insert(c, db, boil.Infer())
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 저장 실패", nil)
 			return
 		}
@@ -155,6 +159,7 @@ func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memeberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -181,6 +186,7 @@ func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 조회 실패", nil)
 			return
 		}
@@ -242,6 +248,7 @@ func GetDetailRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -260,6 +267,7 @@ func GetDetailRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		)
 		songRecordings, err := songRecording.One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 조회 실패", nil)
 			return
 		}
@@ -279,6 +287,7 @@ func GetDetailRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 
 		preSignedURL, err := generatePresignedURL(s3Client, bucketName, key, expiration)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "Presigned URL 생성 실패", nil)
 			return
 		}
@@ -332,6 +341,7 @@ func DeleteMyRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -341,6 +351,7 @@ func DeleteMyRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 			qm.Where("song_recording_id = ? AND member_id = ? AND deleted_at IS NULL", songRecordingId, memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 조회 실패", nil)
 			return
 		}
@@ -349,6 +360,7 @@ func DeleteMyRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		songRecording.DeletedAt = null.TimeFrom(time.Now()) // null.Time 사용 시 null.TimeFrom 사용
 		_, err = songRecording.Update(c.Request.Context(), db, boil.Infer())
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 삭제 실패", nil)
 			return
 		}

@@ -53,6 +53,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 			// DB에 없는 경우 - 회원가입
 			m, err := joinForAnonymous(c, &Claims{Email: generateUniqueEmail()}, 0, "Unknown", loginRequest.Provider, db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -61,6 +62,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 
 			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, rdb, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID)
 			if tokenErr != nil {
+				pkg.SendToSentryWithStack(c, tokenErr)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 				return
 			}
@@ -95,6 +97,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 			// DB에 없는 경우 - 회원가입
 			m, err = joinV2(c, payload, loginRequest, m, db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -104,6 +107,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshTokenV2(c, rdb, payload, "0", "Unknown", m.MemberID)
 
 			if tokenErr != nil {
+				pkg.SendToSentryWithStack(c, tokenErr)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 				return
 			}
@@ -123,6 +127,7 @@ func LoginV2(rdb *redis.Client, db *sql.DB) func(c *gin.Context) {
 		go ActivateDeviceToken(db, loginRequest.DeviceToken, m.MemberID)
 
 		if tokenErr != nil {
+			pkg.SendToSentryWithStack(c, tokenErr)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 			return
 		}
@@ -157,19 +162,20 @@ func LoginV2ExtraInfoRequired(db *sql.DB) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		loginExtraInfoRequest := &LoginV2ExtraInfoRequest{}
 		if err := c.ShouldBindJSON(&loginExtraInfoRequest); err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
 		}
 
 		birthYearInt, err := strconv.Atoi(loginExtraInfoRequest.BirthYear)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
 			return
 		}
 
@@ -178,6 +184,7 @@ func LoginV2ExtraInfoRequired(db *sql.DB) func(c *gin.Context) {
 			qm.Where("member_id = ?", memberId), qm.And("deleted_at IS NULL"),
 		).UpdateAll(c.Request.Context(), db, mysql.M{"birthyear": null.IntFrom(birthYearInt), "gender": null.StringFrom(loginExtraInfoRequest.Gender)})
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"log"
@@ -77,7 +78,8 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 		// 성별 조회
 		gender, exists := c.Get("gender")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - gender not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("gender not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not found", nil)
 			return
 		}
 
@@ -86,6 +88,7 @@ func GetChart(rdb *redis.Client) gin.HandlerFunc {
 		var maleCharts, femaleCharts []ChartResponse
 		location, err := time.LoadLocation("Asia/Seoul")
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot load location", nil)
 			return
 		}

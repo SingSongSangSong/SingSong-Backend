@@ -38,6 +38,7 @@ func AddSongReviewOption(db *sql.DB) gin.HandlerFunc {
 		option := mysql.SongReviewOption{Title: title, Enum: enum}
 
 		if err := option.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -58,6 +59,7 @@ func ListSongReviewOptions(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		all, err := mysql.SongReviewOptions().All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

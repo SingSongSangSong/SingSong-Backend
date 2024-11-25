@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -61,12 +62,14 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 
 		value, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		memberId, ok := value.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
 			return
 		}
@@ -136,6 +139,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 			v := each.Vector
 			atoi, err := strconv.Atoi(v.Id)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -147,6 +151,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		//isKeep
 		all, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -156,6 +161,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		}
 		keepSongs, err := mysql.KeepSongs(qm.WhereIn("keep_list_id in ?", keepIds...), qm.And("deleted_at IS NULL")).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -171,6 +177,7 @@ func RelatedSong(db *sql.DB, idxConnection *pinecone.IndexConnection) gin.Handle
 		}
 		slice, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

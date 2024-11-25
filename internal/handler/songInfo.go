@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -53,6 +54,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -67,6 +69,7 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 		//유저의 keep 여부 조회
 		all, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -80,18 +83,21 @@ func GetSongInfo(db *sql.DB) gin.HandlerFunc {
 			qm.And("deleted_at IS NULL"),
 		).Exists(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		commentCount, err := mysql.Comments(qm.Where("song_info_id = ? AND deleted_at is null", one.SongInfoID)).Count(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		keepCount, err := mysql.KeepSongs(qm.Where("song_info_id = ? AND deleted_at is null", one.SongInfoID)).Count(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

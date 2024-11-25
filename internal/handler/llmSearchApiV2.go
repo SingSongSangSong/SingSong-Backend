@@ -25,6 +25,7 @@ func GetSearchResultsForLLMV2(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(15),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

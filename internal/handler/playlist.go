@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -64,7 +65,8 @@ func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 		}
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
@@ -72,7 +74,8 @@ func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
 		playlistRow, errors := m.One(c.Request.Context(), db)
 		if errors != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
+			pkg.SendToSentryWithStack(c, errors)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
 		}
 
@@ -81,7 +84,8 @@ func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 			m := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId))
 			row, errors := m.One(c.Request.Context(), db)
 			if errors != nil {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
+				pkg.SendToSentryWithStack(c, errors)
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
 			}
 
@@ -96,7 +100,8 @@ func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 			keepSong := mysql.KeepSong{KeepListID: playlistRow.KeepListID, SongInfoID: row.SongInfoID, SongNumber: row.SongNumber}
 			err = keepSong.Insert(c.Request.Context(), db, boil.Infer())
 			if err != nil {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+				pkg.SendToSentryWithStack(c, err)
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
 		}
@@ -112,7 +117,8 @@ func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 		result := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistRow.KeepListID))
 		all, err2 := result.All(c.Request.Context(), db)
 		if err2 != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err2.Error(), nil)
+			pkg.SendToSentryWithStack(c, err2)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err2.Error(), nil)
 			return
 		}
 
@@ -122,7 +128,8 @@ func AddSongsToKeep(db *sql.DB) gin.HandlerFunc {
 			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
 			row, errors := tempSong.One(c.Request.Context(), db)
 			if errors != nil {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
+				pkg.SendToSentryWithStack(c, errors)
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
 			}
 			response := PlaylistAddResponse{
@@ -170,7 +177,8 @@ func DeleteSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 
 		memberId, err := c.Get("memberId")
 		if err != true {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
@@ -178,7 +186,8 @@ func DeleteSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
 		playlistInfo, errors := m.One(c.Request.Context(), db)
 		if errors != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - "+errors.Error(), nil)
+			pkg.SendToSentryWithStack(c, errors)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
 		}
 
@@ -188,13 +197,15 @@ func DeleteSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 				qm.Where("keep_list_id = ? AND song_info_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID, songInfoId),
 			).UpdateAll(c.Request.Context(), db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
 			if err != nil {
-				pkg.BaseResponse(c, http.StatusBadRequest, "error - "+err.Error(), nil)
+				pkg.SendToSentryWithStack(c, err)
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			}
 		}
 
 		// 응답에 keep 목록 넣기
 		all, errors := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID)).All(c.Request.Context(), db)
 		if errors != nil {
+			pkg.SendToSentryWithStack(c, errors)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
 		}
@@ -205,6 +216,7 @@ func DeleteSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
 			row, errors := tempSong.One(c.Request.Context(), db)
 			if errors != nil {
+				pkg.SendToSentryWithStack(c, errors)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
 			}
@@ -241,7 +253,8 @@ func GetSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, err := c.Get("memberId")
 		if err != true {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
@@ -249,6 +262,7 @@ func GetSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
 		playlistInfo, errors := m.One(c.Request.Context(), db)
 		if errors != nil {
+			pkg.SendToSentryWithStack(c, errors)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
 		}
@@ -256,6 +270,7 @@ func GetSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 		result := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID))
 		all, err2 := result.All(c.Request.Context(), db)
 		if err2 != nil {
+			pkg.SendToSentryWithStack(c, err2)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err2.Error(), nil)
 			return
 		}
@@ -266,6 +281,7 @@ func GetSongsFromKeep(db *sql.DB) gin.HandlerFunc {
 			tempSong := mysql.SongInfos(qm.Where("song_info_id = ?", v.SongInfoID))
 			row, errors := tempSong.One(c.Request.Context(), db)
 			if errors != nil {
+				pkg.SendToSentryWithStack(c, errors)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 				return
 			}

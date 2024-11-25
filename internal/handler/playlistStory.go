@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -89,11 +90,13 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 		// 차단된 회원 정보 조회
 		blockerId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -171,6 +174,7 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 		// Query를 통해 SQL 실행
 		rows, err := db.Query(query, args...)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -198,6 +202,7 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 				&songCount,
 			)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -206,6 +211,7 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 
 			songInfoList, err := ConvertToInt64List(songInfoIds.String)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -227,6 +233,7 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 			qm.WhereIn("keep_list_id IN ?", int64SliceToInterface(keepListIds)...),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -242,6 +249,7 @@ func GetKeepForStory(db *sql.DB) gin.HandlerFunc {
 				qm.WhereIn("song_info_id IN ?", int64SliceToInterface(uniqueSongIds)...),
 			).All(c.Request.Context(), db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -371,6 +379,7 @@ func KeepListLike(db *sql.DB) gin.HandlerFunc {
 		if err == nil {
 			keepListLikes.DeletedAt = null.TimeFrom(time.Now())
 			if _, err := keepListLikes.Update(c.Request.Context(), db, boil.Infer()); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -380,11 +389,13 @@ func KeepListLike(db *sql.DB) gin.HandlerFunc {
 				qm.Where("keep_list_id = ?", keepListId),
 			).One(c.Request.Context(), db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
 
 			if err := changeLikeStatus(keepList, -1); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -396,6 +407,7 @@ func KeepListLike(db *sql.DB) gin.HandlerFunc {
 		// keepList 좋아요 누르기
 		like := mysql.KeepListLike{MemberID: memberId.(int64), KeepListID: keepListId}
 		if err := like.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -405,11 +417,13 @@ func KeepListLike(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepListId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		if err := changeLikeStatus(keepList, 1); err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -457,7 +471,8 @@ func GetSongsFromKeepInStory(db *sql.DB) gin.HandlerFunc {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
@@ -473,6 +488,7 @@ func GetSongsFromKeepInStory(db *sql.DB) gin.HandlerFunc {
 		m := mysql.KeepLists(qm.Where("keep_list_id = ?", keepListId))
 		playlistInfo, errors := m.One(c.Request.Context(), db)
 		if errors != nil {
+			pkg.SendToSentryWithStack(c, errors)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
 		}
@@ -480,6 +496,7 @@ func GetSongsFromKeepInStory(db *sql.DB) gin.HandlerFunc {
 		result := mysql.KeepSongs(qm.Where("keep_list_id = ? AND deleted_at IS NULL", playlistInfo.KeepListID))
 		all, err2 := result.All(c.Request.Context(), db)
 		if err2 != nil {
+			pkg.SendToSentryWithStack(c, err2)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err2.Error(), nil)
 			return
 		}
@@ -492,6 +509,7 @@ func GetSongsFromKeepInStory(db *sql.DB) gin.HandlerFunc {
 		// songInfoIds로 SongInfos를 한번에 가져오기
 		allSongInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", int64SliceToInterface(songInfoIds)...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -530,6 +548,7 @@ func GetSongsFromKeepInStory(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -561,13 +580,15 @@ func SubscribeKeep(db *sql.DB) gin.HandlerFunc {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		// memberId Int64로 변환
 		memberIdInt, ok := memberId.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - invalid memberId type", nil)
 			return
 		}
@@ -588,6 +609,7 @@ func SubscribeKeep(db *sql.DB) gin.HandlerFunc {
 			// 이미 구독한 경우 구독을 취소해야한다
 			keepListSubscribes.DeletedAt = null.TimeFrom(time.Now())
 			if _, err := keepListSubscribes.Update(c.Request.Context(), db, boil.Infer()); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -598,6 +620,7 @@ func SubscribeKeep(db *sql.DB) gin.HandlerFunc {
 		// 구독하지 않은 경우 구독한다
 		subscribe := mysql.KeepListSubscribe{MemberID: memberIdInt, KeepListID: keepListId}
 		if err := subscribe.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -636,6 +659,7 @@ func GetSubscribedKeeps(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ? AND deleted_at IS NULL", memberId),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -652,6 +676,7 @@ func GetSubscribedKeeps(db *sql.DB) gin.HandlerFunc {
 		)
 		playlistInfo, errors := m.All(c.Request.Context(), db)
 		if errors != nil {
+			pkg.SendToSentryWithStack(c, errors)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
 		}

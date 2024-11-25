@@ -28,7 +28,7 @@ func GetLatestSearchApi(db *sql.DB) gin.HandlerFunc {
 
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
@@ -38,6 +38,7 @@ func GetLatestSearchApi(db *sql.DB) gin.HandlerFunc {
 			qm.OrderBy("created_at DESC"),
 			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -71,7 +72,7 @@ func GetRecentKeepSongs(db *sql.DB) gin.HandlerFunc {
 
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
@@ -82,6 +83,7 @@ func GetRecentKeepSongs(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(size),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -97,6 +99,7 @@ func GetRecentKeepSongs(db *sql.DB) gin.HandlerFunc {
 		// 노래 정보 가져오기
 		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -142,7 +145,7 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
@@ -152,6 +155,7 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 			qm.OrderBy("created_at DESC"),
 			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -167,6 +171,7 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 		// 노래 정보 가져오기
 		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

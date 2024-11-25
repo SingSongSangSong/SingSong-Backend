@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	firebase "firebase.google.com/go/v4"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -369,6 +370,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -390,6 +392,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 		//차단 유저 제외
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", memberId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -411,6 +414,7 @@ func ListPosts(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -497,7 +501,8 @@ func ReportPost(db *sql.DB) gin.HandlerFunc {
 
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
@@ -506,6 +511,7 @@ func ReportPost(db *sql.DB) gin.HandlerFunc {
 		m := mysql.PostReport{PostID: postId, ReportReason: nullReason, SubjectMemberID: reportRequest.SubjectMemberId, ReporterMemberID: memberId.(int64)}
 		err = m.Insert(c.Request.Context(), db, boil.Infer())
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -529,6 +535,7 @@ func LikePost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -557,6 +564,7 @@ func LikePost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		if err == nil {
 			postLikes.DeletedAt = null.TimeFrom(time.Now())
 			if _, err := postLikes.Update(c.Request.Context(), db, boil.Infer()); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -566,11 +574,13 @@ func LikePost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 				qm.Where("post_id = ?", postId),
 			).One(c.Request.Context(), db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
 
 			if err := changeLikeStatus(post, -1); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -582,6 +592,7 @@ func LikePost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		// 게시글 좋아요 누르기
 		like := mysql.PostLike{MemberID: memberId.(int64), PostID: postId}
 		if err := like.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -591,11 +602,13 @@ func LikePost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 			qm.Where("post_id = ?", postId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		if err := changeLikeStatus(post, 1); err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -625,6 +638,7 @@ func SearchPosts(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -653,6 +667,7 @@ func SearchPosts(db *sql.DB) gin.HandlerFunc {
 		//차단 유저 제외
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", memberId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -673,6 +688,7 @@ func SearchPosts(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

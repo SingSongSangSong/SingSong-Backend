@@ -123,14 +123,16 @@ func GetChartV2(rdb *redis.Client) gin.HandlerFunc {
 		//성별 조회
 		gender, exists := c.Get("gender")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - gender not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("gender not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not found", nil)
 			return
 		}
 
 		//
 		birthYear, exists := c.Get("birthYear")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - birthyear not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("birthyear not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthyear not found", nil)
 			return
 		}
 

@@ -122,6 +122,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			// DB에 없는 경우 - 회원가입
 			m, err := joinForAnonymous(c, &Claims{Email: generateUniqueEmail()}, 0, "Unknown", loginRequest.Provider, db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -129,6 +130,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 
 			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID)
 			if tokenErr != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 				return
 			}
@@ -162,6 +164,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			// DB에 없는 경우 - 회원가입
 			m, err = join(c, payload, loginRequest, m, db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -171,6 +174,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
 
 		if tokenErr != nil {
+			pkg.SendToSentryWithStack(c, tokenErr)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 			return
 		}
