@@ -8,6 +8,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -56,6 +57,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		// Get memberId from the middleware (assumed that the middleware sets the memberId)
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -68,6 +70,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		// Ensure memberId is cast to int64
 		memberIdInt, ok := memberId.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - invalid memberId type", nil)
 			return
 		}
@@ -95,6 +98,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		response, err := client.CreateUserProfile(context.Background(), rpcRequest)
 		if err != nil {
 			log.Printf("Error calling gRPC: %v", err)
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -132,6 +136,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		// Keep 여부 가져오기
 		keepLists, err := mysql.KeepLists(qm.Where("member_id = ?", memberIdInt)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -143,6 +148,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 			qm.WhereIn("keep_list_id = ?", keepListInterface...),
 			qm.AndIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -150,6 +156,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		// 댓글 수 가져오기
 		commentsCounts, err := mysql.Comments(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -157,6 +164,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		// Keep 수 가져오기
 		keepCounts, err := mysql.KeepSongs(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -164,6 +172,7 @@ func GetRecommendation(db *sql.DB, redisClient *redis.Client) gin.HandlerFunc {
 		// MelonSongId 가져오기
 		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

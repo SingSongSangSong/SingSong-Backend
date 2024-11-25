@@ -2,8 +2,9 @@ package handler
 
 import (
 	"SingSong-Server/internal/pkg"
-	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"net/http"
 )
 
@@ -64,5 +65,5 @@ func MapTagToColumnV4(koreanTag string) (string, error) {
 	if column, exists := tagToColumnV4[koreanTag]; exists {
 		return column, nil
 	}
-	return "", errors.New("tag not found, tag cannot convert to database column: " + koreanTag)
+	return "", errors.Wrap(fmt.Errorf("tag not found, tag cannot convert to database column: "+koreanTag), "최초 에러 발생 지점")
 }

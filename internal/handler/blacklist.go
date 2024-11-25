@@ -4,6 +4,7 @@ import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -36,7 +37,8 @@ func AddBlacklist(db *sql.DB) gin.HandlerFunc {
 
 		blockerId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
@@ -52,6 +54,7 @@ func AddBlacklist(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -59,6 +62,7 @@ func AddBlacklist(db *sql.DB) gin.HandlerFunc {
 		m := mysql.Blacklist{BlockerMemberID: blockerId.(int64), BlockedMemberID: request.MemberId}
 		err = m.Insert(c.Request.Context(), db, boil.Infer())
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -103,6 +107,7 @@ func DeleteBlacklist(db *sql.DB) gin.HandlerFunc {
 
 		_, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId), qm.WhereIn("blocked_member_id IN ?", memberIDsInterface...)).DeleteAll(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -136,6 +141,7 @@ func GetBlacklist(db *sql.DB) gin.HandlerFunc {
 
 		all, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -152,6 +158,7 @@ func GetBlacklist(db *sql.DB) gin.HandlerFunc {
 
 		blockedMembers, err := mysql.Members(qm.WhereIn("member_id in ?", blockedIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

@@ -53,6 +53,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -64,6 +65,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -74,6 +76,7 @@ func SearchSongs(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -180,12 +183,12 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 		//page, size를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert page to int", nil)
 			return
 		}
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
@@ -199,6 +202,7 @@ func SearchSongsByArist(db *sql.DB) gin.HandlerFunc {
 			qm.Offset(offset),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -262,12 +266,12 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 		//page, size를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert page to int", nil)
 			return
 		}
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
@@ -280,6 +284,7 @@ func SearchSongsBySongName(db *sql.DB) gin.HandlerFunc {
 			qm.Offset(offset),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -339,7 +344,7 @@ func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
 		//page를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert page to int", nil)
 			return
 		}
 
@@ -348,6 +353,7 @@ func SearchSongsBySongNumber(db *sql.DB) gin.HandlerFunc {
 			qm.Where("song_number = ?", searchKeyword),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

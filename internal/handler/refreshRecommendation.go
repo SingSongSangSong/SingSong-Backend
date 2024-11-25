@@ -6,6 +6,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
@@ -58,12 +59,14 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 	return func(c *gin.Context) {
 		value, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		memberId, ok := value.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
 			return
 		}
@@ -84,6 +87,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		vectorQuerySize := pageSize + len(historySongs)
 		values, err := queryVectorByTag(c, englishTag, idxConnection, vectorQuerySize)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - failed to query", nil)
 			return
 		}
@@ -102,6 +106,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		// KeepLists에서 member_id에 해당하는 KeepList 가져오기
 		one, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error keep list - "+err.Error(), nil)
 			return
 		}
@@ -109,6 +114,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		// 모든 KeepSongs 가져오기
 		keepSongs, err := mysql.KeepSongs(qm.Where("keep_list_id = ?", one.KeepListID), qm.And("deleted_at IS NULL")).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error keep song id- "+err.Error(), nil)
 			return
 		}
@@ -122,6 +128,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		// SongInfos 조회
 		all, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error song info- "+err.Error(), nil)
 			return
 		}
@@ -129,6 +136,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		// Comments 수 조회
 		commentsCounts, err := mysql.Comments(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error comments - "+err.Error(), nil)
 			return
 		}
@@ -136,6 +144,7 @@ func RefreshRecommendation(db *sql.DB, redisClient *redis.Client, idxConnection 
 		// Keep 수 조회
 		keepCounts, err := mysql.KeepSongs(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error keepsongs- "+err.Error(), nil)
 			return
 		}

@@ -64,12 +64,14 @@ func CommentOnPost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		// memberId가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		member, err := mysql.Members(qm.Where("member_id = ?", memberId.(int64))).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -95,6 +97,7 @@ func CommentOnPost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		postComment := mysql.PostComment{MemberID: memberId.(int64), ParentPostCommentID: nullParentCommentId, PostID: commentRequest.PostId, IsRecomment: nulIsRecomment, Content: nullContent, Likes: 0}
 		err = postComment.Insert(c.Request.Context(), db, boil.Infer())
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -102,6 +105,7 @@ func CommentOnPost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		if len(songInfoIds) > 0 {
 			count, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).Count(c.Request.Context(), db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -124,6 +128,7 @@ func CommentOnPost(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 			// Batch insert 실행
 			_, err = db.ExecContext(c.Request.Context(), query, values...)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -209,13 +214,15 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 
 		blockerId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		//차단 유저 제외
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -259,6 +266,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		// Query 실행
 		rows, err := db.Query(query, postId, cursorInt, sizeInt)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -285,6 +293,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 				&postComment.SongInfoIds,
 			)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -332,6 +341,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 
 		all, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -394,6 +404,7 @@ func GetCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		).All(c.Request.Context(), db)
 
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -493,6 +504,7 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -514,6 +526,7 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 			qm.OrderBy("post_comment.created_at ASC"),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -536,6 +549,7 @@ func GetReCommentOnPost(db *sql.DB) gin.HandlerFunc {
 		).All(c.Request.Context(), db)
 
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -625,6 +639,7 @@ func ReportPostComment(db *sql.DB) gin.HandlerFunc {
 		m := mysql.PostCommentReport{PostCommentID: reportRequest.PostCommentId, ReportReason: nullReason, SubjectMemberID: reportRequest.SubjectMemberId, ReporterMemberID: memberId.(int64)}
 		err := m.Insert(c.Request.Context(), db, boil.Infer())
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -684,6 +699,7 @@ func LikePostComment(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		if err == nil {
 			postCommentLikes.DeletedAt = null.TimeFrom(time.Now())
 			if _, err := postCommentLikes.Update(c.Request.Context(), db, boil.Infer()); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -693,11 +709,13 @@ func LikePostComment(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 				qm.Where("post_comment_id = ?", postCommentId),
 			).One(c.Request.Context(), db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
 
 			if err := changeLikeStatus(postComment, -1); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -709,6 +727,7 @@ func LikePostComment(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		// 댓글 좋아요 누르기
 		like := mysql.PostCommentLike{MemberID: memberId.(int64), PostCommentID: postCommentId}
 		if err := like.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -718,11 +737,13 @@ func LikePostComment(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 			qm.Where("post_comment_id = ?", postCommentId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
 		if err := changeLikeStatus(postComment, 1); err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -757,6 +778,7 @@ func DeletePostComment(db *sql.DB) gin.HandlerFunc {
 
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -771,6 +793,7 @@ func DeletePostComment(db *sql.DB) gin.HandlerFunc {
 				return
 			}
 			// 기타 데이터베이스 관련 에러
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -786,6 +809,7 @@ func DeletePostComment(db *sql.DB) gin.HandlerFunc {
 			})
 
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

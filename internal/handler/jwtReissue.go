@@ -39,13 +39,15 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 		// payload를 Claims 구조체로 변환
 		var claims *Claims
 		if err := json.Unmarshal([]byte(payload), &claims); err != nil {
-			pkg.BaseResponse(c, http.StatusBadRequest, "JSON Unmarshal error - "+err.Error(), nil)
+			pkg.SendToSentryWithStack(c, err)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "JSON Unmarshal error - "+err.Error(), nil)
 		}
 
 		// accessToken, refreshToken 생성
 		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, claims, claims.BirthYear, claims.Gender, claims.MemberId)
 
 		if tokenErr != nil {
+			pkg.SendToSentryWithStack(c, tokenErr)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 			return
 		}
