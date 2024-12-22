@@ -212,10 +212,10 @@ func saveToRedis(ctx context.Context, redisClient *redis.Client, baseKey string,
 		key := fmt.Sprintf("%s_%s_%s", baseKey, gender, ageGroup)
 		jsonData, err := json.Marshal(items)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "최초 에러 발생 지점")
 		}
 		if err := redisClient.Set(ctx, key, jsonData, 4800*time.Second).Err(); err != nil {
-			return err
+			return errors.Wrap(err, "최초 에러 발생 지점")
 		}
 	}
 	return nil
@@ -253,7 +253,7 @@ func fetchPreviousData(ctx context.Context, redisClient *redis.Client) (map[stri
 				continue
 			} else if err != nil {
 				log.Printf("Error fetching key %s: %v", key, err)
-				return nil, err
+				return nil, errors.Wrap(err, "최초 에러 발생 지점")
 			}
 
 			// JSON 파싱
