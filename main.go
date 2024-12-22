@@ -83,8 +83,15 @@ func main() {
 
 	// cronjob 추가
 	c := cron.New()
-	_, err = c.AddFunc("49 * * * *", func() {
+	_, err = c.AddFunc("55 * * * *", func() {
 		handler.ScheduleNextChart(db, rdb)
+	})
+	if err != nil {
+		fmt.Println("Error scheduling task:", err)
+		return
+	}
+	_, err = c.AddFunc("0 11 * * *", func() {
+		handler.ScheduleNewSongs(db)
 	})
 	if err != nil {
 		fmt.Println("Error scheduling task:", err)
