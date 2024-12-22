@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/agnivade/levenshtein"
+	"github.com/friendsofgo/errors"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -26,16 +27,16 @@ type NewSongStruct struct {
 	ArtistName  string
 	IsMr        bool
 	IsLive      bool
-	MelonSongId string
-	Album       string
-	Genre       string
-	ReleaseYear int
+	MelonSongId null.String
+	Album       null.String
+	Genre       null.String
+	ReleaseYear null.Int
 }
 
 type SearchResult struct {
 	SongName    string
 	ArtistName  string
-	MelonSongId string
+	MelonSongId null.String
 }
 
 func ScheduleNewSongs(db *sql.DB) {
@@ -72,6 +73,11 @@ func ScheduleNewSongs(db *sql.DB) {
 	}
 
 	// 장르, 발매일, 앨범 정보 가져오기
+	updatedSongs, err = fetchMelonSongInfo(updatedSongs)
+	if err != nil {
+		log.Printf(err.Error())
+		//melon song id는 저장하도록
+	}
 
 	// db에 저장
 	err = saveMelonInfoToDB(ctx, db, updatedSongs)
@@ -90,14 +96,16 @@ func fetchNewSongs(db *sql.DB) ([]NewSongStruct, error) {
 	// HTTP 요청
 	res, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch URL: %v", err)
+		log.Printf("failed to fetch URL: %v", err)
+		return nil, errors.Wrap(err, "failed to fetch URL")
 	}
 	defer res.Body.Close()
 
 	// HTML 파싱
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse HTML: %v", err)
+		log.Printf("failed to parse HTML: %v", err)
+		return nil, errors.Wrap(err, "failed to parse HTML")
 	}
 
 	var songs []NewSongStruct
@@ -135,7 +143,8 @@ func fetchNewSongs(db *sql.DB) ([]NewSongStruct, error) {
 	`)
 	rows, err := db.Query(query, month, year)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch songs from DB: %v", err)
+		log.Printf("failed to fetch songs from DB: %v", err)
+		return nil, errors.Wrap(err, "failed to fetch songs from DB")
 	}
 	defer rows.Close()
 
@@ -144,7 +153,8 @@ func fetchNewSongs(db *sql.DB) ([]NewSongStruct, error) {
 	for rows.Next() {
 		var songNumber int
 		if err := rows.Scan(&songNumber); err != nil {
-			return nil, fmt.Errorf("failed to scan DB rows: %v", err)
+			log.Printf("failed to scan DB rows: %v", err)
+			return nil, errors.Wrap(err, "failed to scan DB rows")
 		}
 		dbSongNumbers[songNumber] = true
 	}
@@ -197,13 +207,13 @@ func fetchMrAndLiveForOne(song NewSongStruct) (bool, bool, error) {
 	table := doc.Find("div#BoardType1 > table.board_type1")
 	if table.Length() == 0 {
 		log.Printf("No table found for song %s", song.SongNumber)
-		return false, false, fmt.Errorf("no table found")
+		return false, false, errors.Wrap(err, "no table found")
 	}
 
 	row := table.Find("tbody > tr:nth-child(2)")
 	if row.Length() == 0 {
 		log.Printf("No row found for song %s", song.SongNumber)
-		return false, false, fmt.Errorf("no row found")
+		return false, false, errors.Wrap(err, "no row found")
 	}
 
 	isLive := row.Find("td img[src='/images/tjsong/live_icon.png']").Length() > 0
@@ -227,7 +237,7 @@ func saveToDB(ctx context.Context, db *sql.DB, songs []NewSongStruct) error {
 		// DB에 저장
 		err := newSong.Insert(ctx, db, boil.Infer())
 		if err != nil {
-			log.Printf("Failed to insert song %s: %v", song.SongNumber, err)
+			log.Printf("Failed to insert song %d: %v", song.SongNumber, err)
 		}
 	}
 
@@ -269,14 +279,14 @@ func fetchMelonSongId(songs []NewSongStruct) ([]NewSongStruct, error) {
 		// 검색 결과가 있다면 best match 찾기
 		bestMatch := findHighestSimilarityMatch(song.SongName, cleanedArtistName, rows)
 		if bestMatch == nil {
-			log.Printf("No suitable match found for song: %s by %s", song.SongName, song.ArtistName)
+			//log.Printf("No suitable match found for song: %s by %s", song.SongName, song.ArtistName)
 			continue
 		}
 
 		// best match 정보로 melon song id 업데이트
 		songs[i].MelonSongId = bestMatch.MelonSongId
 
-		log.Printf("Updated song: %s with Melon Song ID: %s", song.SongName, bestMatch.MelonSongId)
+		//log.Printf("Updated song: %s with Melon Song ID: %s", song.SongName, bestMatch.MelonSongId.String)
 
 	}
 
@@ -333,7 +343,7 @@ func SearchMelon(title, artist string) ([]SearchResult, error) {
 	req, err := http.NewRequest("GET", searchURL, nil)
 	if err != nil {
 		log.Printf(err.Error())
-		return nil, fmt.Errorf("failed to create request: %v", err)
+		return nil, errors.Wrap(err, "failed to create request")
 	}
 	req.Header.Set("User-Agent", randomUserAgent)
 
@@ -341,21 +351,21 @@ func SearchMelon(title, artist string) ([]SearchResult, error) {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf(err.Error())
-		return nil, fmt.Errorf("failed to fetch page for %s by %s: %v", title, artist, err)
+		return nil, errors.Wrap(err, "failed to fetch page")
 	}
 	defer resp.Body.Close()
 
 	// 상태 코드 확인
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("failed to fetch page for %s by %s: Status code %d", title, artist, resp.StatusCode)
-		return nil, fmt.Errorf("failed to fetch page for %s by %s: Status code %d", title, artist, resp.StatusCode)
+		return nil, errors.Wrap(err, "failed to fetch page")
 	}
 
 	// HTML 파싱
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		log.Printf(err.Error())
-		return nil, fmt.Errorf("failed to parse HTML: %v", err)
+		return nil, errors.Wrap(err, "failed to parse HTML")
 	}
 
 	// 검색 결과 추출
@@ -396,14 +406,14 @@ func SearchMelon(title, artist string) ([]SearchResult, error) {
 			topResults = append(topResults, SearchResult{
 				SongName:    songName,
 				ArtistName:  artistName,
-				MelonSongId: songID,
+				MelonSongId: null.StringFrom(songID),
 			})
 		}
 
 		return true
 	})
 
-	log.Printf("Search results found for %s by %s", title, artist)
+	//log.Printf("Search results found for %s by %s", title, artist)
 
 	return topResults, nil
 }
@@ -425,7 +435,7 @@ func findHighestSimilarityMatch(title, artist string, results []SearchResult) *S
 				Result     SearchResult
 			}{Similarity: avgSimilarity, Result: result})
 		}
-		log.Printf("Title: %s, Result Title: %s, Artist: %s, Result Artist: %s, Similarity: %.2f", title, resultSongName, artist, resultArtistName, avgSimilarity)
+		//log.Printf("Title: %s, Result Title: %s, Artist: %s, Result Artist: %s, Similarity: %.2f", title, resultSongName, artist, resultArtistName, avgSimilarity)
 	}
 
 	if len(validMatches) == 0 {
@@ -467,6 +477,95 @@ func randomSleep() {
 	time.Sleep(sleepDuration)
 }
 
+func fetchMelonSongInfo(songs []NewSongStruct) ([]NewSongStruct, error) {
+	for i, song := range songs {
+		// Melon song detail URL
+		url := fmt.Sprintf("https://www.melon.com/song/detail.htm?songId=%s", song.MelonSongId.String)
+
+		// Create HTTP client with timeout
+		client := &http.Client{Timeout: 10 * time.Second}
+
+		// Create HTTP request
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			log.Printf("failed to create request: %v", err)
+			continue
+		}
+
+		// Add headers
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.5735.110 Safari/537.36")
+
+		// Send HTTP request
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("failed to fetch page for song %s by %s: %v", song.SongName, song.ArtistName, err)
+			continue
+		}
+		defer resp.Body.Close()
+
+		// Check HTTP status code
+		if resp.StatusCode != http.StatusOK {
+			log.Printf("failed to fetch page for song %s by %s: Status code %d", song.SongName, song.ArtistName, resp.StatusCode)
+			continue
+		}
+
+		// Parse HTML
+		doc, err := goquery.NewDocumentFromReader(resp.Body)
+		if err != nil {
+			log.Printf("failed to parse HTML for song %s by %s: %v", song.SongName, song.ArtistName, err)
+			continue
+		}
+
+		genre := strings.TrimSpace(doc.Find("dt:contains('장르') + dd").Text())
+		releaseDate := strings.TrimSpace(doc.Find("#downloadfrm > div > div > div:nth-of-type(2) > div:nth-of-type(2) > dl > dd:nth-of-type(2)").Text())
+		albumImageURL, exists := doc.Find("#downloadfrm > div > div > div:nth-of-type(1) > a > img").Attr("src")
+		if !exists {
+			albumImageURL = ""
+		}
+
+		songs[i].Album = null.StringFrom(albumImageURL)
+		year, err := extractYear(releaseDate)
+		if err != nil {
+			log.Printf("cannot extract year %s: %v", releaseDate, err.Error())
+		} else {
+			songs[i].ReleaseYear = null.IntFrom(year)
+		}
+		songs[i].Genre = null.StringFrom(genre)
+	}
+	return songs, nil
+}
+
+func extractYear(dateStr string) (int, error) {
+	// Compile regular expressions for date formats
+	yearOnlyRegex := regexp.MustCompile(`^\d{4}$`)
+	fullDateRegex := regexp.MustCompile(`^\d{4}\.\d{2}\.\d{2}$`)
+
+	// Check if the date matches the "YYYY" format
+	if yearOnlyRegex.MatchString(dateStr) {
+		year, err := strconv.Atoi(dateStr)
+		if err != nil {
+			log.Printf("failed to parse year from %s: %v", dateStr, err)
+			return 0, errors.Wrap(err, "failed to parse year")
+		}
+		return year, nil
+	}
+
+	// Check if the date matches the "YYYY.MM.DD" format
+	if fullDateRegex.MatchString(dateStr) {
+		parts := strings.Split(dateStr, ".")
+		year, err := strconv.Atoi(parts[0])
+		if err != nil {
+			log.Printf("failed to parse year from %s: %v", dateStr, err)
+			return 0, errors.Wrap(err, "failed to parse year")
+		}
+		return year, nil
+	}
+
+	// Return error if the format is invalid
+	log.Printf("invalid date format: %s", dateStr)
+	return 0, errors.Wrap(fmt.Errorf("invalid date format: %s", dateStr), "invalid date format")
+}
+
 func saveMelonInfoToDB(ctx context.Context, db *sql.DB, songs []NewSongStruct) error {
 	for _, song := range songs {
 		// 기존 데이터를 조회
@@ -481,10 +580,10 @@ func saveMelonInfoToDB(ctx context.Context, db *sql.DB, songs []NewSongStruct) e
 		}
 
 		// 업데이트할 데이터 설정
-		existingSong.MelonSongID = null.StringFrom(song.MelonSongId)
-		existingSong.Album = null.StringFrom(song.Album)
-		existingSong.Genre = null.StringFrom(song.Genre)
-		existingSong.Year = null.IntFrom(song.ReleaseYear)
+		existingSong.MelonSongID = song.MelonSongId
+		existingSong.Album = song.Album
+		existingSong.Genre = song.Genre
+		existingSong.Year = song.ReleaseYear
 
 		// 업데이트 실행
 		_, err = existingSong.Update(ctx, db, boil.Infer())
