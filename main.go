@@ -3,15 +3,18 @@ package main
 import (
 	"SingSong-Server/conf"
 	_ "SingSong-Server/docs"
+	"SingSong-Server/internal/handler"
 	"SingSong-Server/router"
 	"context"
 	"database/sql"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	firebase "firebase.google.com/go/v4"
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
+	"github.com/robfig/cron/v3"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
@@ -74,6 +77,27 @@ func main() {
 
 	boil.SetDB(db)
 	//boil.DebugMode = true
+
+	// 차트 초기화
+	go handler.InitializeChart(db, rdb)
+
+	// cronjob 추가
+	c := cron.New()
+	_, err = c.AddFunc("55 * * * *", func() {
+		handler.ScheduleNextChart(db, rdb)
+	})
+	if err != nil {
+		fmt.Println("Error scheduling task:", err)
+		return
+	}
+	_, err = c.AddFunc("0 11 * * *", func() {
+		handler.ScheduleNewSongs(db)
+	})
+	if err != nil {
+		fmt.Println("Error scheduling task:", err)
+		return
+	}
+	c.Start()
 
 	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient, firebaseApp, s3Client)
 

@@ -17,13 +17,13 @@ type V2RedisChartResponse struct {
 	Ranking           int         `json:"ranking"`
 	SongInfoId        int         `json:"song_info_id"`
 	TotalScore        float32     `json:"total_score"`
-	New               int         `json:"new"`
+	New               bool        `json:"new"`
 	RankingChange     int         `json:"ranking_change"`
 	ArtistName        string      `json:"artist_name"`
 	SongName          string      `json:"song_name"`
 	SongNumber        int         `json:"song_number"`
-	IsMR              int         `json:"is_mr"`
-	IsLive            int         `json:"is_live"`
+	IsMR              bool        `json:"is_mr"`
+	IsLive            bool        `json:"is_live"`
 	Album             string      `json:"album"`
 	Gender            string      `json:"gender"`
 	AgeGroup          string      `json:"age_group"`
@@ -64,13 +64,13 @@ func convertOldToNewV2(old []V2RedisChartResponse) []V2ChartSong {
 			Ranking:           o.Ranking,
 			SongInfoId:        o.SongInfoId,
 			TotalScore:        o.TotalScore,
-			IsNew:             o.New == 1, // 1,0 -> true/false로 변환
+			IsNew:             o.New, // 1,0 -> true/false로 변환
 			RankingChange:     o.RankingChange,
 			ArtistName:        o.ArtistName,
 			SongName:          o.SongName,
 			SongNumber:        o.SongNumber,
-			IsMR:              o.IsMR == 1,   // 1, 0 -> true/false로 변환
-			IsLive:            o.IsLive == 1, // 1, 0 -> true/false로 변환
+			IsMR:              o.IsMR,   // 1, 0 -> true/false로 변환
+			IsLive:            o.IsLive, // 1, 0 -> true/false로 변환
 			Album:             o.Album,
 			MelonLink:         CreateMelonLinkByMelonSongId(o.MelonSongId),
 			LyricsYoutubeLink: o.LyricsYoutubeLink,
