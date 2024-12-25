@@ -84,7 +84,7 @@ func init() {
 			log.Printf("Error loading .env file during auth configuration.")
 		}
 	} else if Env == TestMode {
-		log.Println("Running in production mode, skip .env file loading.")
+		log.Println("Running in testing mode, skip .env file loading.")
 	} else {
 		log.Println("Running in production mode, skip .env file loading.")
 	}
@@ -159,12 +159,16 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Redis 연결 실패: %v", err)
 	}
-
-	// Milvus 연결
-	*milvusClient, err = client.NewClient(ctx, client.Config{Address: os.Getenv("MILVUS_HOST") + ":" + os.Getenv("MILVUS_PORT")})
-	if err != nil {
-		log.Fatalf("Milvus 연결 실패: %v", err)
-	}
+	//
+	//// Milvus 연결
+	//*milvusClient, err = client.NewClient(ctx, client.Config{Address: os.Getenv("MILVUS_HOST") + ":" + os.Getenv("MILVUS_PORT")})
+	//if err != nil {
+	//	log.Printf("Milvus 연결 실패: %v. 계속 진행합니다.", err)
+	//	// 연결 실패 시 nil 클라이언트를 반환하거나 처리할 수 있음
+	//	milvusClient = nil
+	//} else {
+	//	log.Println("Milvus 연결 성공!")
+	//}
 
 	// Pinecone 연결
 	pineconeApiKey := os.Getenv("PINECONE_API_KEY")
