@@ -58,10 +58,15 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 			return
 		}
 
+		fileType := "mp4"
 		// 파일 형식을 확인해야한다. 파일의 형식이 오직 Mp3/MP4만 허용한다.
 		if getFile.Header.Get("Content-Type") != "audio/mpeg" && getFile.Header.Get("Content-Type") != "video/mp4" {
 			pkg.BaseResponse(c, http.StatusBadRequest, "파일 형식이 올바르지 않습니다. MP3 또는 MP4 파일만 허용됩니다.", nil)
 			return
+		} else {
+			if getFile.Header.Get("Content-Type") == "audio/mpeg" {
+				fileType = "mp3"
+			}
 		}
 
 		// 파일 열기
@@ -84,11 +89,11 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		fileName := ""
 
 		if conf.Env == conf.LocalMode || conf.Env == "" {
-			fileName = fmt.Sprintf("local/%d/%d/%s.mp4", memberId.(int64), recordSongsRequest.SongId, currentTime)
+			fileName = fmt.Sprintf("local/%d/%d/%s.%s", memberId.(int64), recordSongsRequest.SongId, currentTime, fileType)
 		} else if conf.Env == conf.TestMode {
-			fileName = fmt.Sprintf("test/%d/%d/%s.mp4", memberId.(int64), recordSongsRequest.SongId, currentTime)
+			fileName = fmt.Sprintf("test/%d/%d/%s.%s", memberId.(int64), recordSongsRequest.SongId, currentTime, fileType)
 		} else if conf.Env == conf.ProductionMode {
-			fileName = fmt.Sprintf("prod/%d/%d/%s.mp4", memberId.(int64), recordSongsRequest.SongId, currentTime)
+			fileName = fmt.Sprintf("prod/%d/%d/%s.%s", memberId.(int64), recordSongsRequest.SongId, currentTime, fileType)
 		} else {
 			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "환경 변수가 설정되지 않았습니다.", nil)
