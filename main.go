@@ -39,7 +39,7 @@ func main() {
 	}
 	time.Local = loc // 서버 전역에서 KST로 처리
 
-	if conf.Env == conf.ProductionMode {
+	if conf.Env == conf.ProductionMode || conf.Env == conf.TestMode {
 		currentDate := time.Now().Format("2006-01-02")
 		gitCommit := os.Getenv("GIT_SHA")
 		if gitCommit == "" {
