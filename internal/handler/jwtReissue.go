@@ -44,7 +44,7 @@ func Reissue(redis *redis.Client) gin.HandlerFunc {
 		}
 
 		// accessToken, refreshToken 생성
-		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, claims, claims.BirthYear, claims.Gender, claims.MemberId)
+		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshTokenV2(c, redis, claims, claims.BirthYear, claims.Gender, claims.MemberId)
 
 		if tokenErr != nil {
 			pkg.SendToSentryWithStack(c, tokenErr)
