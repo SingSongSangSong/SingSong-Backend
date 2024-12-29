@@ -33,6 +33,7 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -80,6 +81,7 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 
 		rows, err := db.Query(query, memberId, pageSize, offset)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -109,6 +111,7 @@ func RefreshRecommendationV2(db *sql.DB) gin.HandlerFunc {
 				&commentCount, &keepCount, &isKeep,
 			)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}

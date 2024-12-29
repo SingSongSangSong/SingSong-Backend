@@ -46,7 +46,8 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, err1 := c.Get("memberId")
 		if err1 != true {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
@@ -68,6 +69,7 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 		m := mysql.KeepLists(qm.Where("member_id = ?", memberId))
 		playlistInfo, errors := m.One(c.Request.Context(), db)
 		if errors != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+errors.Error(), nil)
 			return
 		}
@@ -116,6 +118,7 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 		// Query 실행
 		rows, err := db.Query(query, playlistInfo.KeepListID, cursorInt, sizeInt)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -142,6 +145,7 @@ func GetSongsFromPlaylistV2(db *sql.DB) gin.HandlerFunc {
 				&keepSong.TJYoutubeLink,
 			)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}

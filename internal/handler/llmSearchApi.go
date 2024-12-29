@@ -31,6 +31,7 @@ func GetSearchResultsForLLM(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(10),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

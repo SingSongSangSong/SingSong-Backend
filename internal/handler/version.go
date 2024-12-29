@@ -40,6 +40,7 @@ func VersionCheck(db *sql.DB) gin.HandlerFunc {
 
 		version, err := mysql.AppVersions(qm.Where("platform = ?", request.Platform)).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot find version data", nil)
 			return
 		}
@@ -96,11 +97,13 @@ func VersionUpdate(db *sql.DB) gin.HandlerFunc {
 					UpdateURL:          request.UpdateUrl,
 				}
 				if err := version.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
+					pkg.SendToSentryWithStack(c, err)
 					pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 					return
 				}
 			} else {
 				// 그 외 데이터베이스 오류 처리
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -115,6 +118,7 @@ func VersionUpdate(db *sql.DB) gin.HandlerFunc {
 			}
 			// 업데이트 실행
 			if _, err := one.Update(c.Request.Context(), db, boil.Infer()); err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -135,6 +139,7 @@ func AllVersion(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		all, err := mysql.AppVersions().All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

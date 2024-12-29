@@ -82,13 +82,15 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 
 		blockerId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		//차단 유저 제외
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -132,6 +134,7 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 		// Query 실행
 		rows, err := db.Query(query, postId, cursorInt, sizeInt)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -158,6 +161,7 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 				&postComment.SongInfoIds,
 			)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -178,6 +182,7 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 			qm.OrderBy("post_comment.created_at ASC"),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -228,6 +233,7 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 
 		all, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -292,6 +298,7 @@ func GetCommentOnPostV2(db *sql.DB) gin.HandlerFunc {
 		).All(c.Request.Context(), db)
 
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

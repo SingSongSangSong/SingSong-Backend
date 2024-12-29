@@ -86,6 +86,7 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 
 		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -117,6 +118,7 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 			qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL", songId),
 		).Count(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -149,6 +151,7 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 			qm.OrderBy("comment.created_at ASC"),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -168,6 +171,7 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 			qm.And("deleted_at is null"),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

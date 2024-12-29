@@ -7,6 +7,8 @@ import (
 	"database/sql"
 	firebase "firebase.google.com/go/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
@@ -15,13 +17,27 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	_ "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
+	"log"
 	"net/http"
 )
 
 func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexConnection, milvusClient *client.Client, firebaseApp *firebase.App, s3Client *s3.Client) *gin.Engine {
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:              conf.SentryConfigInstance.Dsn,
+		EnableTracing:    false, // 무료 플랜이므로 trace 비활성화
+		TracesSampleRate: 1.0,
+		Environment:      conf.Env,
+	}); err != nil {
+		log.Printf("Sentry initialization failed: %v\n", err)
+	}
 
 	//gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+
+	// sentry
+	r.Use(sentrygin.New(sentrygin.Options{
+		Repanic: true,
+	}))
 
 	// Datadog tracer
 	if conf.Env == conf.ProductionMode {
