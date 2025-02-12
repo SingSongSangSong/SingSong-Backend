@@ -173,33 +173,33 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	// Pinecone 연결
 	pineconeApiKey := os.Getenv("PINECONE_API_KEY")
 	if pineconeApiKey == "" {
-		log.Fatalf("Pinecone api key 없음")
+		log.Printf("Pinecone api key 없음")
 	}
 
 	client, err := pinecone.NewClient(pinecone.NewClientParams{ApiKey: pineconeApiKey})
 	if err != nil {
-		log.Fatalf("Pinecone 실패: %v", err)
+		log.Printf("Pinecone 실패: %v", err)
 	}
 
 	idx, err := client.DescribeIndex(ctx, os.Getenv("PINECONE_INDEX"))
 	if err != nil {
-		log.Fatalf("Failed to describe index \"%s\". Error:%s", idx.Name, err)
+		log.Printf("Failed to describe index \"%s\". Error:%s", idx.Name, err)
 	}
 
 	*idxConnection, err = client.Index(idx.Host)
 	if err != nil {
-		log.Fatalf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
+		log.Printf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
 	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		log.Fatalf("failed to load configuration, %v", err)
+		log.Printf("failed to load configuration, %v", err)
 	}
 	*s3Client = s3.NewFromConfig(cfg)
 
 	// export 환경변수 추가했었다
 	*firebaseApp, err = firebase.NewApp(ctx, nil)
 	if err != nil {
-		log.Fatalf("Failed to initialize firebase: %v", err)
+		log.Printf("Failed to initialize firebase: %v", err)
 	}
 }

@@ -30,25 +30,25 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
           platforms: linux/arm64
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install SSH client
-        run: sudo apt-get install -y sshpass
-
-      - name: Trigger Docker update script on Raspberry Pi
-        env:
-          PI_HOST: ${{ secrets.PI_HOST }}
-          PI_USER: ${{ secrets.PI_USER }}
-          PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
-          DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
-        run: |
-          sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST << EOF
-          echo "Connected to Raspberry Pi"
-          nohup /home/sunwupark/Downloads/SingSong/golang_server_run.sh $DOCKER_IMAGE > golang_server_run.log 2>&1 &
-          echo "Docker update script started in the background."
-          EOF
+#  deploy:
+#    runs-on: ubuntu-latest
+#    needs: build
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Install SSH client
+#        run: sudo apt-get install -y sshpass
+#
+#      - name: Trigger Docker update script on Raspberry Pi
+#        env:
+#          PI_HOST: ${{ secrets.PI_HOST }}
+#          PI_USER: ${{ secrets.PI_USER }}
+#          PI_PASSWORD: ${{ secrets.PI_PASSWORD }}
+#          DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPOSITORY }}:latest
+#        run: |
+#          sshpass -p $PI_PASSWORD ssh -o StrictHostKeyChecking=no $PI_USER@$PI_HOST << EOF
+#          echo "Connected to Raspberry Pi"
+#          nohup /home/sunwupark/Downloads/SingSong/golang_server_run.sh $DOCKER_IMAGE > golang_server_run.log 2>&1 &
+#          echo "Docker update script started in the background."
+#          EOF
