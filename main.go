@@ -7,6 +7,7 @@ import (
 	"SingSong-Server/router"
 	"context"
 	"database/sql"
+	"errors"
 	firebase "firebase.google.com/go/v4"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -15,6 +16,7 @@ import (
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
+	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
@@ -22,6 +24,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -38,6 +42,8 @@ func main() {
 		log.Fatalf("Failed to load location: %v", err)
 	}
 	time.Local = loc // 서버 전역에서 KST로 처리
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	ctx := context.Background()
 
 	if conf.Env == conf.ProductionMode || conf.Env == conf.TestMode {
 		currentDate := time.Now().Format("2006-01-02")
@@ -59,12 +65,10 @@ func main() {
 			profiler.WithService(conf.DatadogServiceName),
 		)
 		if err != nil {
-			log.Fatal("Failed to start profiler: ", err)
+			logrus.WithContext(ctx).Fatal("Failed to start profiler: ", err)
 		}
 		defer profiler.Stop()
 	}
-
-	ctx := context.Background()
 
 	var db *sql.DB
 	var rdb *redis.Client
@@ -107,8 +111,46 @@ func main() {
 	}()
 
 	// 서버 실행
-	if err := r.Run(); err != nil {
-		log.Fatalf("서버 실행 실패: %v", err)
+
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: r.Handler(),
 	}
+
+	// 서버 실행이 블로킹(Blocking)되지 않도록 별도의 Go 루틴에서 실행하여 SIGTERM 감지를 위한 코드를 실행할 수 있도록 함.
+	go func() {
+		// service connections
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 5 seconds.
+	// make(chan os.Signal, 1) → OS에서 발생하는 신호(Signal)를 전달받는 채널 생성.
+	quit := make(chan os.Signal, 1)
+	// kill (no param) default send syscall.SIGTERM
+	// kill -2 is syscall.SIGINT
+	// kill -9 is syscall. SIGKILL but can"t be catch, so don't need add it
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	// <-quit → SIGTERM이 발생할 때까지 대기(Blocking).
+	<-quit
+	log.Println("Shutdown Server ...")
+
+	//5초 동안 서버 종료를 기다릴 수 있는 컨텍스트 생성.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server Shutdown:", err)
+	}
+	// catching ctx.Done(). timeout of 5 seconds.
+	select {
+	case <-ctx.Done():
+		log.Println("timeout of 5 seconds.")
+	}
+	log.Println("Server exiting")
+
+	//if err := r.Run(); err != nil {
+	//	log.Fatalf("서버 실행 실패: %v", err)
+	//}
 
 }
