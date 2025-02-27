@@ -56,6 +56,7 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	}
 
 	r.GET("/", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "Welcome to SingSong-Server"}) })
+	r.GET("/health", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"message": "Server is healthy"}) })
 
 	// 추천 엔드포인트 설정
 	recommend := r.Group("/api/v1/recommend")
