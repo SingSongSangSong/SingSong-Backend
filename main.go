@@ -113,7 +113,7 @@ func main() {
 	// 서버 실행
 
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    "0.0.0.0:8080",
 		Handler: r.Handler(),
 	}
 
