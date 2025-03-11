@@ -9,6 +9,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -73,70 +74,113 @@ func ListNewSongs(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 페이징 처리된 신곡 가져오기
+		// 1. 페이징 처리된 신곡 가져오기 (메인 쿼리)
 		songInfos, err := mysql.SongInfos(
 			qm.Where("song_info_id < ?", cursorInt),
-			qm.And("created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)"), //최근 31일동안 추가된 곡
+			qm.And("created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)"),
 			qm.OrderBy("song_info_id DESC"),
 			qm.Limit(sizeInt),
-		).All(c.Request.Context(), db)
+		).All(c, db)
 		if err != nil {
 			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
 
-		songInfoInterface := make([]interface{}, len(songInfos))
+		if len(songInfos) == 0 {
+			pkg.BaseResponse(c, http.StatusOK, "ok", []interface{}{})
+			return
+		}
+
+		// 2. song_info_id 리스트 생성
+		songInfoIDs := make([]interface{}, len(songInfos))
 		for i, v := range songInfos {
-			songInfoInterface[i] = v.SongInfoID
+			songInfoIDs[i] = v.SongInfoID
 		}
 
-		// Keep 여부 가져오기
-		keepLists, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c.Request.Context(), db)
-		if err != nil {
-			pkg.SendToSentryWithStack(c, err)
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-			return
-		}
-		keepListInterface := make([]interface{}, len(keepLists))
-		for i, v := range keepLists {
-			keepListInterface[i] = v.KeepListID
-		}
-		keepSongs, err := mysql.KeepSongs(
-			qm.WhereIn("keep_list_id = ?", keepListInterface...),
-			qm.AndIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
-		if err != nil {
-			pkg.SendToSentryWithStack(c, err)
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-			return
-		}
+		// 3. Goroutine을 사용하여 Keep, Comment, Keep Count 조회 병렬 실행
+		var wg sync.WaitGroup
+		wg.Add(3) // 3개의 고루틴 실행
+
+		// 에러 처리 및 결과 저장용 채널
+		errChan := make(chan error, 3)
 		keepMap := make(map[int64]bool)
-		for _, keepSong := range keepSongs {
-			keepMap[keepSong.SongInfoID] = true
-		}
-
-		// Comments 수 가져오기
-		commentsCounts, err := mysql.Comments(qm.WhereIn("song_info_id IN ?", songInfoInterface...), qm.And("deleted_at is null")).All(c.Request.Context(), db)
-		if err != nil {
-			pkg.SendToSentryWithStack(c, err)
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error comments - "+err.Error(), nil)
-			return
-		}
-		// Keep 수 가져오기
-		keepCounts, err := mysql.KeepSongs(qm.WhereIn("song_info_id IN ?", songInfoInterface...), qm.And("deleted_at is null")).All(c.Request.Context(), db)
-		if err != nil {
-			pkg.SendToSentryWithStack(c, err)
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error keepsongs- "+err.Error(), nil)
-			return
-		}
-
 		commentCountMap := make(map[int64]int)
 		keepCountMap := make(map[int64]int)
-		for _, comment := range commentsCounts {
-			commentCountMap[comment.SongInfoID]++
-		}
 
-		for _, keep := range keepCounts {
-			keepCountMap[keep.SongInfoID]++
+		// Keep 여부 조회
+		go func() {
+			defer wg.Done()
+			keepLists, err := mysql.KeepLists(qm.Where("member_id = ?", memberId)).All(c, db)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			keepListIDs := make([]interface{}, len(keepLists))
+			for i, v := range keepLists {
+				keepListIDs[i] = v.KeepListID
+			}
+
+			keepSongs, err := mysql.KeepSongs(
+				qm.WhereIn("keep_list_id = ?", keepListIDs...),
+				qm.AndIn("song_info_id IN ?", songInfoIDs...),
+			).All(c, db)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			for _, keepSong := range keepSongs {
+				keepMap[keepSong.SongInfoID] = true
+			}
+		}()
+
+		// 댓글 수 조회
+		go func() {
+			defer wg.Done()
+			commentsCounts, err := mysql.Comments(
+				qm.WhereIn("song_info_id IN ?", songInfoIDs...),
+				qm.And("deleted_at IS NULL"),
+			).All(c, db)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			for _, comment := range commentsCounts {
+				commentCountMap[comment.SongInfoID]++
+			}
+		}()
+
+		// Keep 개수 조회
+		go func() {
+			defer wg.Done()
+			keepCounts, err := mysql.KeepSongs(
+				qm.WhereIn("song_info_id IN ?", songInfoIDs...),
+				qm.And("deleted_at IS NULL"),
+			).All(c, db)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			for _, keep := range keepCounts {
+				keepCountMap[keep.SongInfoID]++
+			}
+		}()
+
+		// 모든 고루틴이 종료될 때까지 대기
+		wg.Wait()
+		close(errChan)
+
+		// 에러가 있으면 반환
+		for err := range errChan {
+			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
+				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+				return
+			}
 		}
 
 		newSongs := make([]newSongInfo, 0, sizeInt)
