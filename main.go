@@ -18,6 +18,7 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 	"log"
@@ -43,6 +44,7 @@ func main() {
 	}
 	time.Local = loc // 서버 전역에서 KST로 처리
 	logrus.SetFormatter(&logrus.JSONFormatter{})
+	// Instantiate a new slog logger
 	ctx := context.Background()
 
 	if conf.Env == conf.ProductionMode || conf.Env == conf.TestMode {
@@ -79,6 +81,15 @@ func main() {
 
 	conf.SetupConfig(ctx, &db, &rdb, &idxConnection, &milvusClient, &firebaseApp, &s3Client)
 
+	otelShutdown, err := conf.SetupOTelSDK(ctx)
+	if err != nil {
+		return
+	}
+	// Handle shutdown properly so nothing leaks.
+	defer func() {
+		err = errors.Join(err, otelShutdown(context.Background()))
+	}()
+
 	boil.SetDB(db)
 	//boil.DebugMode = true
 
@@ -110,11 +121,15 @@ func main() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
+	//if err := r.Run(); err != nil {
+	//	log.Fatalf("서버 실행 실패: %v", err)
+	//}
+
 	// 서버 실행
 
 	srv := &http.Server{
-		Addr:    "0.0.0.0:8080",
-		Handler: r.Handler(),
+		Addr:    ":8080",
+		Handler: otelhttp.NewHandler(r.Handler(), "singsong-server"),
 	}
 
 	// 서버 실행이 블로킹(Blocking)되지 않도록 별도의 Go 루틴에서 실행하여 SIGTERM 감지를 위한 코드를 실행할 수 있도록 함.
@@ -148,9 +163,5 @@ func main() {
 		log.Println("timeout of 5 seconds.")
 	}
 	log.Println("Server exiting")
-
-	//if err := r.Run(); err != nil {
-	//	log.Fatalf("서버 실행 실패: %v", err)
-	//}
 
 }
