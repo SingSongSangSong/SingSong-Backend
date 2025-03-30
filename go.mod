@@ -2,8 +2,6 @@ module SingSong-Server
 
 go 1.23
 
-toolchain go1.23.4
-
 require (
 	firebase.google.com/go/v4 v4.14.1
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -69,6 +67,7 @@ require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/MicahParks/keyfunc v1.9.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/XSAM/otelsql v0.37.0 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.6 // indirect
