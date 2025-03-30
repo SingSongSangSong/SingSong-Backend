@@ -17,19 +17,19 @@ type V2RedisChartResponse struct {
 	Ranking           int         `json:"ranking"`
 	SongInfoId        int         `json:"song_info_id"`
 	TotalScore        float32     `json:"total_score"`
-	New               bool        `json:"new"`
+	New               int         `json:"new"`
 	RankingChange     int         `json:"ranking_change"`
 	ArtistName        string      `json:"artist_name"`
 	SongName          string      `json:"song_name"`
 	SongNumber        int         `json:"song_number"`
-	IsMR              bool        `json:"is_mr"`
-	IsLive            bool        `json:"is_live"`
+	IsMR              int         `json:"is_mr"`
+	IsLive            int         `json:"is_live"`
 	Album             string      `json:"album"`
 	Gender            string      `json:"gender"`
 	AgeGroup          string      `json:"age_group"`
 	MelonSongId       null.String `json:"melon_song_id"`
-	LyricsYoutubeLink string      `json:"lyrics_video_link,omitempty"`
-	TJYoutubeLink     string      `json:"tj_youtube_link,omitempty"`
+	LyricsYoutubeLink null.String `json:"lyrics_video_link,omitempty"`
+	TJYoutubeLink     null.String `json:"tj_youtube_link,omitempty"`
 }
 
 // ChartResponse 카멜케이스 구조체
@@ -64,19 +64,19 @@ func convertOldToNewV2(old []V2RedisChartResponse) []V2ChartSong {
 			Ranking:           o.Ranking,
 			SongInfoId:        o.SongInfoId,
 			TotalScore:        o.TotalScore,
-			IsNew:             o.New, // 1,0 -> true/false로 변환
+			IsNew:             o.New != 0, // 1,0 -> true/false로 변환
 			RankingChange:     o.RankingChange,
 			ArtistName:        o.ArtistName,
 			SongName:          o.SongName,
 			SongNumber:        o.SongNumber,
-			IsMR:              o.IsMR,   // 1, 0 -> true/false로 변환
-			IsLive:            o.IsLive, // 1, 0 -> true/false로 변환
+			IsMR:              o.IsMR != 0,   // 1, 0 -> true/false로 변환
+			IsLive:            o.IsLive != 0, // 1, 0 -> true/false로 변환
 			Album:             o.Album,
 			MelonLink:         CreateMelonLinkByMelonSongId(o.MelonSongId),
-			LyricsYoutubeLink: o.LyricsYoutubeLink,
-			TJYoutubeLink:     o.TJYoutubeLink,
-			LyricsVideoID:     ExtractVideoID(o.LyricsYoutubeLink),
-			TJVideoID:         ExtractVideoID(o.TJYoutubeLink),
+			LyricsYoutubeLink: o.LyricsYoutubeLink.String,
+			TJYoutubeLink:     o.TJYoutubeLink.String,
+			LyricsVideoID:     ExtractVideoID(o.LyricsYoutubeLink.String),
+			TJVideoID:         ExtractVideoID(o.TJYoutubeLink.String),
 		})
 	}
 	return newCharts

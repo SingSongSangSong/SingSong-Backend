@@ -77,7 +77,7 @@ func main() {
 	conf.SetupConfig(ctx, &db, &rdb, &idxConnection, &milvusClient, &firebaseApp, &s3Client)
 
 	boil.SetDB(db)
-	//boil.DebugMode = true
+	boil.DebugMode = true
 
 	//// 차트 초기화
 	//go handler.InitializeChart(db, rdb)
