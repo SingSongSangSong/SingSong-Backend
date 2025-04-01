@@ -159,6 +159,38 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 		log.Fatalf("Mysql ping 실패: %v", err)
 	}
 
+	// Connect to database with open-telemetry
+	//attrs := append(otelsql.AttributesFromDSN(dsn), semconv.DBSystemMySQL)
+	//
+	//otelsql.OpenDB(ctx, otelsql.WithAttributes(attrs...))
+	//
+	//// Connect to database
+	//*db, err = otelsql.Open("mysql", dsn,
+	//	otelsql.WithAttributes(attrs...),
+	//	otelsql.WithSpanOptions(otelsql.SpanOptions{
+	//		Ping:           true,
+	//		RowsNext:       true,
+	//		DisableErrSkip: false,
+	//	}),
+	//)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//// Register DB stats to meter
+	//err = otelsql.RegisterDBStatsMetrics(*db, otelsql.WithAttributes(
+	//	semconv.DBSystemMySQL,
+	//))
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//db = otelsql.WrapDriver(*db)
+	//
+	//if err := (*db).Ping(); err != nil {
+	//	log.Fatalf("Mysql ping 실패: %v", err)
+	//}
+
 	// 레디스
 	*rdb = redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_ADDR") + ":" + os.Getenv("REDIS_PORT"),
