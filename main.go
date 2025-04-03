@@ -58,7 +58,7 @@ func main() {
 	// Instantiate a new slog logger
 	ctx := context.Background()
 
-	if conf.Env == conf.ProductionMode || conf.Env == conf.TestMode {
+	if conf.Env == conf.ProductionMode {
 		currentDate := time.Now().Format("2006-01-02")
 		gitCommit := os.Getenv("GIT_SHA")
 		if gitCommit == "" {
