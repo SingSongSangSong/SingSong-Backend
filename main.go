@@ -9,15 +9,20 @@ import (
 	"errors"
 	firebase "firebase.google.com/go/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
+	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -25,6 +30,16 @@ import (
 	"syscall"
 	"time"
 )
+
+// main.go 상단 어딘가에 선언 (main 밖)
+type otelLogWriter struct {
+	logger *slog.Logger
+}
+
+func (w *otelLogWriter) Write(p []byte) (n int, err error) {
+	w.logger.Info("gin-log", "message", string(p))
+	return len(p), nil
+}
 
 // @title           싱송생송 API
 // @version         1.0
@@ -40,6 +55,7 @@ func main() {
 	}
 	time.Local = loc // 서버 전역에서 KST로 처리
 	logrus.SetFormatter(&logrus.JSONFormatter{})
+	// Instantiate a new slog logger
 	ctx := context.Background()
 
 	if conf.Env == conf.ProductionMode || conf.Env == conf.TestMode {
@@ -76,42 +92,41 @@ func main() {
 
 	conf.SetupConfig(ctx, &db, &rdb, &idxConnection, &milvusClient, &firebaseApp, &s3Client)
 
+	otelShutdown, err := conf.SetupOTelSDK(ctx)
+	if err != nil {
+		return
+	}
+	// Handle shutdown properly so nothing leaks.
+	defer func() {
+		err = errors.Join(err, otelShutdown(context.Background()))
+	}()
+
+	logger := otelslog.NewLogger("Singsong")
+	logger.Info("Hello from OpenTelemetry logs!", "orderID", 12345)
+
 	boil.SetDB(db)
 	boil.DebugMode = true
 
-	//// 차트 초기화
-	//go handler.InitializeChart(db, rdb)
-	//
-	//// cronjob 추가
-	//c := cron.New()
-	//_, err = c.AddFunc("55 * * * *", func() {
-	//	handler.ScheduleNextChart(db, rdb)
-	//})
-	//if err != nil {
-	//	fmt.Println("Error scheduling task:", err)
-	//	return
-	//}
-	//_, err = c.AddFunc("0 11 * * *", func() {
-	//	handler.ScheduleNewSongs(db)
-	//})
-	//if err != nil {
-	//	fmt.Println("Error scheduling task:", err)
-	//	return
-	//}
-	//c.Start()
+	// GIN 로그를 OTel 로그로 redirect
+	gin.DefaultWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stdout)
+	gin.DefaultErrorWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stderr)
 
 	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient, firebaseApp, s3Client)
 
 	// pprof를 위한 별도의 HTTP 서버 실행
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	//go func() {
+	//	log.Println(http.ListenAndServe("localhost:6060", nil))
+	//}()
+
+	//if err := r.Run(); err != nil {
+	//	log.Fatalf("서버 실행 실패: %v", err)
+	//}
 
 	// 서버 실행
 
 	srv := &http.Server{
-		Addr:    "0.0.0.0:8080",
-		Handler: r.Handler(),
+		Addr:    ":8080",
+		Handler: otelhttp.NewHandler(r.Handler(), "singsong-server"),
 	}
 
 	// 서버 실행이 블로킹(Blocking)되지 않도록 별도의 Go 루틴에서 실행하여 SIGTERM 감지를 위한 코드를 실행할 수 있도록 함.
@@ -145,9 +160,5 @@ func main() {
 		log.Println("timeout of 5 seconds.")
 	}
 	log.Println("Server exiting")
-
-	//if err := r.Run(); err != nil {
-	//	log.Fatalf("서버 실행 실패: %v", err)
-	//}
 
 }

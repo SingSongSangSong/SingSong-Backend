@@ -3,6 +3,7 @@ package conf
 import (
 	"context"
 	"database/sql"
+	"errors"
 	firebase "firebase.google.com/go/v4"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -12,10 +13,24 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/log/global"
+	"go.opentelemetry.io/otel/propagation"
+	otelLog "go.opentelemetry.io/otel/sdk/log"
+	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 type GrpcConfig struct {
@@ -149,6 +164,38 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 		log.Fatalf("Mysql ping 실패: %v", err)
 	}
 
+	// Connect to database with open-telemetry
+	//attrs := append(otelsql.AttributesFromDSN(dsn), semconv.DBSystemMySQL)
+	//
+	//otelsql.OpenDB(ctx, otelsql.WithAttributes(attrs...))
+	//
+	//// Connect to database
+	//*db, err = otelsql.Open("mysql", dsn,
+	//	otelsql.WithAttributes(attrs...),
+	//	otelsql.WithSpanOptions(otelsql.SpanOptions{
+	//		Ping:           true,
+	//		RowsNext:       true,
+	//		DisableErrSkip: false,
+	//	}),
+	//)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//// Register DB stats to meter
+	//err = otelsql.RegisterDBStatsMetrics(*db, otelsql.WithAttributes(
+	//	semconv.DBSystemMySQL,
+	//))
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	//db = otelsql.WrapDriver(*db)
+	//
+	//if err := (*db).Ping(); err != nil {
+	//	log.Fatalf("Mysql ping 실패: %v", err)
+	//}
+
 	// 레디스
 	*rdb = redis.NewClient(&redis.Options{
 		Addr:     os.Getenv("REDIS_ADDR") + ":" + os.Getenv("REDIS_PORT"),
@@ -202,4 +249,103 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Printf("Failed to initialize firebase: %v", err)
 	}
+}
+
+// SetupOTelSDK bootstraps the OpenTelemetry pipeline.
+// If it does not return an error, make sure to call shutdown for proper cleanup.
+// setupOTelSDK bootstraps the OpenTelemetry pipeline.
+// If it does not return an error, make sure to call shutdown for proper cleanup.
+func SetupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, err error) {
+	var shutdownFuncs []func(context.Context) error
+
+	// shutdown calls cleanup functions registered via shutdownFuncs.
+	// The errors from the calls are joined.
+	// Each registered cleanup will be invoked once.
+	shutdown = func(ctx context.Context) error {
+		var err error
+		for _, fn := range shutdownFuncs {
+			err = errors.Join(err, fn(ctx))
+		}
+		shutdownFuncs = nil
+		return err
+	}
+
+	// handleErr calls shutdown for cleanup and makes sure that all errors are returned.
+	handleErr := func(inErr error) {
+		err = errors.Join(inErr, shutdown(ctx))
+	}
+
+	prop := propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	)
+	otel.SetTextMapPropagator(prop)
+
+	traceExporter, err := otlptrace.New(ctx, otlptracehttp.NewClient())
+	if err != nil {
+		return nil, err
+	}
+
+	tracerProvider := trace.NewTracerProvider(trace.WithBatcher(traceExporter))
+	if err != nil {
+		handleErr(err)
+		return
+	}
+	shutdownFuncs = append(shutdownFuncs, tracerProvider.Shutdown)
+	otel.SetTracerProvider(tracerProvider)
+
+	metricExporter, err := otlpmetrichttp.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	meterProvider := metric.NewMeterProvider(metric.WithReader(metric.NewPeriodicReader(metricExporter)))
+	if err != nil {
+		handleErr(err)
+		return
+	}
+	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
+	otel.SetMeterProvider(meterProvider)
+
+	// Create resource.
+	res := newResource()
+	if err != nil {
+		panic(err)
+	}
+	// Create a logger provider.
+	// You can pass this instance directly when creating bridges.
+	loggerProvider, err := newLoggerProvider(ctx, res)
+	if err != nil {
+		panic(err)
+	}
+	shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
+	global.SetLoggerProvider(loggerProvider)
+
+	err = runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return
+}
+
+func newResource() *resource.Resource {
+	return resource.NewWithAttributes(
+		semconv.SchemaURL, // 이건 1.30.0에 맞춰짐
+		semconv.ServiceName("my-service"),
+		semconv.ServiceVersion("0.1.0"),
+	)
+}
+
+func newLoggerProvider(ctx context.Context, res *resource.Resource) (*otelLog.LoggerProvider, error) {
+	exporter, err := otlploghttp.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+	processor := otelLog.NewBatchProcessor(exporter)
+	provider := otelLog.NewLoggerProvider(
+		otelLog.WithResource(res),
+		otelLog.WithProcessor(processor),
+	)
+	return provider, nil
 }
