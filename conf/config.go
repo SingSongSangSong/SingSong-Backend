@@ -15,12 +15,17 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
+	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
+	otelLog "go.opentelemetry.io/otel/sdk/log"
 	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	"log"
 	"os"
@@ -302,19 +307,19 @@ func SetupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, er
 	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
 	otel.SetMeterProvider(meterProvider)
 
-	//logExporter, err := otlploghttp.New(ctx)
-	//if err != nil {
-	//	return nil, err
-	//
-	//}
-
-	//logProvider := otelLog.NewLoggerProvider(otelLog.WithResource(), otelLog.NewSimpleProcessor(logExporter))
-	//if err != nil {
-	//	handleErr(err)
-	//	return
-	//}
-	//shutdownFuncs = append(shutdownFuncs, logProvider.Shutdown)
-	//otel.SetLogger(logProvider)
+	// Create resource.
+	res := newResource()
+	if err != nil {
+		panic(err)
+	}
+	// Create a logger provider.
+	// You can pass this instance directly when creating bridges.
+	loggerProvider, err := newLoggerProvider(ctx, res)
+	if err != nil {
+		panic(err)
+	}
+	shutdownFuncs = append(shutdownFuncs, loggerProvider.Shutdown)
+	global.SetLoggerProvider(loggerProvider)
 
 	err = runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second))
 	if err != nil {
@@ -322,4 +327,25 @@ func SetupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, er
 	}
 
 	return
+}
+
+func newResource() *resource.Resource {
+	return resource.NewWithAttributes(
+		semconv.SchemaURL, // 이건 1.30.0에 맞춰짐
+		semconv.ServiceName("my-service"),
+		semconv.ServiceVersion("0.1.0"),
+	)
+}
+
+func newLoggerProvider(ctx context.Context, res *resource.Resource) (*otelLog.LoggerProvider, error) {
+	exporter, err := otlploghttp.New(ctx)
+	if err != nil {
+		return nil, err
+	}
+	processor := otelLog.NewBatchProcessor(exporter)
+	provider := otelLog.NewLoggerProvider(
+		otelLog.WithResource(res),
+		otelLog.WithProcessor(processor),
+	)
+	return provider, nil
 }

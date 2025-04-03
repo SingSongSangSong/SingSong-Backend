@@ -9,16 +9,20 @@ import (
 	"errors"
 	firebase "firebase.google.com/go/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
+	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -26,6 +30,16 @@ import (
 	"syscall"
 	"time"
 )
+
+// main.go 상단 어딘가에 선언 (main 밖)
+type otelLogWriter struct {
+	logger *slog.Logger
+}
+
+func (w *otelLogWriter) Write(p []byte) (n int, err error) {
+	w.logger.Info("gin-log", "message", string(p))
+	return len(p), nil
+}
 
 // @title           싱송생송 API
 // @version         1.0
@@ -87,8 +101,15 @@ func main() {
 		err = errors.Join(err, otelShutdown(context.Background()))
 	}()
 
+	logger := otelslog.NewLogger("Singsong")
+	logger.Info("Hello from OpenTelemetry logs!", "orderID", 12345)
+
 	boil.SetDB(db)
 	boil.DebugMode = true
+
+	// GIN 로그를 OTel 로그로 redirect
+	gin.DefaultWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stdout)
+	gin.DefaultErrorWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stderr)
 
 	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient, firebaseApp, s3Client)
 
