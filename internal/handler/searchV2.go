@@ -77,14 +77,42 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 		go func() {
 			defer wg.Done()
 			songsWithName, err1 = mysql.SongInfos(
-				qm.SQL("SELECT * FROM song_info WHERE MATCH(song_name) AGAINST (? IN BOOLEAN MODE) ORDER BY MATCH(song_name) AGAINST (?) DESC LIMIT 10", searchKeyword+"*", searchKeyword+"*"),
+				qm.SQL(`
+			(
+				SELECT *, MATCH(song_name) AGAINST (? IN BOOLEAN MODE) AS score
+				FROM song_info
+				WHERE MATCH(song_name) AGAINST (? IN BOOLEAN MODE)
+			)
+			UNION ALL
+			(
+				SELECT *, MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
+				FROM song_info
+				WHERE MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE)
+			)
+			ORDER BY score DESC
+			LIMIT 10
+		`, searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", searchKeyword+"*"),
 			).All(c.Request.Context(), db)
 		}()
 
 		go func() {
 			defer wg.Done()
-			songsWithArtist, err2 = mysql.SongInfos(
-				qm.SQL("SELECT * FROM song_info WHERE MATCH(artist_name) AGAINST (? IN BOOLEAN MODE) ORDER BY MATCH(artist_name) AGAINST (?) DESC LIMIT 10", searchKeyword+"*", searchKeyword+"*"),
+			songsWithName, err1 = mysql.SongInfos(
+				qm.SQL(`
+			(
+				SELECT *, MATCH(song_name) AGAINST (? IN BOOLEAN MODE) AS score
+				FROM song_info
+				WHERE MATCH(song_name) AGAINST (? IN BOOLEAN MODE)
+			)
+			UNION ALL
+			(
+				SELECT *, MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
+				FROM song_info
+				WHERE MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE)
+			)
+			ORDER BY score DESC
+			LIMIT 10
+		`, searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", searchKeyword+"*"),
 			).All(c.Request.Context(), db)
 		}()
 
@@ -226,9 +254,22 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 		}
 
 		offset := (page - 1) * size
-
 		songsWithArtist, err := mysql.SongInfos(
-			qm.SQL("SELECT * FROM song_info WHERE MATCH(artist_name) AGAINST (? IN BOOLEAN MODE) ORDER BY MATCH(artist_name) AGAINST (?) DESC LIMIT ? OFFSET ?", searchKeyword+"*", searchKeyword+"*", size, offset),
+			qm.SQL(`
+				SELECT * FROM (
+					SELECT *, MATCH(artist_name) AGAINST (? IN BOOLEAN MODE) AS score
+					FROM song_info
+					WHERE MATCH(artist_name) AGAINST (? IN BOOLEAN MODE)
+		
+					UNION ALL
+		
+					SELECT *, MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
+					FROM song_info
+					WHERE MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE)
+				) AS merged
+				ORDER BY score DESC
+				LIMIT ? OFFSET ?
+			`, searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", size, offset),
 		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.SendToSentryWithStack(c, err)
@@ -315,7 +356,21 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 		offset := (page - 1) * size
 
 		songsWithName, err := mysql.SongInfos(
-			qm.SQL("SELECT * FROM song_info WHERE MATCH(song_name) AGAINST (? IN BOOLEAN MODE) ORDER BY MATCH(song_name) AGAINST (?) DESC LIMIT ? OFFSET ?", searchKeyword+"*", searchKeyword+"*", size, offset),
+			qm.SQL(`
+				SELECT * FROM (
+					SELECT *, MATCH(song_name) AGAINST (? IN BOOLEAN MODE) AS score
+					FROM song_info
+					WHERE MATCH(song_name) AGAINST (? IN BOOLEAN MODE)
+		
+					UNION ALL
+		
+					SELECT *, MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
+					FROM song_info
+					WHERE MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE)
+				) AS merged
+				ORDER BY score DESC
+				LIMIT ? OFFSET ?
+			`, searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", size, offset),
 		).All(c.Request.Context(), db)
 		if err != nil {
 			pkg.SendToSentryWithStack(c, err)
