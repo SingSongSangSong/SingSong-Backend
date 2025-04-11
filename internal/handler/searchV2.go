@@ -97,18 +97,18 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 
 		go func() {
 			defer wg.Done()
-			songsWithName, err1 = mysql.SongInfos(
+			songsWithArtist, err2 = mysql.SongInfos(
 				qm.SQL(`
 			(
-				SELECT *, MATCH(song_name) AGAINST (? IN BOOLEAN MODE) AS score
+				SELECT *, MATCH(artist_name) AGAINST (? IN BOOLEAN MODE) AS score
 				FROM song_info
-				WHERE MATCH(song_name) AGAINST (? IN BOOLEAN MODE)
+				WHERE MATCH(artist_name) AGAINST (? IN BOOLEAN MODE)
 			)
 			UNION ALL
 			(
-				SELECT *, MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
+				SELECT *, MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
 				FROM song_info
-				WHERE MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE)
+				WHERE MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE)
 			)
 			ORDER BY score DESC
 			LIMIT 10
