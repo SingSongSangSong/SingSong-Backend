@@ -200,7 +200,7 @@ func joinV2(c *gin.Context, payload *Claims, loginRequest *LoginV2Request, m *my
 	m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname}
 	err := m.Insert(c.Request.Context(), db, boil.Infer())
 	if err != nil {
-		return nil, errors.Wrap(fmt.Errorf("error inserting member - "+err.Error()), "최초 에러 발생 지점")
+		return nil, errors.Wrap(fmt.Errorf("error inserting member %s", err.Error()), "최초 에러 발생 지점")
 	}
 	return m, nil
 }

@@ -77,14 +77,14 @@ func MapTagKoreanToEnglish(koreanTag string) (string, error) {
 	if englishTag, exists := tagMapToEnglish[koreanTag]; exists {
 		return englishTag, nil
 	}
-	return "", errors.Wrap(fmt.Errorf("tag not found, tag cannot convert to english:"+koreanTag), "최초 에러 발생 지점")
+	return "", errors.Wrap(fmt.Errorf("tag not found, tag cannot convert to english: %s", koreanTag), "최초 에러 발생 지점")
 }
 
 func MapTagEnglishToKorean(englishTag string) (string, error) {
 	if koreanTag, exists := tagMapToKorean[englishTag]; exists {
 		return koreanTag, nil
 	}
-	return "", errors.Wrap(fmt.Errorf("tag not found, tag cannot convert to korean:"+englishTag), "최초 에러 발생 지점")
+	return "", errors.Wrap(fmt.Errorf("tag not found, tag cannot convert to korean: %s", englishTag), "최초 에러 발생 지점")
 }
 
 func MapTagsKoreanToEnglish(koreanTags []string) ([]string, error) {

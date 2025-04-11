@@ -65,5 +65,5 @@ func MapTagToColumnV4(koreanTag string) (string, error) {
 	if column, exists := tagToColumnV4[koreanTag]; exists {
 		return column, nil
 	}
-	return "", errors.Wrap(fmt.Errorf("tag not found, tag cannot convert to database column: "+koreanTag), "최초 에러 발생 지점")
+	return "", errors.Wrap(fmt.Errorf("tag not found, tag cannot convert to english: %s", koreanTag), "최초 에러 발생 지점")
 }

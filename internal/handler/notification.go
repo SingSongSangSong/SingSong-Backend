@@ -183,7 +183,7 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 
 		br, err := client.SendEachForMulticast(ctx, message)
 		if err != nil {
-			log.Printf("error sending notifications - " + err.Error())
+			log.Printf("error sending notifications - %s", err.Error())
 			return
 		}
 		if br.FailureCount > 0 {

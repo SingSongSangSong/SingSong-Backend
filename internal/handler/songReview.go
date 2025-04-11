@@ -191,7 +191,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			ctx := context.Background()
 			option, err2 := mysql.SongReviewOptions(qm.Where("song_review_option_id = ?", songReviewOptionId)).One(ctx, db)
 			if err2 != nil {
-				log.Printf("failed to get song review option: " + err2.Error())
+				log.Printf("failed to get song review option: %s", err2.Error())
 				return
 			}
 			logMemberAction(db, memberId, "REVIEW_"+option.Enum.String, 3, songInfoId)

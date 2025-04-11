@@ -436,7 +436,7 @@ func joinForAnonymous(c *gin.Context, payload *Claims, year int, gender string, 
 	m := &mysql.Member{Provider: provider, Email: payload.Email, Nickname: null.StringFrom("Anonymous"), Birthyear: null.IntFrom(year), Gender: null.StringFrom(gender)}
 	err := m.Insert(c.Request.Context(), db, boil.Infer())
 	if err != nil {
-		return nil, errors2.Wrap(fmt.Errorf("error inserting member - "+err.Error()), "최초 에러 발생 지점")
+		return nil, errors2.Wrap(fmt.Errorf("error inserting member %s", err.Error()), "최초 에러 발생 지점")
 	}
 	return m, nil
 }

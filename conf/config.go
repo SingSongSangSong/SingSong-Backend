@@ -29,7 +29,6 @@ import (
 	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	"log"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -120,19 +119,19 @@ func init() {
 		JWT_REFRESH_VALIDITY_SECONDS: os.Getenv("JWT_REFRESH_VALIDITY_SECONDS"),
 	}
 
-	dimensionStr := os.Getenv("MILVUS_DIMENSION")
-	dimension, err := strconv.Atoi(dimensionStr)
-	if err != nil {
-		log.Fatalf("Failed to convert MILVUS_DIMENSION to int: %v", err)
-	}
+	//dimensionStr := os.Getenv("MILVUS_DIMENSION")
+	//dimension, err := strconv.Atoi(dimensionStr)
+	//if err != nil {
+	//	log.Fatalf("Failed to convert MILVUS_DIMENSION to int: %v", err)
+	//}
 
-	VectorDBConfigInstance = &VectorDBConfig{
-		MILVUS_HOST:        os.Getenv("MILVUS_HOST"),
-		MILVUS_PORT:        os.Getenv("MILVUS_PORT"),
-		MILVUS_DIMENSION:   dimension,
-		COLLECTION_NAME:    os.Getenv("MILVUS_COLLECTION_NAME"),
-		PINECONE_DIMENSION: 548,
-	}
+	//VectorDBConfigInstance = &VectorDBConfig{
+	//	MILVUS_HOST:        os.Getenv("MILVUS_HOST"),
+	//	MILVUS_PORT:        os.Getenv("MILVUS_PORT"),
+	//	MILVUS_DIMENSION:   dimension,
+	//	COLLECTION_NAME:    os.Getenv("MILVUS_COLLECTION_NAME"),
+	//	PINECONE_DIMENSION: 548,
+	//}
 
 	GrpcConfigInstance = &GrpcConfig{
 		Addr: func() string {
