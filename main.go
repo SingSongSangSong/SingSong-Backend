@@ -113,52 +113,43 @@ func main() {
 
 	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient, firebaseApp, s3Client)
 
-	// pprof를 위한 별도의 HTTP 서버 실행
-	//go func() {
-	//	log.Println(http.ListenAndServe("localhost:6060", nil))
-	//}()
+	pprofServer := &http.Server{
+		Addr: "0.0.0.0:6060",
+	}
 
-	//if err := r.Run(); err != nil {
-	//	log.Fatalf("서버 실행 실패: %v", err)
-	//}
+	// pprof 서버 실행
+	go func() {
+		if err1 := pprofServer.ListenAndServe(); err1 != nil && err1 != http.ErrServerClosed {
+			log.Fatalf("pprof listen: %s\n", err1)
+		}
+	}()
 
-	// 서버 실행
-
+	// 메인 서버 실행
 	srv := &http.Server{
 		Addr:    ":8080",
 		Handler: otelhttp.NewHandler(r.Handler(), "singsong-server"),
 	}
 
-	// 서버 실행이 블로킹(Blocking)되지 않도록 별도의 Go 루틴에서 실행하여 SIGTERM 감지를 위한 코드를 실행할 수 있도록 함.
 	go func() {
-		// service connections
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("listen: %s\n", err)
+		if err2 := srv.ListenAndServe(); err2 != nil && err2 != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err2)
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 5 seconds.
-	// make(chan os.Signal, 1) → OS에서 발생하는 신호(Signal)를 전달받는 채널 생성.
+	// Shutdown 처리
 	quit := make(chan os.Signal, 1)
-	// kill (no param) default send syscall.SIGTERM
-	// kill -2 is syscall.SIGINT
-	// kill -9 is syscall. SIGKILL but can"t be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	// <-quit → SIGTERM이 발생할 때까지 대기(Blocking).
 	<-quit
 	log.Println("Shutdown Server ...")
 
-	//5초 동안 서버 종료를 기다릴 수 있는 컨텍스트 생성.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
+	// graceful shutdown
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal("Server Shutdown:", err)
 	}
-	// catching ctx.Done(). timeout of 5 seconds.
-	select {
-	case <-ctx.Done():
-		log.Println("timeout of 5 seconds.")
+	if err := pprofServer.Shutdown(ctx); err != nil {
+		log.Fatal("pprof Shutdown:", err)
 	}
-	log.Println("Server exiting")
-
 }

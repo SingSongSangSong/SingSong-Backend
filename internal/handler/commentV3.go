@@ -8,6 +8,7 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -104,22 +105,44 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 			cursorCondition = "comment.comment_id < ?" // 최신순
 		}
 
-		comments, err := mysql.Comments(
-			qm.Load(mysql.CommentRels.Member),
-			// 댓글 10개만 가져오기!
-			qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL AND parent_comment_id = 0", songId),
-			qm.WhereNotIn("comment.member_id NOT IN ?", blockedMemberIds...),
-			qm.And(cursorCondition, cursorInt),
-			qm.OrderBy(orderBy),
-			qm.Limit(sizeInt),
-		).All(c.Request.Context(), db)
+		var (
+			comments     mysql.CommentSlice
+			commentCount int64
+			err1, err2   error
+		)
 
-		commentCount, err := mysql.Comments(
-			qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL", songId),
-		).Count(c.Request.Context(), db)
-		if err != nil {
-			pkg.SendToSentryWithStack(c, err)
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+		wg := sync.WaitGroup{}
+		wg.Add(2)
+
+		// 병렬 처리 #1: 댓글 목록과 댓글 개수 동시에
+		go func() {
+			defer wg.Done()
+			comments, err1 = mysql.Comments(
+				qm.Load(mysql.CommentRels.Member),
+				qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL AND parent_comment_id = 0", songId),
+				qm.WhereNotIn("comment.member_id NOT IN ?", blockedMemberIds...),
+				qm.And(cursorCondition, cursorInt),
+				qm.OrderBy(orderBy),
+				qm.Limit(sizeInt),
+			).All(c.Request.Context(), db)
+		}()
+
+		go func() {
+			defer wg.Done()
+			commentCount, err2 = mysql.Comments(
+				qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL", songId),
+			).Count(c.Request.Context(), db)
+		}()
+
+		wg.Wait()
+		if err1 != nil {
+			pkg.SendToSentryWithStack(c, err1)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err1.Error(), nil)
+			return
+		}
+		if err2 != nil {
+			pkg.SendToSentryWithStack(c, err2)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err2.Error(), nil)
 			return
 		}
 
