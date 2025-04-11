@@ -466,12 +466,11 @@ CREATE INDEX idx_keep_song_deleted_song_created
     ON keep_song (deleted_at, song_info_id, created_at DESC);
 CREATE INDEX idx_comment_song_created ON comment (song_info_id, created_at DESC);
 
-ALTER TABLE song_info ADD FULLTEXT(song_name);
-ALTER TABLE song_info ADD FULLTEXT(artist_name);
-
 ALTER TABLE song_info
 ADD COLUMN song_name_chosung VARCHAR(255) DEFAULT '',
 ADD COLUMN artist_name_chosung VARCHAR(255) DEFAULT '';
 
+ALTER TABLE song_info ADD FULLTEXT INDEX idx_song_name (song_name);
+ALTER TABLE song_info ADD FULLTEXT INDEX idx_artist_name (artist_name);
 ALTER TABLE song_info ADD FULLTEXT INDEX idx_song_name_chosung (song_name_chosung);
 ALTER TABLE song_info ADD FULLTEXT INDEX idx_artist_name_chosung (artist_name_chosung);

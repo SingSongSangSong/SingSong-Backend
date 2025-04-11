@@ -83,15 +83,6 @@ func main() {
 		defer profiler.Stop()
 	}
 
-	var db *sql.DB
-	var rdb *redis.Client
-	var idxConnection *pinecone.IndexConnection
-	var milvusClient client.Client
-	var s3Client *s3.Client
-	var firebaseApp *firebase.App
-
-	conf.SetupConfig(ctx, &db, &rdb, &idxConnection, &milvusClient, &firebaseApp, &s3Client)
-
 	otelShutdown, err := conf.SetupOTelSDK(ctx)
 	if err != nil {
 		return
@@ -104,12 +95,21 @@ func main() {
 	logger := otelslog.NewLogger("Singsong")
 	logger.Info("Hello from OpenTelemetry logs!", "orderID", 12345)
 
+	var db *sql.DB
+	var rdb *redis.Client
+	var idxConnection *pinecone.IndexConnection
+	var milvusClient client.Client
+	var s3Client *s3.Client
+	var firebaseApp *firebase.App
+
+	conf.SetupConfig(ctx, &db, &rdb, &idxConnection, &milvusClient, &firebaseApp, &s3Client)
+
 	boil.SetDB(db)
 	boil.DebugMode = true
 
 	// GIN 로그를 OTel 로그로 redirect
-	gin.DefaultWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stdout)
-	gin.DefaultErrorWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stderr)
+	gin.DefaultWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stdout, boil.DebugWriter)
+	gin.DefaultErrorWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stderr, boil.DebugWriter)
 
 	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient, firebaseApp, s3Client)
 

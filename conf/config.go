@@ -6,15 +6,16 @@ import (
 	"errors"
 	firebase "firebase.google.com/go/v4"
 	"fmt"
+	"github.com/XSAM/otelsql"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -26,7 +27,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
-	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	"log"
 	"os"
 	"time"
@@ -150,50 +150,51 @@ func init() {
 func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnection **pinecone.IndexConnection, milvusClient *client.Client, firebaseApp **firebase.App, s3Client **s3.Client) {
 	var err error
 
+	//sqltrace.Register("mysql", &mysql.MySQLDriver{}, sqltrace.WithServiceName("singsong-mysql"))
+	//*db, err = sqltrace.Open("mysql", dsn)
+	//if err != nil {
+	//	log.Fatalf("Mysql 연결 실패: %v", err)
+	//}
+	//if err := (*db).Ping(); err != nil {
+	//	log.Fatalf("Mysql ping 실패: %v", err)
+	//}
+
 	// MySQL 연결 설정
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_NAME"))
 
-	sqltrace.Register("mysql", &mysql.MySQLDriver{}, sqltrace.WithServiceName("singsong-mysql"))
-	*db, err = sqltrace.Open("mysql", dsn)
-	if err != nil {
-		log.Fatalf("Mysql 연결 실패: %v", err)
-	}
-	if err := (*db).Ping(); err != nil {
-		log.Fatalf("Mysql ping 실패: %v", err)
+	// OpenTelemetry attributes for the database connection
+	attrs := []attribute.KeyValue{
+		semconv.DBSystemNameMySQL,
+		semconv.DBNamespace(os.Getenv("DB_NAME")),
+		semconv.DBClientConnectionPoolName("main-pool"),
 	}
 
-	// Connect to database with open-telemetry
-	//attrs := append(otelsql.AttributesFromDSN(dsn), semconv.DBSystemMySQL)
-	//
-	//otelsql.OpenDB(ctx, otelsql.WithAttributes(attrs...))
-	//
-	//// Connect to database
-	//*db, err = otelsql.Open("mysql", dsn,
-	//	otelsql.WithAttributes(attrs...),
-	//	otelsql.WithSpanOptions(otelsql.SpanOptions{
-	//		Ping:           true,
-	//		RowsNext:       true,
-	//		DisableErrSkip: false,
-	//	}),
-	//)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//// Register DB stats to meter
-	//err = otelsql.RegisterDBStatsMetrics(*db, otelsql.WithAttributes(
-	//	semconv.DBSystemMySQL,
-	//))
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//db = otelsql.WrapDriver(*db)
-	//
-	//if err := (*db).Ping(); err != nil {
-	//	log.Fatalf("Mysql ping 실패: %v", err)
-	//}
+	// Open DB with OpenTelemetry instrumentation
+	*db, err = otelsql.Open("mysql", dsn,
+		otelsql.WithAttributes(attrs...),
+		otelsql.WithSpanOptions(otelsql.SpanOptions{
+			Ping:           true,
+			RowsNext:       true,
+			DisableErrSkip: true,
+		}),
+		otelsql.WithTracerProvider(otel.GetTracerProvider()),
+		otelsql.WithMeterProvider(otel.GetMeterProvider()),
+	)
+	if err != nil {
+		log.Fatalf("MySQL 연결 실패: %v", err)
+	}
+
+	// Register DB stats to meter
+	err = otelsql.RegisterDBStatsMetrics(*db, otelsql.WithAttributes(attrs...))
+	if err != nil {
+		log.Fatalf("MySQL metrics 등록 실패: %v", err)
+	}
+
+	// Verify connection
+	if err := (*db).Ping(); err != nil {
+		log.Fatalf("MySQL ping 실패: %v", err)
+	}
 
 	// 레디스
 	*rdb = redis.NewClient(&redis.Options{
@@ -331,7 +332,7 @@ func SetupOTelSDK(ctx context.Context) (shutdown func(context.Context) error, er
 func newResource() *resource.Resource {
 	return resource.NewWithAttributes(
 		semconv.SchemaURL, // 이건 1.30.0에 맞춰짐
-		semconv.ServiceName("my-service"),
+		semconv.ServiceName("singsong"),
 		semconv.ServiceVersion("0.1.0"),
 	)
 }

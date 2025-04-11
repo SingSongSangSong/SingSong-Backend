@@ -260,9 +260,7 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 					SELECT *, MATCH(artist_name) AGAINST (? IN BOOLEAN MODE) AS score
 					FROM song_info
 					WHERE MATCH(artist_name) AGAINST (? IN BOOLEAN MODE)
-		
 					UNION ALL
-		
 					SELECT *, MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
 					FROM song_info
 					WHERE MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE)
