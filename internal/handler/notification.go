@@ -183,7 +183,7 @@ func SendNotification(db *sql.DB, firebaseApp *firebase.App, notificationMessage
 
 		br, err := client.SendEachForMulticast(ctx, message)
 		if err != nil {
-			log.Printf("error sending notifications - " + err.Error())
+			log.Printf("error sending notifications - %s", err.Error())
 			return
 		}
 		if br.FailureCount > 0 {
@@ -492,6 +492,7 @@ func ListNotifications(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -517,6 +518,7 @@ func ListNotifications(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -587,6 +589,7 @@ func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		ctx := context.Background()
 		client, err := firebaseApp.Messaging(ctx)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error getting Messaging client: "+err.Error(), nil)
 			return
 		}
@@ -595,6 +598,7 @@ func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 		//deepLink, err := CreatePostDeepLink(db, 84)
 		//deepLink := CreateHomeDeepLink()
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error "+err.Error(), nil)
 			return
 		}
@@ -635,6 +639,7 @@ func TestNotification(db *sql.DB, firebaseApp *firebase.App) gin.HandlerFunc {
 
 		_, err = client.Send(ctx, message)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error sending notification - "+err.Error(), nil)
 			return
 		}

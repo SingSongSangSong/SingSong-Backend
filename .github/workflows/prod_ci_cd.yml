@@ -2,7 +2,7 @@ name: Build and Deploy to ECS
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "past/master" ]
 
 jobs:
   build-and-deploy:

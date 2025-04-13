@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
+	errors2 "github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -122,6 +123,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			// DB에 없는 경우 - 회원가입
 			m, err := joinForAnonymous(c, &Claims{Email: generateUniqueEmail()}, 0, "Unknown", loginRequest.Provider, db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -129,6 +131,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 
 			accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, &Claims{Email: "Anonymous@anonymous.com"}, "0", "Unknown", m.MemberID)
 			if tokenErr != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 				return
 			}
@@ -162,6 +165,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 			// DB에 없는 경우 - 회원가입
 			m, err = join(c, payload, loginRequest, m, db)
 			if err != nil {
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}
@@ -171,6 +175,7 @@ func Login(redis *redis.Client, db *sql.DB) gin.HandlerFunc {
 		accessTokenString, refreshTokenString, tokenErr := createAccessTokenAndRefreshToken(c, redis, payload, strconv.Itoa(m.Birthyear.Int), m.Gender.String, m.MemberID)
 
 		if tokenErr != nil {
+			pkg.SendToSentryWithStack(c, tokenErr)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot create token "+tokenErr.Error(), nil)
 			return
 		}
@@ -196,20 +201,20 @@ func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string
 		issuer = APPLE_ISSUER
 		apiKey = APPLE_CLIENT_ID
 	default:
-		return nil, errors.New("유효하지 않은 provider")
+		return nil, errors2.Wrap(fmt.Errorf("유효하지 않은 provider"), "최초 에러 발생 지점")
 	}
 
 	keys, err := GetPublicKeys(c, provider, redis)
 	if err != nil {
 		log.Printf("오류 발생 From GetPublicKeys: %v", err)
-		return nil, err
+		return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	// idToken을 파싱하여 Header, Payload, Signature로 나누는 로직
 	kid, err := getKidFromToken(idToken)
 	if err != nil {
 		log.Printf("오류 발생 From getKidFromToken: %v", err)
-		return nil, err
+		return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	for _, key := range keys {
@@ -217,19 +222,19 @@ func GetUserEmailFromIdToken(c *gin.Context, redis *redis.Client, idToken string
 			publicKey, err := getRSAPublicKey(key)
 			if err != nil {
 				log.Printf("오류 발생 From getPayload: %v", err)
-				return nil, err
+				return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 			}
 
 			payload, err := validateSignature(idToken, publicKey, issuer, apiKey)
 			if err != nil {
 				log.Printf("오류 발생 From validateSignature: %v", err)
-				return nil, err
+				return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 			}
 
 			return payload, nil
 		}
 	}
-	return nil, errors.New("유효한 키를 찾을 수 없음")
+	return nil, errors2.Wrap(fmt.Errorf("유효한 키를 찾을 수 없음"), "최초 에러 발생 지점")
 }
 
 // Redis에서 공개키 가져오기 함수
@@ -253,28 +258,28 @@ func GetPublicKeys(c *gin.Context, provider string, redis *redis.Client) ([]Json
 		err = FetchPublicKeys(c, redis, publicKeyUrl, provider)
 		if err != nil {
 			log.Printf("GetKaKaoPublicKey 오류 발생: %v", err)
-			return nil, err
+			return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 		}
 
 		// 다시 시도하여 공개키 가져오기
 		response = redis.Get(c, provider)
 		if err := response.Err(); err != nil {
 			log.Printf("오류 발생 (다시 시도 후): %v", err)
-			return nil, err
+			return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 		}
 	}
 
 	publicKeyDto, err := parsePublicKeyDto(response.Val())
 	if err != nil {
 		log.Printf("오류 발생: %v", err)
-		return nil, err
+		return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	// PublicKeyDto의 key 필드를 파싱하여 각 Key 구조체로 변환
 	keys, err := parseKeysFromPublicKeyDto(publicKeyDto)
 	if err != nil {
 		log.Printf("오류 발생: %v", err)
-		return nil, err
+		return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	return keys, nil
@@ -286,19 +291,19 @@ func FetchPublicKeys(c *gin.Context, redis *redis.Client, publicKeyUrl string, p
 	resp, err := client.Get(publicKeyUrl)
 	if err != nil {
 		log.Printf("HTTP 요청 오류: %v", err)
-		return err
+		return errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode > 300 {
 		log.Printf("HTTP 응답 오류: 상태 코드 %d", resp.StatusCode)
-		return err
+		return errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("응답 본문 읽기 오류: %v", err)
-		return err
+		return errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	// PublicKeyDto 구조체 생성
@@ -311,7 +316,7 @@ func FetchPublicKeys(c *gin.Context, redis *redis.Client, publicKeyUrl string, p
 	jsonData, err := json.Marshal(publicKey)
 	if err != nil {
 		log.Printf("JSON 마샬 오류: %v", err)
-		return err
+		return errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	// Redis에 저장
@@ -326,7 +331,7 @@ func parsePublicKeyDto(jsonData string) (*PublicKeyDto, error) {
 	var publicKeyDto PublicKeyDto
 	err := json.Unmarshal([]byte(jsonData), &publicKeyDto)
 	if err != nil {
-		return nil, fmt.Errorf("JSON 언마샬 오류: %v", err)
+		return nil, errors2.Wrap(fmt.Errorf("JSON 언마샬 오류: %v", err), "최초 에러 발생 지점")
 	}
 	return &publicKeyDto, nil
 }
@@ -336,7 +341,7 @@ func parseKeysFromPublicKeyDto(publicKeyDto *PublicKeyDto) ([]JsonWebKey, error)
 	var keyContainer KeyContainer
 	err := json.Unmarshal([]byte(publicKeyDto.Key), &keyContainer)
 	if err != nil {
-		return nil, fmt.Errorf("키 필드 JSON 언마샬 오류: %v", err)
+		return nil, errors2.Wrap(fmt.Errorf("키 필드 JSON 언마샬 오류: %v", err), "최초 에러 발생 지점")
 	}
 	return keyContainer.Keys, nil
 }
@@ -346,7 +351,7 @@ func getKidFromToken(idToken string) (string, error) {
 	token, _, err := new(jwt.Parser).ParseUnverified(idToken, jwt.MapClaims{})
 	if err != nil {
 		log.Printf("Error parsing kid from id token: %v\n", err)
-		return "", err
+		return "", errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 	kid := token.Header["kid"].(string)
 	return kid, nil
@@ -355,17 +360,17 @@ func getKidFromToken(idToken string) (string, error) {
 // RSA 공개 키 생성 함수
 func getRSAPublicKey(selectedKey JsonWebKey) (*rsa.PublicKey, error) {
 	if selectedKey.Kty != "RSA" {
-		return nil, errors.New("지원되지 않는 키 타입")
+		return nil, errors2.Wrap(fmt.Errorf("지원되지 않는 키 타입"), "최초 에러 발생 지점")
 	}
 
 	decodeM, err := base64UrlDecode(selectedKey.N)
 	if err != nil {
-		return nil, err
+		return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	decodeE, err := base64UrlDecode(selectedKey.E)
 	if err != nil {
-		return nil, err
+		return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	m := new(big.Int).SetBytes(decodeM)
@@ -389,7 +394,7 @@ func validateSignature(idToken string, signingKey *rsa.PublicKey, issuer, audien
 	// 파서 설정
 	token, err := jwt.ParseWithClaims(idToken, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, errors.New("지원되지 않는 서명 방식")
+			return nil, errors2.Wrap(fmt.Errorf("지원되지 않는 서명 방식"), "최초 에러 발생 지점")
 		}
 		return signingKey, nil
 	})
@@ -399,15 +404,15 @@ func validateSignature(idToken string, signingKey *rsa.PublicKey, issuer, audien
 		if errors.As(err, &validationError) {
 			switch validationError.Errors {
 			case jwt.ValidationErrorMalformed:
-				return nil, errors.New("JWT가 올바르지 않음")
+				return nil, errors2.Wrap(fmt.Errorf("JWT가 올바르지 않음"), "최초 에러 발생 지점")
 			case jwt.ValidationErrorSignatureInvalid:
-				return nil, errors.New("서명이 유효하지 않음")
+				return nil, errors2.Wrap(fmt.Errorf("서명이 유효하지 않음"), "최초 에러 발생 지점")
 			case jwt.ValidationErrorExpired:
-				return nil, errors.New("JWT가 만료됨")
+				return nil, errors2.Wrap(fmt.Errorf("JWT가 만료됨"), "최초 에러 발생 지점")
 			case jwt.ValidationErrorClaimsInvalid:
-				return nil, errors.New("클레임이 유효하지 않음")
+				return nil, errors2.Wrap(fmt.Errorf("클레임이 유효하지 않음"), "최초 에러 발생 지점")
 			default:
-				return nil, err
+				return nil, errors2.Wrap(err, "최초 에러 발생 지점")
 			}
 		}
 		return nil, err
@@ -416,22 +421,22 @@ func validateSignature(idToken string, signingKey *rsa.PublicKey, issuer, audien
 	// 토큰 클레임 확인
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		if claims.Issuer != issuer {
-			return nil, fmt.Errorf("예상치 못한 발급자: %s", claims.Issuer)
+			return nil, errors2.Wrap(fmt.Errorf("예상치 못한 발급자: %s", claims.Issuer), "최초 에러 발생 지점")
 		}
 		if claims.Audience != audience {
-			return nil, fmt.Errorf("예상치 못한 대상자: %s", claims.Audience)
+			return nil, errors2.Wrap(fmt.Errorf("예상치 못한 대상자: %s", claims.Audience), "최초 에러 발생 지점")
 		}
 		return claims, nil
 	}
 
-	return nil, errors.New("클레임이 유효하지 않음")
+	return nil, errors2.Wrap(fmt.Errorf("클레임이 유효하지 않음"), "최초 에러 발생 지점")
 }
 
 func joinForAnonymous(c *gin.Context, payload *Claims, year int, gender string, provider string, db *sql.DB) (*mysql.Member, error) {
 	m := &mysql.Member{Provider: provider, Email: payload.Email, Nickname: null.StringFrom("Anonymous"), Birthyear: null.IntFrom(year), Gender: null.StringFrom(gender)}
 	err := m.Insert(c.Request.Context(), db, boil.Infer())
 	if err != nil {
-		return nil, errors.New("error inserting member - " + err.Error())
+		return nil, errors2.Wrap(fmt.Errorf("error inserting member %s", err.Error()), "최초 에러 발생 지점")
 	}
 	return m, nil
 }
@@ -455,8 +460,7 @@ func join(c *gin.Context, payload *Claims, loginRequest *LoginRequest, m *mysql.
 	m = &mysql.Member{Provider: loginRequest.Provider, Email: payload.Email, Nickname: nullNickname, Birthyear: nullBrithyear, Gender: nullGender}
 	err = m.Insert(c.Request.Context(), db, boil.Infer())
 	if err != nil {
-		//pkg.BaseResponse(c, http.StatusBadRequest, "error inserting member - "+err.Error(), nil)
-		return nil, errors.New("Error inserting member")
+		return nil, errors2.Wrap(fmt.Errorf("Error inserting member"), "최초 에러 발생 지점")
 	}
 	return m, nil
 }
@@ -477,13 +481,13 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, paylo
 	jwtAccessValidityStr := JWT_ACCESS_VALIDITY_SECONDS
 	if jwtAccessValidityStr == "" {
 		log.Printf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
-		return "", "", fmt.Errorf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
+		return "", "", errors2.Wrap(fmt.Errorf("JWT_ACCESS_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다"), "최초 에러 발생 지점")
 	}
 
 	jwtAccessValidity, err := strconv.ParseInt(jwtAccessValidityStr, 10, 64)
 	if err != nil {
 		log.Printf("환경 변수 변환 실패: %v", err)
-		return "", "", fmt.Errorf("환경 변수 변환 실패: %v", err)
+		return "", "", errors2.Wrap(fmt.Errorf("환경 변수 변환 실패: %v", err), "최초 에러 발생 지점")
 	}
 
 	accessTokenExpiresAt := time.Now().Add(time.Duration(jwtAccessValidity) * time.Second).Unix()
@@ -502,13 +506,13 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, paylo
 	jwtRefreshValidityStr := JWT_REFRESH_VALIDITY_SECONDS
 	if jwtRefreshValidityStr == "" {
 		log.Printf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다.")
-		return "", "", errors.New("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다")
+		return "", "", errors2.Wrap(fmt.Errorf("JWT_REFRESH_VALIDITY_SECONDS 환경 변수가 설정되지 않았습니다"), "최초 에러 발생 지점")
 	}
 
 	jwtRefreshValidity, err := strconv.ParseInt(jwtRefreshValidityStr, 10, 64)
 	if err != nil {
 		log.Printf("환경 변수 변환 실패: %v", err)
-		return "", "", fmt.Errorf("환경 변수 변환 실패: %v", err)
+		return "", "", errors2.Wrap(fmt.Errorf("환경 변수 변환 실패: %v", err), "최초 에러 발생 지점")
 	}
 
 	refreshTokenExpiresAt := time.Now().Add(time.Duration(jwtRefreshValidity) * time.Second).Unix()
@@ -524,13 +528,13 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, paylo
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS512, at)
 	accessTokenString, err := accessToken.SignedString([]byte(SECRET_KEY))
 	if err != nil {
-		return "", "", err
+		return "", "", errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS512, rt)
 	refreshTokenString, err := refreshToken.SignedString([]byte(SECRET_KEY))
 	if err != nil {
-		return "", "", err
+		return "", "", errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	payload.BirthYear = birthYear
@@ -539,12 +543,12 @@ func createAccessTokenAndRefreshToken(c *gin.Context, redis *redis.Client, paylo
 
 	claims, err := json.Marshal(payload)
 	if err != nil {
-		return "", "", err
+		return "", "", errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	_, err = redis.Set(c, refreshTokenString, claims, time.Duration(jwtRefreshValidity)*time.Second).Result()
 	if err != nil {
-		return "", "", err
+		return "", "", errors2.Wrap(err, "최초 에러 발생 지점")
 	}
 
 	return accessTokenString, refreshTokenString, nil

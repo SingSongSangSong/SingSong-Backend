@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -34,7 +35,7 @@ type RecordSongsRequest struct {
 // @Tags         Record
 // @Accept       multipart/form-data
 // @Produce      json
-// @Param        file formData file true "MP3 파일"
+// @Param        file formData file true "MP4 파일"
 // @Param        title formData string true "노래 제목"
 // @Param        songId formData int64 true "노래 정보 ID"
 // @Param        isPublic formData bool true "공개 여부"
@@ -45,6 +46,7 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -56,10 +58,15 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 			return
 		}
 
-		// 파일 형식을 확인해야한다. 파일의 형식이 오직 Mp3만 허용한다.
-		if getFile.Header.Get("Content-Type") != "audio/mpeg" {
-			pkg.BaseResponse(c, http.StatusBadRequest, "파일 형식이 올바르지 않습니다. MP3 파일만 허용됩니다.", nil)
+		fileType := "mp4"
+		// 파일 형식을 확인해야한다. 파일의 형식이 오직 Mp3/MP4만 허용한다.
+		if getFile.Header.Get("Content-Type") != "audio/mpeg" && getFile.Header.Get("Content-Type") != "video/mp4" {
+			pkg.BaseResponse(c, http.StatusBadRequest, "파일 형식이 올바르지 않습니다. MP3 또는 MP4 파일만 허용됩니다.", nil)
 			return
+		} else {
+			if getFile.Header.Get("Content-Type") == "audio/mpeg" {
+				fileType = "mp3"
+			}
 		}
 
 		// 파일 열기
@@ -82,12 +89,13 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		fileName := ""
 
 		if conf.Env == conf.LocalMode || conf.Env == "" {
-			fileName = fmt.Sprintf("local/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongId, currentTime)
+			fileName = fmt.Sprintf("local/%d/%d/%s.%s", memberId.(int64), recordSongsRequest.SongId, currentTime, fileType)
 		} else if conf.Env == conf.TestMode {
-			fileName = fmt.Sprintf("test/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongId, currentTime)
+			fileName = fmt.Sprintf("test/%d/%d/%s.%s", memberId.(int64), recordSongsRequest.SongId, currentTime, fileType)
 		} else if conf.Env == conf.ProductionMode {
-			fileName = fmt.Sprintf("prod/%d/%d/%s.mp3", memberId.(int64), recordSongsRequest.SongId, currentTime)
+			fileName = fmt.Sprintf("prod/%d/%d/%s.%s", memberId.(int64), recordSongsRequest.SongId, currentTime, fileType)
 		} else {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "환경 변수가 설정되지 않았습니다.", nil)
 			return
 		}
@@ -101,6 +109,7 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 			Body:   file,
 		})
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "S3 업로드 실패", nil)
 			return
 		}
@@ -109,6 +118,7 @@ func RecordSong(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		songRecording := mysql.SongRecording{MemberID: memberId.(int64), Title: recordSongsRequest.Title, SongInfoID: recordSongsRequest.SongId, IsPublic: null.BoolFrom(recordSongsRequest.IsPublic), RecordingLink: s3URL}
 		err = songRecording.Insert(c, db, boil.Infer())
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 저장 실패", nil)
 			return
 		}
@@ -155,6 +165,7 @@ func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memeberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -181,6 +192,7 @@ func GetMyRecordings(db *sql.DB) gin.HandlerFunc {
 			qm.Limit(sizeInt),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 조회 실패", nil)
 			return
 		}
@@ -242,6 +254,7 @@ func GetDetailRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -260,6 +273,7 @@ func GetDetailRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		)
 		songRecordings, err := songRecording.One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 조회 실패", nil)
 			return
 		}
@@ -279,6 +293,7 @@ func GetDetailRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 
 		preSignedURL, err := generatePresignedURL(s3Client, bucketName, key, expiration)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "Presigned URL 생성 실패", nil)
 			return
 		}
@@ -332,6 +347,7 @@ func DeleteMyRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		// memberId 가져오기
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -341,6 +357,7 @@ func DeleteMyRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 			qm.Where("song_recording_id = ? AND member_id = ? AND deleted_at IS NULL", songRecordingId, memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 조회 실패", nil)
 			return
 		}
@@ -349,6 +366,7 @@ func DeleteMyRecording(db *sql.DB, s3Client *s3.Client) gin.HandlerFunc {
 		songRecording.DeletedAt = null.TimeFrom(time.Now()) // null.Time 사용 시 null.TimeFrom 사용
 		_, err = songRecording.Update(c.Request.Context(), db, boil.Infer())
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "DB 삭제 실패", nil)
 			return
 		}
@@ -381,7 +399,8 @@ func generatePresignedURL(s3Client *s3.Client, bucketName, key string, expiratio
 	}, s3.WithPresignExpires(expiration))
 
 	if err != nil {
-		return "", fmt.Errorf("Presigned URL 생성 실패: %w", err)
+		return "",
+			errors.Wrap(fmt.Errorf("Presigned URL 생성 실패: %w", err), "최초 에러 발생 지점")
 	}
 
 	return req.URL, nil

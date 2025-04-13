@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/null/v8"
 	"github.com/volatiletech/sqlboiler/v4/boil"
@@ -42,18 +43,21 @@ func GetSongReview(db *sql.DB) gin.HandlerFunc {
 
 		value, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		memberId, ok := value.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
 			return
 		}
 
 		all, err := mysql.SongReviews(qm.Where("song_info_id = ?", songInfoId), qm.And("deleted_at IS NULL")).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -112,30 +116,35 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 
 		value, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		memberId, ok := value.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
 			return
 		}
 
 		value2, exists := c.Get("birthYear")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("birthYear not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthYear not found", nil)
 			return
 		}
 		birthYearStr := value2.(string)
 		birthYear, err := strconv.Atoi(birthYearStr)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not found", nil)
 			return
 		}
 
 		value3, exists := c.Get("gender")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("gender not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not found", nil)
 			return
 		}
@@ -148,6 +157,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 		}
 		one, err := mysql.SongInfos(qm.Where("song_info_id = ?", songInfoId)).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -157,6 +167,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", one.SongInfoID), qm.And("deleted_at IS NULL"),
 		).UpdateAll(c.Request.Context(), db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -171,6 +182,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 		}
 
 		if err := review.Insert(c.Request.Context(), db, boil.Infer()); err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -179,7 +191,7 @@ func PutSongReview(db *sql.DB) gin.HandlerFunc {
 			ctx := context.Background()
 			option, err2 := mysql.SongReviewOptions(qm.Where("song_review_option_id = ?", songReviewOptionId)).One(ctx, db)
 			if err2 != nil {
-				log.Printf("failed to get song review option: " + err2.Error())
+				log.Printf("failed to get song review option: %s", err2.Error())
 				return
 			}
 			logMemberAction(db, memberId, "REVIEW_"+option.Enum.String, 3, songInfoId)
@@ -209,12 +221,14 @@ func DeleteSongReview(db *sql.DB) gin.HandlerFunc {
 
 		value, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
 		memberId, ok := value.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not type int64", nil)
 			return
 		}
@@ -224,6 +238,7 @@ func DeleteSongReview(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId), qm.And("song_info_id = ?", songInfoId), qm.And("deleted_at IS NULL"),
 		).UpdateAll(c.Request.Context(), db, mysql.M{"deleted_at": null.TimeFrom(time.Now())})
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

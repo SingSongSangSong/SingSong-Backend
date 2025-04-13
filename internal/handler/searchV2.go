@@ -5,6 +5,7 @@ import (
 	"SingSong-Server/internal/pkg"
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
@@ -13,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type SongSearchInfoV2Response struct {
@@ -52,52 +54,86 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
-		// 검색어를 URL 파라미터에서 가져오기
-		searchKeyword := c.Param("searchKeyword")
-		// 혹시 모를 공백 제거
-		searchKeyword = strings.TrimSpace(searchKeyword)
-
-		// 검색어가 한국어라면 띄어쓰기 제거
-		// 한국어 여부를 확인하는 정규식
-		var koreanRegex = regexp.MustCompile(`[가-힣]`)
-		// 검색어가 한국어를 포함하는지 확인
-		if koreanRegex.MatchString(searchKeyword) {
-			// 한국어가 포함된 경우 띄어쓰기 제거
+		searchKeyword := strings.TrimSpace(c.Param("searchKeyword"))
+		if regexp.MustCompile(`[가-힣]`).MatchString(searchKeyword) {
 			searchKeyword = strings.ReplaceAll(searchKeyword, " ", "")
 		}
 
-		// 노래 이름으로 검색
-		songsWithName, err := mysql.SongInfos(
-			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
-			qm.OrderBy("CASE WHEN song_name LIKE ? THEN 1 WHEN song_name LIKE ? THEN 2 ELSE 3 END, song_info_id", searchKeyword, searchKeyword+"%"),
-			qm.Limit(10),
-		).All(c.Request.Context(), db)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-			return
-		}
+		var (
+			songsWithName    mysql.SongInfoSlice
+			songsWithArtist  mysql.SongInfoSlice
+			songsWithNumber  mysql.SongInfoSlice
+			err1, err2, err3 error
+		)
 
-		// 아티스트 이름으로 검색
-		songsWithArtist, err := mysql.SongInfos(
-			qm.Where("artist_name LIKE ?", "%"+searchKeyword+"%"),
-			qm.OrderBy("CASE WHEN artist_name LIKE ? THEN 1 WHEN artist_name LIKE ? THEN 2 ELSE 3 END, song_info_id", searchKeyword, searchKeyword+"%"),
-			qm.Limit(10),
-		).All(c.Request.Context(), db)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-			return
-		}
+		wg := sync.WaitGroup{}
+		wg.Add(3)
 
-		// 노래 번호로 검색
-		songsWithNumber, err := mysql.SongInfos(
-			qm.Where("song_number = ?", searchKeyword),
-			qm.Limit(10),
-		).All(c.Request.Context(), db)
-		if err != nil {
+		go func() {
+			defer wg.Done()
+			songsWithName, err1 = mysql.SongInfos(
+				qm.SQL(`
+			(
+				SELECT *, MATCH(song_name) AGAINST (? IN BOOLEAN MODE) AS score
+				FROM song_info
+				WHERE MATCH(song_name) AGAINST (? IN BOOLEAN MODE)
+			)
+			UNION ALL
+			(
+				SELECT *, MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
+				FROM song_info
+				WHERE MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE)
+			)
+			ORDER BY score DESC
+			LIMIT 10
+		`, searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", searchKeyword+"*"),
+			).All(c.Request.Context(), db)
+		}()
+
+		go func() {
+			defer wg.Done()
+			songsWithArtist, err2 = mysql.SongInfos(
+				qm.SQL(`
+			(
+				SELECT *, MATCH(artist_name) AGAINST (? IN BOOLEAN MODE) AS score
+				FROM song_info
+				WHERE MATCH(artist_name) AGAINST (? IN BOOLEAN MODE)
+			)
+			UNION ALL
+			(
+				SELECT *, MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
+				FROM song_info
+				WHERE MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE)
+			)
+			ORDER BY score DESC
+			LIMIT 10
+		`, searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", searchKeyword+"*"),
+			).All(c.Request.Context(), db)
+		}()
+
+		go func() {
+			defer wg.Done()
+			songsWithNumber, err3 = mysql.SongInfos(
+				qm.Where("song_number = ?", searchKeyword),
+				qm.Limit(10),
+			).All(c.Request.Context(), db)
+		}()
+
+		wg.Wait()
+		if err1 != nil || err2 != nil || err3 != nil {
+			err := err1
+			if err == nil {
+				err = err2
+				if err == nil {
+					err = err3
+				}
+			}
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -106,6 +142,7 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -114,6 +151,7 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepList.KeepListID),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -123,79 +161,43 @@ func SearchSongsV2(db *sql.DB) gin.HandlerFunc {
 			keepSongMap[keepSong.SongInfoID] = true
 		}
 
-		// 응답 데이터 생성
 		response := SongSearchInfoV2Responses{
 			SongName:   make([]SongSearchInfoV2Response, 0),
 			ArtistName: make([]SongSearchInfoV2Response, 0),
 			SongNumber: make([]SongSearchInfoV2Response, 0),
 		}
 
-		// 노래 이름으로 검색한 결과를 response 추가
-		for _, song := range songsWithName {
-			response.SongName = append(response.SongName, SongSearchInfoV2Response{
-				SongNumber:        song.SongNumber,
-				SongName:          song.SongName,
-				SingerName:        song.ArtistName,
-				SongInfoId:        song.SongInfoID,
-				Album:             song.Album.String,
-				IsMr:              song.IsMR.Bool,
-				IsLive:            song.IsLive.Bool,
-				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
-				IsKeep:            keepSongMap[song.SongInfoID],
-				LyricsYoutubeLink: song.LyricsVideoLink.String,
-				TJYoutubeLink:     song.TJYoutubeLink.String,
-				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
-				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
-			})
+		appendSongs := func(target *[]SongSearchInfoV2Response, songs mysql.SongInfoSlice) {
+			for _, song := range songs {
+				*target = append(*target, SongSearchInfoV2Response{
+					SongNumber:        song.SongNumber,
+					SongName:          song.SongName,
+					SingerName:        song.ArtistName,
+					SongInfoId:        song.SongInfoID,
+					Album:             song.Album.String,
+					IsMr:              song.IsMR.Bool,
+					IsLive:            song.IsLive.Bool,
+					MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+					IsKeep:            keepSongMap[song.SongInfoID],
+					LyricsYoutubeLink: song.LyricsVideoLink.String,
+					TJYoutubeLink:     song.TJYoutubeLink.String,
+					LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+					TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
+				})
+			}
 		}
 
-		// 아티스트 이름으로 검색한 결과를 response 추가
-		for _, song := range songsWithArtist {
-			response.ArtistName = append(response.ArtistName, SongSearchInfoV2Response{
-				SongNumber:        song.SongNumber,
-				SongName:          song.SongName,
-				SingerName:        song.ArtistName,
-				SongInfoId:        song.SongInfoID,
-				Album:             song.Album.String,
-				IsMr:              song.IsMR.Bool,
-				IsLive:            song.IsLive.Bool,
-				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
-				IsKeep:            keepSongMap[song.SongInfoID],
-				LyricsYoutubeLink: song.LyricsVideoLink.String,
-				TJYoutubeLink:     song.TJYoutubeLink.String,
-				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
-				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
-			})
-		}
-
-		// 노래 번호로 검색한 결과를 response에 추가
-		for _, song := range songsWithNumber {
-			response.SongNumber = append(response.SongNumber, SongSearchInfoV2Response{
-				SongNumber:        song.SongNumber,
-				SongName:          song.SongName,
-				SingerName:        song.ArtistName,
-				SongInfoId:        song.SongInfoID,
-				Album:             song.Album.String,
-				IsMr:              song.IsMR.Bool,
-				IsLive:            song.IsLive.Bool,
-				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
-				IsKeep:            keepSongMap[song.SongInfoID],
-				LyricsYoutubeLink: song.LyricsVideoLink.String,
-				TJYoutubeLink:     song.TJYoutubeLink.String,
-				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
-				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
-			})
-		}
+		appendSongs(&response.SongName, songsWithName)
+		appendSongs(&response.ArtistName, songsWithArtist)
+		appendSongs(&response.SongNumber, songsWithNumber)
 
 		go func() {
 			searchLog := mysql.SearchLog{MemberID: memberId.(int64), SearchText: searchKeyword}
-			err = searchLog.Insert(context.Background(), db, boil.Infer())
-			if err != nil {
+			if err := searchLog.Insert(context.Background(), db, boil.Infer()); err != nil {
 				log.Printf("Error inserting Search Log: %v", err)
 			}
 		}()
 
-		// 응답 반환
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }
@@ -222,53 +224,53 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
 
-		// 검색어를 쿼리 파라미터에서 가져오기
-		searchKeyword := c.Query("keyword")
+		searchKeyword := strings.TrimSpace(c.Query("keyword"))
 		if searchKeyword == "" {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find keyword in query", nil)
 			return
 		}
 
-		searchKeyword = strings.TrimSpace(searchKeyword)
-
-		// 검색어가 한국어라면 띄어쓰기 제거
-		// 한국어 여부를 확인하는 정규식
-		var koreanRegex = regexp.MustCompile(`[가-힣]`)
-		// 검색어가 한국어를 포함하는지 확인
-		if koreanRegex.MatchString(searchKeyword) {
-			// 한국어가 포함된 경우 띄어쓰기 제거
+		if regexp.MustCompile(`[가-힣]`).MatchString(searchKeyword) {
 			searchKeyword = strings.ReplaceAll(searchKeyword, " ", "")
 		}
 
 		pageValue := c.DefaultQuery("page", defaultSearchPage)
 		sizeValue := c.DefaultQuery("size", defaultSearchSize)
 
-		//page, size를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert page to int", nil)
 			return
 		}
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
-		// 아티스트 이름으로 검색
 		offset := (page - 1) * size
-
 		songsWithArtist, err := mysql.SongInfos(
-			qm.Where("artist_name LIKE ?", "%"+searchKeyword+"%"),
-			qm.OrderBy("CASE WHEN artist_name LIKE ? THEN 1 WHEN artist_name LIKE ? THEN 2 ELSE 3 END, song_info_id", searchKeyword, searchKeyword+"%"),
-			qm.Limit(size),
-			qm.Offset(offset),
+			qm.SQL(`
+				SELECT * FROM (
+					SELECT *, MATCH(artist_name) AGAINST (? IN BOOLEAN MODE) AS score
+					FROM song_info
+					WHERE MATCH(artist_name) AGAINST (? IN BOOLEAN MODE)
+					UNION ALL
+					SELECT *, MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
+					FROM song_info
+					WHERE MATCH(artist_name_chosung) AGAINST (? IN BOOLEAN MODE)
+				) AS merged
+				ORDER BY score DESC
+				LIMIT ? OFFSET ?
+			`, searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", size, offset),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -277,6 +279,7 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -285,6 +288,7 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepList.KeepListID),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -294,30 +298,11 @@ func SearchSongsByAristV2(db *sql.DB) gin.HandlerFunc {
 			keepSongMap[keepSong.SongInfoID] = true
 		}
 
-		// 응답 데이터 생성
-		songs := make([]SongSearchInfoV2Response, 0, len(songsWithArtist))
-		for _, song := range songsWithArtist {
-			songs = append(songs, SongSearchInfoV2Response{
-				SongNumber:        song.SongNumber,
-				SongName:          song.SongName,
-				SingerName:        song.ArtistName,
-				SongInfoId:        song.SongInfoID,
-				Album:             song.Album.String,
-				IsMr:              song.IsMR.Bool,
-				IsLive:            song.IsLive.Bool,
-				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
-				IsKeep:            keepSongMap[song.SongInfoID],
-				LyricsYoutubeLink: song.LyricsVideoLink.String,
-				TJYoutubeLink:     song.TJYoutubeLink.String,
-				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
-				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
-			})
-		}
+		songs := ConvertToSongSearchInfoResponses(songsWithArtist, keepSongMap)
 		response := SongSearchPageV2Response{
 			Songs:    songs,
 			NextPage: page + 1,
 		}
-		// 응답 반환
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }
@@ -339,56 +324,54 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		memberId, exists := c.Get("memberId")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - memberId not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
-		// 검색어를 쿼리 파라미터에서 가져오기
-		searchKeyword := c.Query("keyword")
+		searchKeyword := strings.TrimSpace(c.Query("keyword"))
 		if searchKeyword == "" {
 			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot find keyword in query", nil)
 			return
 		}
-		// 혹시 모를 공백 제거
-		searchKeyword = strings.TrimSpace(searchKeyword)
-		// 검색어가 한국어라면 띄어쓰기 제거
-		// 한국어 여부를 확인하는 정규식
-		var koreanRegex = regexp.MustCompile(`[가-힣]`)
-		// 검색어가 한국어를 포함하는지 확인
-		if koreanRegex.MatchString(searchKeyword) {
-			// 한국어가 포함된 경우 띄어쓰기 제거
+		if regexp.MustCompile(`[가-힣]`).MatchString(searchKeyword) {
 			searchKeyword = strings.ReplaceAll(searchKeyword, " ", "")
 		}
 
-		pageValue := c.Query("page")
-		if pageValue == "" {
-			pageValue = defaultSearchPage
-		}
-		sizeValue := c.Query("size")
-		if sizeValue == "" {
-			sizeValue = defaultSearchSize
-		}
+		pageValue := c.DefaultQuery("page", defaultSearchPage)
+		sizeValue := c.DefaultQuery("size", defaultSearchSize)
 
-		//page, size를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert page to int", nil)
 			return
 		}
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
-		// 노래 이름으로 검색
 		offset := (page - 1) * size
+
 		songsWithName, err := mysql.SongInfos(
-			qm.Where("song_name LIKE ?", "%"+searchKeyword+"%"),
-			qm.OrderBy("CASE WHEN song_name LIKE ? THEN 1 WHEN song_name LIKE ? THEN 2 ELSE 3 END, song_info_id", searchKeyword, searchKeyword+"%"),
-			qm.Limit(size),
-			qm.Offset(offset),
+			qm.SQL(`
+				SELECT * FROM (
+					SELECT *, MATCH(song_name) AGAINST (? IN BOOLEAN MODE) AS score
+					FROM song_info
+					WHERE MATCH(song_name) AGAINST (? IN BOOLEAN MODE)
+		
+					UNION ALL
+		
+					SELECT *, MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE) AS score
+					FROM song_info
+					WHERE MATCH(song_name_chosung) AGAINST (? IN BOOLEAN MODE)
+				) AS merged
+				ORDER BY score DESC
+				LIMIT ? OFFSET ?
+			`, searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", searchKeyword+"*", size, offset),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -397,6 +380,7 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -405,6 +389,7 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepList.KeepListID),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -414,30 +399,11 @@ func SearchSongsBySongNameV2(db *sql.DB) gin.HandlerFunc {
 			keepSongMap[keepSong.SongInfoID] = true
 		}
 
-		// 응답 데이터 생성
-		songs := make([]SongSearchInfoV2Response, 0, len(songsWithName))
-		for _, song := range songsWithName {
-			songs = append(songs, SongSearchInfoV2Response{
-				SongNumber:        song.SongNumber,
-				SongName:          song.SongName,
-				SingerName:        song.ArtistName,
-				SongInfoId:        song.SongInfoID,
-				Album:             song.Album.String,
-				IsMr:              song.IsMR.Bool,
-				IsLive:            song.IsLive.Bool,
-				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
-				IsKeep:            keepSongMap[song.SongInfoID],
-				LyricsYoutubeLink: song.LyricsVideoLink.String,
-				TJYoutubeLink:     song.TJYoutubeLink.String,
-				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
-				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
-			})
-		}
+		songs := ConvertToSongSearchInfoResponses(songsWithName, keepSongMap)
 		response := SongSearchPageV2Response{
 			Songs:    songs,
 			NextPage: page + 1,
 		}
-		// 응답 반환
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
 }
@@ -478,7 +444,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 		//page를 숫자로 변환
 		page, err := strconv.Atoi(pageValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert page to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert page to int", nil)
 			return
 		}
 
@@ -487,6 +453,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("song_number = ?", searchKeyword),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -495,6 +462,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("member_id = ?", memberId),
 		).One(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -503,6 +471,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 			qm.Where("keep_list_id = ?", keepList.KeepListID),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -512,25 +481,7 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 			keepSongMap[keepSong.SongInfoID] = true
 		}
 
-		// 응답 데이터 생성
-		songs := make([]SongSearchInfoV2Response, 0, len(songsWithNumber))
-		for _, song := range songsWithNumber {
-			songs = append(songs, SongSearchInfoV2Response{
-				SongNumber:        song.SongNumber,
-				SongName:          song.SongName,
-				SingerName:        song.ArtistName,
-				SongInfoId:        song.SongInfoID,
-				Album:             song.Album.String,
-				IsMr:              song.IsMR.Bool,
-				IsLive:            song.IsLive.Bool,
-				MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
-				IsKeep:            keepSongMap[song.SongInfoID],
-				LyricsYoutubeLink: song.LyricsVideoLink.String,
-				TJYoutubeLink:     song.TJYoutubeLink.String,
-				LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
-				TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
-			})
-		}
+		songs := ConvertToSongSearchInfoResponses(songsWithNumber, keepSongMap)
 		response := SongSearchPageV2Response{
 			Songs:    songs,
 			NextPage: page + 1,
@@ -538,4 +489,28 @@ func SearchSongsBySongNumberV2(db *sql.DB) gin.HandlerFunc {
 		// 응답 반환
 		pkg.BaseResponse(c, http.StatusOK, "ok", response)
 	}
+}
+
+func ConvertToSongSearchInfoResponses(songs mysql.SongInfoSlice, keepSongMap map[int64]bool) []SongSearchInfoV2Response {
+	songResponses := make([]SongSearchInfoV2Response, 0, len(songs))
+
+	for _, song := range songs {
+		songResponses = append(songResponses, SongSearchInfoV2Response{
+			SongNumber:        song.SongNumber,
+			SongName:          song.SongName,
+			SingerName:        song.ArtistName,
+			SongInfoId:        song.SongInfoID,
+			Album:             song.Album.String,
+			IsMr:              song.IsMR.Bool,
+			IsLive:            song.IsLive.Bool,
+			MelonLink:         CreateMelonLinkByMelonSongId(song.MelonSongID),
+			IsKeep:            keepSongMap[song.SongInfoID],
+			LyricsYoutubeLink: song.LyricsVideoLink.String,
+			TJYoutubeLink:     song.TJYoutubeLink.String,
+			LyricsVideoID:     ExtractVideoID(song.LyricsVideoLink.String),
+			TJVideoID:         ExtractVideoID(song.TJYoutubeLink.String),
+		})
+	}
+
+	return songResponses
 }

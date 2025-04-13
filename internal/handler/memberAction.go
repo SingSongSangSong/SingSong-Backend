@@ -20,14 +20,14 @@ func logMemberAction(db *sql.DB, memberId interface{}, actionType string, action
 	ctx := context.Background()
 	one, err := mysql.Members(qm.Where("member_id = ? AND deleted_at is null", memberIdInt64)).One(ctx, db)
 	if err != nil {
-		log.Printf("failed to get member: " + err.Error())
+		log.Printf("failed to get member: %s", err.Error())
 		return
 	}
 
 	for _, songInfoIdStr := range songInfoIds {
 		songInfoIdInt64, err := strconv.ParseInt(songInfoIdStr, 10, 64)
 		if err != nil {
-			log.Printf("failed to parse songInfoId: " + err.Error())
+			log.Printf("failed to parse songInfoId: %s", err.Error())
 			continue
 		}
 
@@ -41,7 +41,7 @@ func logMemberAction(db *sql.DB, memberId interface{}, actionType string, action
 		}
 
 		if err := action.Insert(ctx, db, boil.Infer()); err != nil {
-			log.Printf("failed to insert member action: " + err.Error())
+			log.Printf("failed to insert member action: %s", err.Error())
 		}
 	}
 }

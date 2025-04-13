@@ -28,8 +28,8 @@ type V2RedisChartResponse struct {
 	Gender            string      `json:"gender"`
 	AgeGroup          string      `json:"age_group"`
 	MelonSongId       null.String `json:"melon_song_id"`
-	LyricsYoutubeLink string      `json:"lyrics_video_link,omitempty"`
-	TJYoutubeLink     string      `json:"tj_youtube_link,omitempty"`
+	LyricsYoutubeLink null.String `json:"lyrics_video_link,omitempty"`
+	TJYoutubeLink     null.String `json:"tj_youtube_link,omitempty"`
 }
 
 // ChartResponse 카멜케이스 구조체
@@ -64,19 +64,19 @@ func convertOldToNewV2(old []V2RedisChartResponse) []V2ChartSong {
 			Ranking:           o.Ranking,
 			SongInfoId:        o.SongInfoId,
 			TotalScore:        o.TotalScore,
-			IsNew:             o.New == 1, // 1,0 -> true/false로 변환
+			IsNew:             o.New != 0, // 1,0 -> true/false로 변환
 			RankingChange:     o.RankingChange,
 			ArtistName:        o.ArtistName,
 			SongName:          o.SongName,
 			SongNumber:        o.SongNumber,
-			IsMR:              o.IsMR == 1,   // 1, 0 -> true/false로 변환
-			IsLive:            o.IsLive == 1, // 1, 0 -> true/false로 변환
+			IsMR:              o.IsMR != 0,   // 1, 0 -> true/false로 변환
+			IsLive:            o.IsLive != 0, // 1, 0 -> true/false로 변환
 			Album:             o.Album,
 			MelonLink:         CreateMelonLinkByMelonSongId(o.MelonSongId),
-			LyricsYoutubeLink: o.LyricsYoutubeLink,
-			TJYoutubeLink:     o.TJYoutubeLink,
-			LyricsVideoID:     ExtractVideoID(o.LyricsYoutubeLink),
-			TJVideoID:         ExtractVideoID(o.TJYoutubeLink),
+			LyricsYoutubeLink: o.LyricsYoutubeLink.String,
+			TJYoutubeLink:     o.TJYoutubeLink.String,
+			LyricsVideoID:     ExtractVideoID(o.LyricsYoutubeLink.String),
+			TJVideoID:         ExtractVideoID(o.TJYoutubeLink.String),
 		})
 	}
 	return newCharts
@@ -123,20 +123,23 @@ func GetChartV2(rdb *redis.Client) gin.HandlerFunc {
 		//성별 조회
 		gender, exists := c.Get("gender")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - gender not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("gender not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - gender not found", nil)
 			return
 		}
 
 		//
 		birthYear, exists := c.Get("birthYear")
 		if !exists {
-			pkg.BaseResponse(c, http.StatusBadRequest, "error - birthyear not found", nil)
+			pkg.SendToSentryWithStack(c, fmt.Errorf("birthyear not found in context"))
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - birthyear not found", nil)
 			return
 		}
 
 		// 전체 차트 만들기
 		location, err := time.LoadLocation("Asia/Seoul")
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot load location", nil)
 			return
 		}
@@ -159,6 +162,7 @@ func GetChartV2(rdb *redis.Client) gin.HandlerFunc {
 					})
 				}
 
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot find chart", wholeCharts)
 				return
 			}
@@ -167,6 +171,7 @@ func GetChartV2(rdb *redis.Client) gin.HandlerFunc {
 			err = json.Unmarshal([]byte(chart), &redisChart)
 			if err != nil {
 				log.Printf("JSON Unmarshal error: %v", err)
+				pkg.SendToSentryWithStack(c, err)
 				pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 				return
 			}

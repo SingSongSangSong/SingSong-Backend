@@ -28,16 +28,21 @@ func GetLatestSearchApi(db *sql.DB) gin.HandlerFunc {
 
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
 		// 최근 검색어 가져오기
 		latestSearch, err := mysql.SearchLogs(
-			qm.InnerJoin("(SELECT search_text, MAX(created_at) AS max_created_at FROM search_log GROUP BY search_text) AS latest_search ON search_log.search_text = latest_search.search_text AND search_log.created_at = latest_search.max_created_at"),
+			qm.InnerJoin(""+
+				"(SELECT search_text, MAX(created_at) AS max_created_at "+
+				"FROM search_log "+
+				"GROUP BY search_text) AS latest_search "+
+				"ON search_log.search_text = latest_search.search_text AND search_log.created_at = latest_search.max_created_at"),
 			qm.OrderBy("created_at DESC"),
 			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -71,17 +76,23 @@ func GetRecentKeepSongs(db *sql.DB) gin.HandlerFunc {
 
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
 		// 저장한 노래 가져오기
 		likeSongs, err := mysql.KeepSongs(
-			qm.InnerJoin("(SELECT song_info_id, MAX(created_at) AS max_created_at FROM keep_song WHERE deleted_at IS NULL GROUP BY song_info_id) AS latest_songs ON keep_song.song_info_id = latest_songs.song_info_id AND keep_song.created_at = latest_songs.max_created_at"),
+			qm.InnerJoin(""+
+				"(SELECT song_info_id, MAX(created_at) AS max_created_at "+
+				"FROM keep_song "+
+				"WHERE deleted_at IS NULL "+
+				"GROUP BY song_info_id) AS latest_songs "+
+				"ON keep_song.song_info_id = latest_songs.song_info_id AND keep_song.created_at = latest_songs.max_created_at"),
 			qm.OrderBy("created_at DESC"),
 			qm.Limit(size),
 		).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -97,6 +108,7 @@ func GetRecentKeepSongs(db *sql.DB) gin.HandlerFunc {
 		// 노래 정보 가져오기
 		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -142,16 +154,22 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 
 		size, err := strconv.Atoi(sizeValue)
 		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - cannot convert size to int", nil)
+			pkg.BaseResponse(c, http.StatusBadRequest, "error - cannot convert size to int", nil)
 			return
 		}
 
 		// 댓글 단 노래 가져오기
 		commentSongs, err := mysql.Comments(
-			qm.InnerJoin("(SELECT song_info_id, MAX(created_at) AS max_created_at FROM comment WHERE deleted_at IS NULL GROUP BY song_info_id) AS latest_comment ON comment.song_info_id = latest_comment.song_info_id AND comment.created_at = latest_comment.max_created_at"),
+			qm.InnerJoin(""+
+				"(SELECT song_info_id, MAX(created_at) AS max_created_at "+
+				"FROM comment "+
+				"WHERE deleted_at IS NULL "+
+				"GROUP BY song_info_id) AS latest_comment "+
+				"ON comment.song_info_id = latest_comment.song_info_id AND comment.created_at = latest_comment.max_created_at"),
 			qm.OrderBy("created_at DESC"),
 			qm.Limit(size)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -167,6 +185,7 @@ func GetRecentCommentsongs(db *sql.DB) gin.HandlerFunc {
 		// 노래 정보 가져오기
 		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoIds...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

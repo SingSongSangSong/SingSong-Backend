@@ -21,8 +21,7 @@ func ActivateDeviceToken(db *sql.DB, deviceToken string, memberId int64) {
 		qm.And("device_token = ?", deviceToken),
 	).Exists(ctx, db)
 	if err != nil {
-		log.Printf("error -" + err.Error())
-		return
+		log.Printf("error - %s", err.Error())
 	}
 	if exists {
 		// activate하게 만들기
@@ -33,14 +32,14 @@ func ActivateDeviceToken(db *sql.DB, deviceToken string, memberId int64) {
 			"is_activate": null.BoolFrom(true),
 		})
 		if err != nil {
-			log.Printf("error -" + err.Error())
+			log.Printf("error - %s", err.Error())
 			return
 		}
 	} else {
 		token := mysql.MemberDeviceToken{MemberID: memberId, DeviceToken: deviceToken, IsActivate: null.BoolFrom(true)}
 		err := token.Insert(ctx, db, boil.Infer())
 		if err != nil {
-			log.Printf("error -" + err.Error())
+			log.Printf("error - %s", err.Error())
 			return
 		}
 	}
@@ -55,7 +54,7 @@ func InvalidateAllDeviceTokens(db *sql.DB, memberId int64) {
 		"deleted_at":  null.TimeFrom(time.Now()),
 	})
 	if err != nil {
-		log.Printf("error -" + err.Error())
+		log.Printf("error - %s", err.Error())
 	}
 	log.Printf("Success! Rows affected: %d", rowsAffected)
 }

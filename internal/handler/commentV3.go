@@ -3,11 +3,12 @@ package handler
 import (
 	"SingSong-Server/internal/db/mysql"
 	"SingSong-Server/internal/pkg"
+	"SingSong-Server/internal/repository"
 	"database/sql"
 	"github.com/gin-gonic/gin"
-	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -84,16 +85,7 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		blacklists, err := mysql.Blacklists(qm.Where("blocker_member_id = ?", blockerId)).All(c.Request.Context(), db)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
-			return
-		}
-
-		blockedMemberIds := make([]interface{}, 0, len(blacklists))
-		for _, blacklist := range blacklists {
-			blockedMemberIds = append(blockedMemberIds, blacklist.BlockedMemberID)
-		}
+		blockedMemberIds, err := repository.GetBlockedMemberIDs(c.Request.Context(), db, blockerId)
 
 		// 댓글 가져오기 (최신순/오래된순)
 		orderBy := "comment.comment_id ASC"
@@ -103,21 +95,35 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 			cursorCondition = "comment.comment_id < ?" // 최신순
 		}
 
-		comments, err := mysql.Comments(
-			qm.Load(mysql.CommentRels.Member),
-			// 댓글 10개만 가져오기!
-			qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL AND parent_comment_id = 0", songId),
-			qm.WhereNotIn("comment.member_id NOT IN ?", blockedMemberIds...),
-			qm.And(cursorCondition, cursorInt),
-			qm.OrderBy(orderBy),
-			qm.Limit(sizeInt),
-		).All(c.Request.Context(), db)
+		var (
+			comments     mysql.CommentSlice
+			commentCount int64
+			err1, err2   error
+		)
 
-		commentCount, err := mysql.Comments(
-			qm.Where("comment.song_info_id = ? AND comment.deleted_at IS NULL", songId),
-		).Count(c.Request.Context(), db)
-		if err != nil {
-			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
+		wg := sync.WaitGroup{}
+		wg.Add(2)
+
+		// 병렬 처리 #1: 댓글 목록과 댓글 개수 동시에
+		go func() {
+			defer wg.Done()
+			comments, err1 = repository.GetTopLevelComments(c, db, songId, cursorCondition, cursorInt, orderBy, sizeInt, blockedMemberIds)
+		}()
+
+		go func() {
+			defer wg.Done()
+			commentCount, err2 = repository.GetCommentCount(c, db, songId)
+		}()
+
+		wg.Wait()
+		if err1 != nil {
+			pkg.SendToSentryWithStack(c, err1)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err1.Error(), nil)
+			return
+		}
+		if err2 != nil {
+			pkg.SendToSentryWithStack(c, err2)
+			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err2.Error(), nil)
 			return
 		}
 
@@ -141,14 +147,9 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 		}
 
 		// 모든 댓글의 RecommentsCount를 한 번에 조회
-		recomments, err := mysql.Comments(
-			qm.Load(mysql.CommentRels.Member),
-			qm.Where("comment.deleted_at IS NULL"),
-			qm.WhereIn("parent_comment_id IN ?", commentIDs...),
-			qm.WhereNotIn("comment.member_id not IN ?", blockedMemberIds...),
-			qm.OrderBy("comment.created_at ASC"),
-		).All(c.Request.Context(), db)
+		recomments, err := repository.GetRecomments(c, db, commentIDs, blockedMemberIds)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -162,12 +163,9 @@ func GetCommentsOnSongV3(db *sql.DB) gin.HandlerFunc {
 		searchCommentIDs := append(commentIDs, reCommentIDs...)
 
 		// 해당 song_id와 member_id에 대한 모든 좋아요를 가져오기
-		likes, err := mysql.CommentLikes(
-			qm.WhereIn("comment_id IN ?", searchCommentIDs...),
-			qm.And("member_id = ?", blockerId),
-			qm.And("deleted_at is null"),
-		).All(c.Request.Context(), db)
+		likes, err := repository.GetLikesForComments(c, db, searchCommentIDs, blockerId)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}

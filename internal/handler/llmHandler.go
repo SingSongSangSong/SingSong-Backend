@@ -6,6 +6,7 @@ import (
 	pb "SingSong-Server/proto/langchainRecommend"
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"google.golang.org/grpc"
@@ -32,6 +33,7 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 		// Get memberId from the middleware (assumed that the middleware sets the memberId)
 		memberId, exists := c.Get("memberId")
 		if !exists {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId not found in context"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - memberId not found", nil)
 			return
 		}
@@ -46,6 +48,7 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 		// Ensure memberId is cast to int64
 		memberIdInt, ok := memberId.(int64)
 		if !ok {
+			pkg.SendToSentryWithStack(c, fmt.Errorf("memberId found in context is invalid type"))
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - invalid memberId type", nil)
 			return
 		}
@@ -69,6 +72,7 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 		response, err := client.GetLangchainRecommendation(context.Background(), rpcRequest)
 		if err != nil {
 			log.Printf("Error calling gRPC: %v", err)
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
@@ -95,6 +99,7 @@ func LlmHandler(db *sql.DB) gin.HandlerFunc {
 		// MelonSongId 가져오기
 		songInfos, err := mysql.SongInfos(qm.WhereIn("song_info_id IN ?", songInfoInterface...)).All(c.Request.Context(), db)
 		if err != nil {
+			pkg.SendToSentryWithStack(c, err)
 			pkg.BaseResponse(c, http.StatusInternalServerError, "error - "+err.Error(), nil)
 			return
 		}
