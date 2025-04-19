@@ -29,6 +29,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -119,26 +120,26 @@ func init() {
 		JWT_REFRESH_VALIDITY_SECONDS: os.Getenv("JWT_REFRESH_VALIDITY_SECONDS"),
 	}
 
-	//dimensionStr := os.Getenv("MILVUS_DIMENSION")
-	//dimension, err := strconv.Atoi(dimensionStr)
-	//if err != nil {
-	//	log.Fatalf("Failed to convert MILVUS_DIMENSION to int: %v", err)
-	//}
+	dimensionStr := os.Getenv("MILVUS_DIMENSION")
+	dimension, err := strconv.Atoi(dimensionStr)
+	if err != nil {
+		log.Fatalf("Failed to convert MILVUS_DIMENSION to int: %v", err)
+	}
 
-	//VectorDBConfigInstance = &VectorDBConfig{
-	//	MILVUS_HOST:        os.Getenv("MILVUS_HOST"),
-	//	MILVUS_PORT:        os.Getenv("MILVUS_PORT"),
-	//	MILVUS_DIMENSION:   dimension,
-	//	COLLECTION_NAME:    os.Getenv("MILVUS_COLLECTION_NAME"),
-	//	PINECONE_DIMENSION: 548,
-	//}
+	VectorDBConfigInstance = &VectorDBConfig{
+		MILVUS_HOST:        os.Getenv("MILVUS_HOST"),
+		MILVUS_PORT:        os.Getenv("MILVUS_PORT"),
+		MILVUS_DIMENSION:   dimension,
+		COLLECTION_NAME:    os.Getenv("MILVUS_COLLECTION_NAME"),
+		PINECONE_DIMENSION: 548,
+	}
 
 	GrpcConfigInstance = &GrpcConfig{
 		Addr: func() string {
 			if addr := os.Getenv("GRPC_ADDR"); addr != "" {
 				return addr
 			}
-			return "python-gRPC" // 기본값
+			return "singsong-python" // 기본값
 		}(),
 	}
 
@@ -206,16 +207,16 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err != nil {
 		log.Fatalf("Redis 연결 실패: %v", err)
 	}
-	//
-	//// Milvus 연결
-	//*milvusClient, err = client.NewClient(ctx, client.Config{Address: os.Getenv("MILVUS_HOST") + ":" + os.Getenv("MILVUS_PORT")})
-	//if err != nil {
-	//	log.Printf("Milvus 연결 실패: %v. 계속 진행합니다.", err)
-	//	// 연결 실패 시 nil 클라이언트를 반환하거나 처리할 수 있음
-	//	milvusClient = nil
-	//} else {
-	//	log.Println("Milvus 연결 성공!")
-	//}
+
+	// Milvus 연결
+	*milvusClient, err = client.NewClient(ctx, client.Config{Address: os.Getenv("MILVUS_HOST") + ":" + os.Getenv("MILVUS_PORT")})
+	if err != nil {
+		log.Printf("Milvus 연결 실패: %v. 계속 진행합니다.", err)
+		// 연결 실패 시 nil 클라이언트를 반환하거나 처리할 수 있음
+		milvusClient = nil
+	} else {
+		log.Println("Milvus 연결 성공!")
+	}
 
 	// Pinecone 연결
 	pineconeApiKey := os.Getenv("PINECONE_API_KEY")

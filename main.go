@@ -37,7 +37,7 @@ type otelLogWriter struct {
 }
 
 func (w *otelLogWriter) Write(p []byte) (n int, err error) {
-	w.logger.Info("gin-log", "message", string(p))
+	w.logger.Info(string(p), "message", string(p))
 	return len(p), nil
 }
 
