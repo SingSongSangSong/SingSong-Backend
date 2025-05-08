@@ -171,6 +171,7 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 		semconv.DBClientConnectionPoolName("main-pool"),
 	}
 
+	log.Printf("Connecting to MySQL database at %s:%s with user %s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"))
 	// Open DB with OpenTelemetry instrumentation
 	*db, err = otelsql.Open("mysql", dsn,
 		otelsql.WithAttributes(attrs...),
@@ -186,6 +187,9 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 		log.Fatalf("MySQL 연결 실패: %v", err)
 	}
 
+	log.Printf("Connected to MySQL database at %s:%s with user %s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"))
+
+	log.Printf("Registering DB stats metrics for MySQL database at %s:%s with user %s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"))
 	// Register DB stats to meter
 	err = otelsql.RegisterDBStatsMetrics(*db, otelsql.WithAttributes(attrs...))
 	if err != nil {
@@ -196,6 +200,8 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	if err := (*db).Ping(); err != nil {
 		log.Fatalf("MySQL ping 실패: %v", err)
 	}
+
+	log.Printf("Trying to connect to Redis at %s:%s", os.Getenv("REDIS_ADDR"), os.Getenv("REDIS_PORT"))
 
 	// 레디스
 	*rdb = redis.NewClient(&redis.Options{
