@@ -112,6 +112,7 @@ func main() {
 	gin.DefaultErrorWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stderr, boil.DebugWriter)
 
 	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient, firebaseApp, s3Client)
+	log.Println("router setup complete")
 
 	pprofServer := &http.Server{
 		Addr: "0.0.0.0:6060",
@@ -131,6 +132,7 @@ func main() {
 	}
 
 	go func() {
+		log.Println("server about to listen on :8080")
 		if err2 := srv.ListenAndServe(); err2 != nil && err2 != http.ErrServerClosed {
 			log.Fatalf("listen: %s\n", err2)
 		}
