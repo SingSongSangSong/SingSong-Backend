@@ -17,7 +17,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
 	"io"
@@ -126,9 +125,13 @@ func main() {
 	}()
 
 	// 메인 서버 실행
+	//srv := &http.Server{
+	//	Addr:    ":8080",
+	//	Handler: otelhttp.NewHandler(r.Handler(), "singsong-server"),
+	//}
 	srv := &http.Server{
 		Addr:    ":8080",
-		Handler: otelhttp.NewHandler(r.Handler(), "singsong-server"),
+		Handler: r,
 	}
 
 	go func() {

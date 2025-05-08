@@ -188,7 +188,6 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	}
 
 	log.Printf("Connected to MySQL database at %s:%s with user %s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"))
-
 	log.Printf("Registering DB stats metrics for MySQL database at %s:%s with user %s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"))
 	// Register DB stats to meter
 	err = otelsql.RegisterDBStatsMetrics(*db, otelsql.WithAttributes(attrs...))
