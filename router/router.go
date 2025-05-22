@@ -15,6 +15,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	_ "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	gintrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gin-gonic/gin"
 	"log"
@@ -43,6 +44,9 @@ func SetupRouter(db *sql.DB, rdb *redis.Client, idxConnection *pinecone.IndexCon
 	if conf.Env == conf.ProductionMode {
 		r.Use(gintrace.Middleware(conf.DatadogServiceName))
 	}
+
+	// Otel Tracer
+	r.Use(otelgin.Middleware("singsong-service"))
 
 	// CORS 설정 추가
 	r.Use(middleware.CORSMiddleware())
