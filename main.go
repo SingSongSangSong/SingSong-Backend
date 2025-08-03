@@ -6,20 +6,16 @@ import (
 	"SingSong-Server/router"
 	"context"
 	"database/sql"
-	"errors"
 	firebase "firebase.google.com/go/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/pinecone-io/go-pinecone/pinecone"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/volatiletech/sqlboiler/v4/boil"
-	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 	"gopkg.in/DataDog/dd-trace-go.v1/profiler"
-	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -82,17 +78,17 @@ func main() {
 		defer profiler.Stop()
 	}
 
-	otelShutdown, err := conf.SetupOTelSDK(ctx)
-	if err != nil {
-		return
-	}
-	// Handle shutdown properly so nothing leaks.
-	defer func() {
-		err = errors.Join(err, otelShutdown(context.Background()))
-	}()
+	//otelShutdown, err := conf.SetupOTelSDK(ctx)
+	//if err != nil {
+	//	return
+	//}
+	//// Handle shutdown properly so nothing leaks.
+	//defer func() {
+	//	err = errors.Join(err, otelShutdown(context.Background()))
+	//}()
 
-	logger := otelslog.NewLogger("Singsong")
-	logger.Info("Hello from OpenTelemetry logs!", "orderID", 12345)
+	//logger := otelslog.NewLogger("Singsong")
+	//logger.Info("Hello from OpenTelemetry logs!", "orderID", 12345)
 
 	var db *sql.DB
 	var rdb *redis.Client
@@ -107,8 +103,8 @@ func main() {
 	boil.DebugMode = true
 
 	// GIN 로그를 OTel 로그로 redirect
-	gin.DefaultWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stdout, boil.DebugWriter)
-	gin.DefaultErrorWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stderr, boil.DebugWriter)
+	//gin.DefaultWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stdout, boil.DebugWriter)
+	//gin.DefaultErrorWriter = io.MultiWriter(&otelLogWriter{logger: logger}, os.Stderr, boil.DebugWriter)
 
 	r := router.SetupRouter(db, rdb, idxConnection, &milvusClient, firebaseApp, s3Client)
 	log.Println("router setup complete")

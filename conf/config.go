@@ -7,7 +7,6 @@ import (
 	firebase "firebase.google.com/go/v4"
 	"fmt"
 	"github.com/XSAM/otelsql"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/joho/godotenv"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
@@ -214,41 +213,44 @@ func SetupConfig(ctx context.Context, db **sql.DB, rdb **redis.Client, idxConnec
 	}
 
 	// Milvus 연결
-	*milvusClient, err = client.NewClient(ctx, client.Config{Address: os.Getenv("MILVUS_HOST") + ":" + os.Getenv("MILVUS_PORT")})
-	if err != nil {
-		log.Printf("Milvus 연결 실패: %v. 계속 진행합니다.", err)
-		// 연결 실패 시 nil 클라이언트를 반환하거나 처리할 수 있음
-		milvusClient = nil
-	} else {
-		log.Println("Milvus 연결 성공!")
-	}
+	//*milvusClient, err = client.NewClient(ctx, client.Config{Address: os.Getenv("MILVUS_HOST") + ":" + os.Getenv("MILVUS_PORT")})
+	//if err != nil {
+	//	log.Printf("Milvus 연결 실패: %v. 계속 진행합니다.", err)
+	//	// 연결 실패 시 nil 클라이언트를 반환하거나 처리할 수 있음
+	//	milvusClient = nil
+	//} else {
+	//	log.Println("Milvus 연결 성공!")
+	//}
+	milvusClient = nil
 
 	// Pinecone 연결
-	pineconeApiKey := os.Getenv("PINECONE_API_KEY")
-	if pineconeApiKey == "" {
-		log.Printf("Pinecone api key 없음")
-	}
-
-	client, err := pinecone.NewClient(pinecone.NewClientParams{ApiKey: pineconeApiKey})
-	if err != nil {
-		log.Printf("Pinecone 실패: %v", err)
-	}
-
-	idx, err := client.DescribeIndex(ctx, os.Getenv("PINECONE_INDEX"))
-	if err != nil {
-		log.Printf("Failed to describe index \"%s\". Error:%s", idx.Name, err)
-	}
-
-	*idxConnection, err = client.Index(idx.Host)
-	if err != nil {
-		log.Printf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
-	}
-
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		log.Printf("failed to load configuration, %v", err)
-	}
-	*s3Client = s3.NewFromConfig(cfg)
+	//pineconeApiKey := os.Getenv("PINECONE_API_KEY")
+	//if pineconeApiKey == "" {
+	//	log.Printf("Pinecone api key 없음")
+	//}
+	//
+	//client, err := pinecone.NewClient(pinecone.NewClientParams{ApiKey: pineconeApiKey})
+	//if err != nil {
+	//	log.Printf("Pinecone 실패: %v", err)
+	//}
+	//
+	//idx, err := client.DescribeIndex(ctx, os.Getenv("PINECONE_INDEX"))
+	//if err != nil {
+	//	log.Printf("Failed to describe index \"%s\". Error:%s", idx.Name, err)
+	//}
+	//
+	//*idxConnection, err = client.Index(idx.Host)
+	//if err != nil {
+	//	log.Printf("Failed to create IndexConnection for Host: %v. Error: %v", idx.Host, err)
+	//}
+	//
+	//cfg, err := config.LoadDefaultConfig(context.TODO())
+	//if err != nil {
+	//	log.Printf("failed to load configuration, %v", err)
+	//}
+	//*s3Client = s3.NewFromConfig(cfg)
+	idxConnection = nil
+	s3Client = nil
 
 	// export 환경변수 추가했었다
 	*firebaseApp, err = firebase.NewApp(ctx, nil)
